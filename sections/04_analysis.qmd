@@ -10,7 +10,7 @@ We illustrate the model with data from a commercial choice-based conjoint study 
 
 ### Model Specifications and Estimation {#sec-empirical-spec}
 
-We estimate six specifications on the same data: Model A and Model B (@sec-model), each in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-two-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
+We estimate six specifications on the same data: our model and the logistic alternative (@sec-model), each in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-two-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
 
 **Pre-specified test battery.** Before any model comparison, we commit to the three specification tests of @sec-spectests on the aggregate fit: the unit-slope test ($\lambda = 1$), the conditioning test ($\delta = 0$), and the DR-2Max test ($\delta = 1$) — whose operating characteristics are established in @sec-sim-spectests — together with the A-versus-B link comparison by holdout likelihood and WAIC. We also pre-commit to re-running the pricing counterfactual of @sec-sim-counterfactual on the empirical posteriors, replacing the synthetic market with the study's own category structure.
 
@@ -20,7 +20,7 @@ We estimate six specifications on the same data: Model A and Model B (@sec-model
 
 <!-- TODO: results, mirroring the simulation-study structure so the reader can map findings across sections:
 (1) Model comparison: LMD for all specifications — headline question: which link (A vs. B) fits real respondents better, and how much does the ordinal model improve on the dichotomized binary model?
-(2) Parameter estimates: part-worths across specifications (expect: attribute part-worths broadly stable, in line with Brazell_2006 and Hung_2025_dual; differences concentrated in the outside-good/cut-point structure); estimated cut points with interpretation — what purchase probability does each scale label correspond to (Model A's alphas are directly interpretable here and are a selling point of the framework).
+(2) Parameter estimates: part-worths across specifications (expect: attribute part-worths broadly stable, in line with Brazell_2006 and Hung_2025_dual; differences concentrated in the outside-good/cut-point structure); estimated cut points with interpretation — what purchase probability does each scale label correspond to (our model's alphas are directly interpretable here and are a selling point of the framework).
 (3) Predictive validity: holdout hit rates and predicted vs. actual ordinal response distributions.
 (4) Managerial quantities: purchase-incidence/share predictions across methods — show how much the dichotomization choice (top-box vs. top-two-box) moves the answer vs. the model-based estimate.
 (5) If task-order drift appears in the descriptives, a robustness fit with task-number effects, connecting to Hung_2025_nochoice. -->

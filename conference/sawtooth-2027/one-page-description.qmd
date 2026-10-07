@@ -21,7 +21,7 @@ format:
           \posttitle{\par\end{center}\vskip 0.3em}
 ---
 
-\vspace{-2em}
+\vspace{-2emµ}
 
 *Proposal for the Sawtooth Research Conference 2027 — methodological track, 30-minute presentation.*
 

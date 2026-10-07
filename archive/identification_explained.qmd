@@ -1,0 +1,689 @@
+---
+title: "How the Ordinal Dual-Response Models Are Identified"
+subtitle: "A plain-language walkthrough of the aggregate model, the hierarchical model with common cut points, and the hierarchical model with respondent-specific cut points"
+author: "Dan Yavorsky"
+date: 2026-09-15
+bibliography: ../references.bib
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    embed-resources: true
+    code-fold: false
+execute:
+  warning: false
+  message: false
+---
+
+::: {.callout-note}
+## Purpose and audience
+
+This note explains, in as plain a language as the subject allows, *why* each of our
+three models can be estimated at all, and what has to be true of the experimental
+design for that to work. It assumes you know what a regression is and that you have
+seen a logit once. It does not assume you have seen a multinomial logit, an ordered
+logit, or a hierarchical Bayesian model.
+
+Everything here is a restatement of Proposition 1 in Section 2 of the paper and the
+remarks that follow it. Nothing here is new. The point is to make the argument
+followable without a proof.
+
+Not part of the manuscript. Written for teaching and for discussion.
+:::
+
+## What "identification" means
+
+Before any model, the idea.
+
+A statistical model is a machine that turns parameters into predicted probabilities.
+You feed in a candidate set of numbers, and it tells you how likely each possible
+survey answer is. Estimation runs the machine backwards: you have the answers, and
+you want the numbers.
+
+**A parameter is identified if no other parameter value predicts exactly the same
+thing.** That is the whole definition. If two different parameter vectors
+$\theta$ and $\theta'$ produce *identical* probabilities for every answer a
+respondent could give, on every task you could possibly show them, then no amount of
+data will ever separate the two. Not a bigger sample, not a better optimizer, not a
+smarter prior. The data only ever see predictions, and the predictions are the same.
+
+So the way to check identification is not to stare at the estimator. It is to ask:
+
+> Can I find two different parameter values that make exactly the same predictions?
+
+If you can, the model is unidentified and you have just found the direction in which
+it fails. If you can prove you cannot, the model is identified. That is exactly how
+the proof of Proposition 1 is organized, and it is how this note is organized.
+
+A related idea will matter in Section 3. A parameter can be *technically* identified
+but *practically* hopeless: two parameter values that predict almost, but not quite,
+the same thing. Then the data can separate them in principle, but only with far more
+observations than you have. Statisticians call this weak identification. It is the
+normal condition of individual-level parameters in conjoint analysis, and it is the
+reason hierarchical models exist.
+
+## A 30-second recap of the model
+
+Each respondent sees $J$ "inside" goods and answers two questions.
+
+**Question 1, the forced choice.** Which of these $J$ do you prefer? She picks the
+one with the highest utility $u_j = \mathbf{x}_j'\beta + \eta_j$, where $\mathbf{x}_j$
+is the good's attributes, $\beta$ is her taste for those attributes, and $\eta_j$ is
+a random shock. The outside good, "buy nothing," is *not* on the screen.
+
+**Question 2, the ordinal report.** How likely are you to actually buy the one you
+picked? She answers on a $W$-point scale, "very unlikely" through "very likely."
+
+Our model says the second answer is about the *level* of the utility she just
+achieved, $u^* = \max_j u_j$, compared against a set of thresholds
+$c_1 < c_2 < \cdots < c_{W-1}$ that define the scale labels. From the researcher's
+side, $u^*$ has a known distribution centered at
+
+$$
+\overline{\mu}_t \;=\; \ln \sum_{j=1}^{J} e^{\mathbf{x}_{tj}'\beta},
+$$
+
+the **inclusive value** of task $t$: one number summarizing how attractive the whole
+screen was. The two answers then have probabilities
+
+$$
+\underbrace{\Pr(\text{picks } j) = \frac{e^{\mathbf{x}_{tj}'\beta}}{\sum_k e^{\mathbf{x}_{tk}'\beta}}}_{\text{forced choice}}
+\qquad\qquad
+\underbrace{\Pr(y_t \le w) = G\big(c_w - \overline{\mu}_t\big)}_{\text{ordinal report}}
+$$
+
+where $G$ is a link function (Gumbel under Model A, logistic under Model B; which one
+does not matter for anything in this note).
+
+The parameters to be found are $\beta$ and the cut points $\mathbf{c}$.
+
+::: {.callout-tip}
+## The one piece of algebra that drives everything
+
+Suppose you add the same constant $\delta$ to the utility of **every** good on the
+screen. What happens to the inclusive value?
+
+$$
+\ln \sum_j e^{V_j + \delta}
+\;=\; \ln \left( e^{\delta} \sum_j e^{V_j} \right)
+\;=\; \delta + \ln \sum_j e^{V_j}
+\;=\; \delta + \overline{\mu}.
+$$
+
+**A common shift passes straight through the log-sum-exp.** Shift every alternative
+by $\delta$ and the inclusive value moves by exactly $\delta$.
+
+That one line is the source of every identification problem in this paper. Hold onto
+it.
+:::
+
+```{r setup}
+#| code-fold: true
+#| code-summary: "Setup: load the paper's own likelihood code"
+PROJ <- if (file.exists("_quarto.yml")) "." else ".."
+source(file.path(PROJ, "R", "lib", "dgp.R"))
+source(file.path(PROJ, "R", "lib", "likelihood.R"))
+```
+
+# Section 1. The aggregate model
+
+The aggregate model assumes everyone shares one taste vector $\beta$ and one set of
+cut points $\mathbf{c}$. This is the simplest case and it contains the entire
+argument; Sections 2 and 3 are variations on it.
+
+## 1.1 The division of labor between the two answers
+
+The two survey questions tell you genuinely different things, and the cleanest way to
+understand identification here is to keep them separate.
+
+> **The forced choice sees only *differences*. The ordinal report sees *levels*.**
+
+Both halves of that sentence need explaining.
+
+### The forced choice sees only differences
+
+When a respondent picks between goods, all that matters is which utility is biggest.
+Adding the same amount to all of them changes nothing about which is biggest. This is
+the oldest fact in discrete choice [@Train_2009, ch. 2]: *only differences in utility
+matter*.
+
+Concretely: suppose the screen shows three goods with utilities $1.2$, $-0.4$, $0.8$.
+Now suppose we add $0.7$ to all three, giving $1.9$, $0.3$, $1.5$. The respondent's
+ranking is unchanged, and so are the choice probabilities.
+
+```{r d1}
+V <- c(1.2, -0.4, 0.8)
+softmax <- function(v) exp(v) / sum(exp(v))
+
+rbind(original = softmax(V),
+      shifted  = softmax(V + 0.7))
+```
+
+Identical. The forced choice is *blind* to any shift that moves everything together.
+
+### The ordinal report sees levels
+
+The second answer is different. It compares $\overline{\mu}_t$, a level, against the
+cut points, which are also levels. If the whole screen gets better, $\overline{\mu}_t$
+rises, it clears more thresholds, and answers shift toward "very likely." This is
+precisely the information the forced choice throws away, and it is the reason the
+dual-response design is worth running at all.
+
+```{r d1b}
+mubar <- function(v) log(sum(exp(v)))
+cuts  <- c(-0.5, 0.7, 1.9)
+
+ord_dist <- function(v) {
+  m <- mubar(v)
+  diff(c(0, plogis(cuts - m), 1)) |> round(3) |> rev()
+}
+
+rbind(`unattractive screen` = ord_dist(c(-1, -1.5, -0.8)),
+      `attractive screen`   = ord_dist(c(1.2, -0.4, 0.8))) |>
+  `colnames<-`(paste0("P(y=", 4:1, ")"))
+```
+
+The attractive screen pushes mass toward the top of the scale. The ordinal answers
+carry information about levels that the forced choice cannot.
+
+So: the forced choice pins down the *contrast* directions of $\beta$ (does she prefer
+red to blue? is she price sensitive?), and the ordinal answers pin down *where the
+whole thing sits* relative to the scale labels.
+
+## 1.2 The gap: what slips past both questions
+
+Now the problem. What if there is a direction in $\beta$ that moves *every* good on
+*every* screen by the same amount?
+
+Call that direction $v$, and suppose $\mathbf{x}_{tj}'v = \delta$ for every good $j$
+and every task $t$. Then:
+
+- The forced choice does not notice, by §1.1. Everything shifted together.
+- The inclusive value moves to $\overline{\mu}_t + \delta$ in every task, by the
+  log-sum-exp identity in the callout above.
+- So if we *also* move every cut point to $c_w + \delta$, then
+  $c_w + \delta - (\overline{\mu}_t + \delta) = c_w - \overline{\mu}_t$, and the
+  ordinal probabilities do not move either.
+
+Both questions give identical answers under $(\beta, \mathbf{c})$ and under
+$(\beta + v, \mathbf{c} + \delta)$. The model is unidentified in the direction $v$.
+
+That is the entire content of Proposition 1, which states it as a rank condition:
+
+::: {.callout-important}
+## The identification condition
+
+$(\beta, \mathbf{c})$ is identified **if and only if** the only way to have
+$\mathbf{x}_{tj}'v = \delta$ for every good and every task is $v = \mathbf{0}$ and
+$\delta = 0$.
+
+Equivalently: the design matrix $X$, with a column of ones stapled on, must have full
+column rank.
+
+In words: **no combination of your attributes may be constant across the alternatives
+you show.**
+:::
+
+This is not exotic. It is the same phenomenon as the two normalizations everyone
+already knows, fused into one condition:
+
+| Classical model | Its classical problem | Standard fix |
+|---|---|---|
+| Multinomial logit | Adding a constant to all utilities changes nothing | Only differences are identified; no global intercept |
+| Ordered logit | An intercept and the cut points cannot both move freely | Drop the intercept, or fix one cut point |
+| **Our model** | **A constant in the design shifts $\overline{\mu}$ and trades off against the cut points** | **Reference- or effects-code; no global constant** |
+
+: The dual-response condition is the union of the two classical ones {tbl-colwidths="[20,45,35]"}
+
+Our model is a multinomial logit stacked on an ordered logit, so it inherits both
+classical problems. The twist is that they are *linked*: the thing the ordered-logit
+stage measures the level of is $\overline{\mu}_t(\beta)$, which is built from the same
+$\beta$ the multinomial logit is estimating. That linkage is why the condition takes
+the specific form it does.
+
+## 1.3 The trap in practice: full dummy coding
+
+The obvious violation is putting a literal intercept in the design. Nobody does that
+on purpose. The violation that actually happens is **coding a categorical attribute
+with all of its levels included**.
+
+Suppose brand has three levels and you create three dummies: `brand_A`, `brand_B`,
+`brand_C`. Every alternative is exactly one brand, so for every row of the design,
+
+$$
+\texttt{brand\_A} + \texttt{brand\_B} + \texttt{brand\_C} = 1 .
+$$
+
+There is your constant. Take $v = (1,1,1)$ across those three columns and you get
+$\mathbf{x}_{tj}'v = 1$ for every good on every screen. You can add $1$ to all three
+brand part-worths, add $1$ to every cut point, and nothing observable changes.
+
+Here is that failure, exactly, using the paper's own likelihood function. The design
+below has a constant column; we evaluate the negative log-likelihood at the true
+parameters and at the shifted ones.
+
+```{r d2}
+des_bad <- make_design(n_tasks = 400, J = 3, seed = 1, intercept = TRUE)
+id_rank_check(des_bad$X)   # the paper's rank condition: does it pass?
+```
+
+```{r d2b}
+beta <- c(0.6, 1.0, -0.4, 0.5, -1.2, 0.0)  # last element multiplies the constant column
+cut  <- c(-0.5, 0.7, 1.9)
+dat  <- simulate_dual(des_bad, beta, cut, model = "B", seed = 7)
+
+delta <- 1.3
+par_true    <- c(beta, cut_to_par(cut))
+par_shifted <- c(beta[1:5], beta[6] + delta, cut_to_par(cut + delta))
+
+nll_true    <- negloglik(par_true, dat)
+nll_shifted <- negloglik(par_shifted, dat)
+
+cat(sprintf("nll at true parameters : %.12f\n", nll_true))
+cat(sprintf("nll at shifted ones    : %.12f\n", nll_shifted))
+cat(sprintf("difference             : %.3e\n", nll_shifted - nll_true))
+cat(sprintf("bit-for-bit identical  : %s\n", identical(nll_true, nll_shifted)))
+```
+
+The difference is **exactly zero** — not small, not within tolerance, but bit-for-bit
+identical. The likelihood is perfectly flat along that direction. Every point on that
+ridge is equally good, so "the" maximum likelihood estimate does not exist, and which
+answer you get depends entirely on where the optimizer happened to start.
+
+The standard symptom is a Hessian with a zero eigenvalue:
+
+```{r d3}
+des_ok <- make_design(n_tasks = 400, J = 3, seed = 1, intercept = FALSE)
+dat_ok <- simulate_dual(des_ok, beta[1:5], cut, model = "B", seed = 7)
+
+c(`smallest eigenvalue, constant in design` = min(fit_dual_mle(dat)$eigen),
+  `smallest eigenvalue, properly coded`     = min(fit_dual_mle(dat_ok)$eigen))
+```
+
+Numerically zero versus comfortably positive. This is the diagnostic to look at, and
+it is why the paper reports the smallest eigenvalue of the observed information
+alongside every simulation result.
+
+**The fix is free.** Code categorical attributes against an omitted reference level
+(two dummies for three brands), or effects-code them. One caveat worth stating: with
+reference coding, the reference level has to actually *appear* in the design. If you
+drop `brand_A` from the coding and then never show brand A, you have re-created the
+constant.
+
+## 1.4 Why the usual escape hatch is not available here
+
+If you have run a standard choice model with a "none of these" option, you may be
+thinking: *I include all my brand dummies all the time and it works fine.* You are
+right, and the reason is instructive.
+
+In the standard setup [@Haaijer_2001], the outside good sits on the screen as an
+actual alternative with all-zero attributes. So when you shift the inside goods by
+$\delta$, the outside good does **not** shift with them, the comparison changes, and
+the probabilities move. The constant is identified because the row of zeros anchors
+it.
+
+```{r d4}
+V <- c(1.2, -0.4, 0.8)
+
+forced   <- rbind(original = softmax(V), shifted = softmax(V + 0.7))
+with_out <- rbind(original = softmax(c(0, V)), shifted = softmax(c(0, V + 0.7)))
+
+round(forced, 4)                     # our first response: no outside good on screen
+round(with_out, 4)                   # standard model: outside good is a row of zeros
+```
+
+The top table does not move; the bottom one does. **In our design the outside good
+never appears as a row.** It has been absorbed into the cut points — that is the whole
+idea of the dual-response format, and at $W = 2$ the single cut point *is* the
+no-choice constant of the standard model. Having given up that row, we have given up
+the anchor that came with it, and anything the design holds constant across the inside
+goods gets absorbed right along with it.
+
+This is the one place where our identification requirement is genuinely stricter than
+the familiar one, and it is worth flagging to anyone who brings habits from standard
+CBC.
+
+## 1.5 Normalizations versus restrictions
+
+Two more conventions appear in the model, and it is worth being clear about which are
+free and which are testable claims about the world.
+
+**Free normalizations** (you must make some choice; nothing is being asserted):
+
+- *The outside good has zero attributes.* This fixes the origin of the utility scale.
+  Giving the outside good its own constant would shift all cut points equally, which is
+  exactly the invariance above, so it is not a restriction we are imposing — it is one
+  we could not avoid.
+- *The shocks are standard Gumbel with scale 1.* This fixes the units of $\beta$, as in
+  any logit. Doubling all utilities and all cut points changes nothing, so something
+  has to set the scale.
+
+**A genuine restriction** (testable, and we test it):
+
+- *The coefficient on $\overline{\mu}_t$ in the second stage is exactly $1$.* This is
+  not a normalization. It follows from the behavioral claim that the *same* utility
+  draw produces both answers. You can free it up, estimate
+  $\Pr(y_t \le w) = G(c_w - \lambda \overline{\mu}_t)$, and test $\lambda = 1$. That is
+  an overidentification test of the model's central story, and the paper runs it.
+
+The distinction matters for how you answer a referee. A normalization is a choice of
+units and cannot be wrong. A restriction can be wrong, and the honest move is to test
+it rather than to describe it as a normalization.
+
+## 1.6 One more thing the design has to do
+
+Proposition 1 guarantees identification of the cut points, but it does not guarantee they
+are *well* estimated, and it is silent on a question we care about: **which link
+function is right, Model A or Model B?**
+
+Here is the issue. At a single value of $\overline{\mu}$, any two increasing link
+functions can fit the observed category frequencies perfectly, just by relabeling the
+cut points. There are $W-1$ frequencies and $W-1$ cut points; you can always solve it.
+So a design in which every task is about equally attractive tells you *nothing* about
+which link is correct.
+
+What separates the links is how the answer distribution *moves* as the screen gets
+better or worse. The two links agree in the middle and diverge in the tails, so you
+need tasks out in the tails.
+
+> **Practical implication.** If you want to distinguish Model A from Model B, or to
+> estimate the cut points sharply, deliberately vary how attractive your screens are.
+> A design optimized purely for the forced choice — which typically wants utility
+> *balance*, all options roughly equally good — is close to the worst case for the
+> second response.
+
+This is a real tension between designing for question 1 and designing for question 2,
+and it is treated at length in notebook 07.
+
+# Section 2. The hierarchical model with common cut points
+
+Now let respondents differ. Each has her own tastes,
+
+$$
+\beta_i \sim \mathcal{N}(\bar\beta, \Sigma),
+$$
+
+but everyone shares one set of cut points $\mathbf{c}$. The substantive assumption is
+that people want different things but *use the words the same way*: "somewhat likely"
+means the same thing to you as it does to me.
+
+## 2.1 Three different questions, three different answers
+
+The word "identified" now has to be applied to three separate things, and conflating
+them is the main source of confusion in this literature.
+
+| What you might ask about | Identified? | What does the work |
+|---|---|---|
+| The cut points $\mathbf{c}$ | Yes, easily | Pooling: every respondent's ordinal answers inform them |
+| The population parameters $\bar\beta, \Sigma$ | Yes | Many respondents, $N \to \infty$ |
+| One person's tastes $\beta_i$ | Weakly at best | Only her own handful of tasks |
+
+: The three questions differ, and so do their answers {tbl-colwidths="[36,22,42]"}
+
+Let us take them in order.
+
+## 2.2 The cut points are the easy part
+
+The cut points are *common*. So every ordinal answer from every respondent carries
+information about them. With $N = 300$ respondents answering $T = 10$ tasks each, you
+have $3{,}000$ ordinal answers informing $W - 1 = 4$ cut points.
+
+That is an enormous amount of information per parameter. Cut points are estimated
+precisely in this model, and they are essentially never the thing that goes wrong.
+
+The same is true of $\bar\beta$ and $\Sigma$: they are features of the *population*, and
+the population is what you sampled a lot of. Adding respondents drives their standard
+errors down in the ordinary way.
+
+## 2.3 Individual tastes are the hard part
+
+Now the other direction. Respondent $i$ contributes $T$ choices and $T$ ordinal
+answers — say $10$ and $10$ — and you want $P$ taste parameters from her, say $6$.
+
+That is not much. Twenty observations for six parameters, where the observations are
+categorical and each one is fairly uninformative. Her individual likelihood is a broad,
+shallow hill rather than a sharp peak.
+
+Worse, this does not improve as you collect more data in the usual sense. Adding
+respondents adds *more* $\beta_i$ parameters, one per respondent, so you never
+accumulate information about any particular one. Econometricians call this the
+**incidental parameters** situation: the number of unknowns grows with the sample.
+
+Here is what that looks like. We fit a single respondent's data on its own, with no
+hierarchy, at three different task counts:
+
+```{r d5}
+small_design <- function(T_tasks, J = 3, seed) {
+  set.seed(seed)
+  n <- T_tasks * J
+  list(X = cbind(hi = rbinom(n, 1, 0.5), price = runif(n, 0.5, 2.5)),
+       n_tasks = T_tasks, J = J, P = 2)
+}
+
+sapply(c(8, 40, 200), function(Tt) {
+  d  <- small_design(Tt, seed = 11)
+  dd <- simulate_dual(d, beta = c(1.0, -0.8), cut = c(-0.4, 1.1),
+                      model = "B", seed = 2)
+  f  <- fit_dual_mle(dd)
+  c(`se(beta_hi)` = f$se_beta[1], `se(c_1)` = f$se_cut[1])
+}) |> `colnames<-`(paste0("T=", c(8, 40, 200))) |> round(3)
+```
+
+At $T = 8$ — a realistic commercial task count — the standard error on that
+respondent's own taste parameter is larger than the parameter itself. On her own, she
+tells you almost nothing.
+
+## 2.4 What the hierarchy actually does, and what it does not
+
+This is the point most worth getting right, because it is routinely overstated.
+
+The hierarchical prior $\beta_i \sim \mathcal{N}(\bar\beta, \Sigma)$ says: respondents
+are not arbitrary, they are draws from a population. When respondent $i$'s own data are
+uninformative, her posterior is pulled toward what the rest of the sample looks like.
+This is **shrinkage**, and it is genuinely valuable — it is why hierarchical Bayes
+beats fitting each person separately, and it is why individual-level estimates from
+CBC/HB are usable at all.
+
+But be precise about what it is:
+
+::: {.callout-warning}
+## Shrinkage is borrowed information, not identification
+
+Shrinkage improves your estimate of $\beta_i$ by importing information from other
+respondents. That is legitimate — under the assumption that $i$ really is a draw from
+the same population.
+
+It does **not** repair a direction in which the model is truly unidentified. If a
+direction is flat in *everyone's* likelihood, then borrowing from everyone borrows
+nothing, and the posterior in that direction is just the prior, restated.
+
+The distinction: shrinkage fixes *weak* identification (a shallow hill). It cannot fix
+*non*-identification (a flat ridge).
+:::
+
+So which is it here? For the common-cut model, the good news is structural:
+
+> **The common cut points act as an anchor for every individual.**
+
+Because $\mathbf{c}$ is shared and pinned down by the whole sample, respondent $i$'s
+*level* is measured against a scale that is already known. Even if her own design were
+weak, the pooled data fix the ruler she is being measured with.
+
+That means the rank condition from §1.2 has to hold on the **pooled** design, not on
+each respondent's own. If your attribute coding is clean, it holds for everyone at once.
+If you dummy-coded all levels, it fails for everyone at once — no rotation of the design
+across respondents will save you, because the offending combination is constant in every
+row of every screen shown to anybody.
+
+**Summary for Section 2.** Nothing new is required beyond §1.2. Apply the same rank
+condition to the pooled design and the model is identified. What changes is the
+*precision* story: the population parameters and the cut points are sharp, individual
+tastes are fuzzy and lean on the prior, and that is expected rather than alarming.
+
+# Section 3. The hierarchical model with respondent-specific cut points
+
+Now relax the shared-scale assumption. Each respondent gets her own cut points:
+
+$$
+c_{i1} \in \mathbb{R}, \qquad c_{iw} = c_{i,w-1} + e^{\delta_{iw}},
+$$
+
+with $\theta_i = (c_{i1}, \delta_{i2}, \ldots)$ drawn from a population distribution
+jointly with $\beta_i$. (The exponentials just keep the cut points in increasing order
+without constrained sampling. They are a computational device, not a modeling claim.)
+
+This is a real phenomenon. Some people are enthusiasts who say "very likely" to
+everything; others are reserved and never use the top box. @Greene_2010 and
+@Falco_2015 document exactly this in other settings. But allowing it costs us something
+specific, and this section is about what.
+
+## 3.1 The new confound: enthusiasm versus generosity
+
+Respondent $i$ answers "very likely" on nearly every task. Two explanations:
+
+- **She likes everything.** Her $\beta_i$ is large; the products really do appeal to her.
+- **She is a generous scale user.** Her $c_{i1}$ is low; she says "very likely" at a
+  level of enthusiasm where you would say "somewhat."
+
+From her ordinal answers *alone*, these are indistinguishable. High utility against
+ordinary thresholds, and ordinary utility against low thresholds, produce identical
+answers. This confound did not exist in Section 2, because there the thresholds were
+common and known from everyone else.
+
+## 3.2 What breaks the tie, and what does not
+
+The confound is resolved — partly — by the forced choice.
+
+Recall the division of labor from §1.1. The forced choice reveals the *contrast*
+directions of $\beta_i$: whether she prefers red to blue, how she trades quality for
+price. Those answers are completely unaffected by how she uses the words, because she
+is not using the words when she picks. So the forced choice measures her tastes on a
+scale that scale-use heterogeneity cannot touch, and given her tastes, the ordinal
+answers reveal her thresholds.
+
+**But only for the directions the forced choice can see.** And by §1.1, it cannot see a
+direction that moves every alternative together. For that direction, we are back in
+exactly the situation of §1.2 — with one important difference:
+
+::: {.callout-important}
+## The condition tightens: it must now hold respondent by respondent
+
+In the **common-cut** model, a shift of $\beta_i$ had to be absorbed by the *shared*
+cut points, and the rest of the sample would not stand for it. The pooled design was
+what mattered.
+
+In the **het-cut** model, respondent $i$'s shift can be absorbed by *her own*
+$c_{i1}$. Nobody else's data constrain it, because nobody else's cut points moved.
+
+So the rank condition must now hold on **each respondent's own design** — her $T \times J$
+rows — not merely on the pooled design.
+:::
+
+In practice, commercial designs rotate attribute levels across respondents and include
+at least one continuous attribute (price), so each respondent's own rows typically do
+satisfy the condition. The paper says as much. But it is now a per-respondent
+requirement that can fail for a subset of your sample, which is a thing worth checking
+rather than assuming.
+
+## 3.3 The counting problem gets materially worse
+
+Set aside exact non-identification and just count. Per respondent, at $T = 10$ tasks,
+$P = 6$ attributes, $W = 5$ scale points:
+
+| | Parameters per respondent | Observations per respondent |
+|---|:---:|:---:|
+| Common cut points (§2) | $6$ ($\beta_i$ only) | $10$ choices $+$ $10$ ordinal answers |
+| Respondent-specific cut points (§3) | $6 + 4 = 10$ | $10$ choices $+$ $10$ ordinal answers |
+
+: Same data, many more individual parameters {tbl-colwidths="[40,30,30]"}
+
+Ten parameters from ten ordinal answers and ten choices, where the four new parameters
+are informed *only* by the ordinal half. Recall from §2.3 that at $T = 8$ the standard
+error on a single cut point was already $1.6$ — on a utility scale where the whole
+range of interest is a few units wide.
+
+Individual cut points are therefore not really estimated from individual data. They are
+almost entirely shrinkage. That is not fatal, but it does mean:
+
+> Do not interpret one respondent's estimated cut points as a measurement of how *that
+> person* uses the scale. What the model reliably recovers is the **population
+> distribution** of scale use, and whether allowing it improves fit.
+
+## 3.4 The specifically Bayesian hazard
+
+Here is the part that deserves a warning label, and it applies to hierarchical Bayesian
+models generally.
+
+**A proper prior always produces a proper posterior.** If you put a normal prior on a
+parameter and the likelihood is completely flat in some direction, the MCMC sampler will
+run happily, the chains will mix, the traceplots will look fine, and you will get a
+posterior with a mean and a credible interval. Nothing will crash.
+
+But in that direction, the posterior *is the prior*. You have not learned anything; you
+have printed your assumption back out with a standard error attached.
+
+This is the essential difference between how the failure presents in the two estimation
+methods:
+
+| | Maximum likelihood (§1) | Hierarchical Bayes (§3) |
+|---|---|---|
+| Symptom | Optimizer fails; zero eigenvalue in the Hessian; different starts give different answers | Nothing. Chains mix, output looks normal |
+| How you find out | Immediately, loudly | Only if you go looking |
+
+: The same failure is loud in one framework and silent in the other {tbl-colwidths="[18,41,41]"}
+
+Practical checks, in rough order of effort:
+
+1. **Check the rank condition per respondent** before estimating anything. It is a
+   `qr()` call on each respondent's design rows. This is cheap and catches the exact
+   failure.
+2. **Compare the posterior to the prior.** For any parameter where they coincide, the
+   data said nothing. Widen the prior and see what moves; a genuinely identified
+   parameter will barely notice.
+3. **Watch $\beta_i$ and $c_{i1}$ together.** Near-unidentification in the level
+   direction shows up as a strong negative correlation between a respondent's level-ish
+   taste parameters and her first cut point, within her own posterior draws.
+
+## 3.5 So should you use respondent-specific cut points?
+
+The identification analysis gives a clear answer, and it is a conditional one.
+
+Allowing heterogeneous cut points is the right call when you have reason to think scale
+use genuinely varies and you have enough tasks per respondent to say something about it.
+It is the wrong call when $T$ is small and your design was not built with per-respondent
+rank in mind — there you will be reporting your prior.
+
+The common-cut model is the safer default precisely because of the anchoring property in
+§2.4: shared cut points pin down the ruler, so individual weakness is not fatal. The
+paper's simulation study takes up the empirical side of this question — what you gain
+when cut-point heterogeneity is real, and what you lose by ignoring it when it is not.
+
+# A checklist
+
+Everything above, compressed.
+
+**Before you field the study**
+
+- [ ] Reference-code or effects-code every categorical attribute. Never include all levels.
+- [ ] Confirm the reference level actually appears in the design.
+- [ ] Check that $[X \;\; \iota]$ has full column rank. One line of code; catches the fatal case.
+- [ ] If you plan respondent-specific cut points, run that check *per respondent*, not just pooled.
+- [ ] If you want to compare Model A against Model B, deliberately vary how attractive your screens are. Utility-balanced designs cannot distinguish the links.
+
+**After you estimate**
+
+- [ ] Report the smallest eigenvalue of the observed information (aggregate model).
+- [ ] Check that every scale category was actually used; an empty category leaves its neighboring cut points weakly identified.
+- [ ] Test $\lambda = 1$. It is a restriction, not a normalization, and it is the model's central behavioral claim.
+- [ ] In the Bayesian models, compare posteriors to priors before believing individual-level output.
+
+**Three sentences to remember**
+
+1. The forced choice sees only differences; the ordinal report sees levels; anything constant across the alternatives is invisible to both.
+2. Our design gave up the outside good's row of zeros, which is the anchor that lets standard choice models get away with full dummy coding — so we cannot.
+3. Shrinkage fixes weak identification, not non-identification; in a Bayesian model the difference is invisible unless you check.
+
+## References
+
+::: {#refs}
+:::
