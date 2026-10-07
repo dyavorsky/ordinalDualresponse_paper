@@ -1,0 +1,566 @@
+---
+title: "The Persistent Outside Option"
+subtitle: "When the outside-good shock is drawn once per respondent instead of once per task"
+author:
+  - name: Dan Yavorsky
+  - name: Geoffery Zheng
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: false
+execute:
+  warning: false
+  message: false
+---
+
+{{< include ../latex_commands.qmd >}}
+
+## What this notebook does
+
+Model B says the consumer resolves her outside-good shock and grades the
+realized comparison $d_{it} = u^*_{it} - \eta_{it0}$. Written that way, the
+shock carries a task subscript: she gets a fresh draw on every screen.
+
+That is a strong assumption, and an easy one to miss. The inside goods
+legitimately get new shocks each task, because each task shows new goods. But
+the outside option is *the same object* on all of a respondent's screens. It is
+her current product, her budget this month, her situation. Re-randomizing it
+between screens four and five is hard to defend once stated out loud.
+
+So consider the alternative: one outside-good shock per respondent,
+
+$$
+d_{it} = u^*_{it} - \eta_{i0}, \qquad \eta_{i0} \sim \text{Gumbel}(0,1),
+$$
+
+drawn once and held across her tasks. Call this the **persistent** outside
+option, against Model B's **transient** one.
+
+The two are harder to tell apart than they look, and that is the point of this
+notebook:
+
+1. **They are marginally identical.** Task by task, both give the logistic
+   link. A cross-section cannot distinguish them at all.
+2. **They differ in the panel.** The persistent version induces correlation
+   across a respondent's ordinal answers that the transient version does not.
+3. **The theory pins a number.** A persistent Gumbel shock implies a
+   respondent-level variance of exactly $\pi^2/6 \approx 1.645$ — no free
+   parameter. We estimate that variance freely and ask whether the data agree.
+4. **Ignoring it has a cost**, and we measure it.
+
+This notebook is the source of `persistent_outside.rds`. It backs the
+persistent-outside-option paragraph in the model section.
+
+::: {.callout-note}
+## Why this is the heterogeneous-cut-point model in disguise
+
+Conditional on $\eta_{i0}$, the second-response probability is
+
+$$
+\Pr(y_{it} \le w \mid \eta_{i0}) = F\big(c_w + \eta_{i0} - \overline\mu_{it}\big),
+$$
+
+Model A's link with every cut point shifted by the same amount. So the
+persistent outside option is exactly **location-only cut-point heterogeneity**:
+the spacings between a respondent's thresholds are common, only the level
+moves, and the theory fixes the level's distribution rather than estimating it.
+
+Two consequences we lean on below. The estimator is the heterogeneous-cut
+sampler restricted to a common shift, so no new machinery is required. And the
+*simulator* needs no change either: Model A's latent is $u^*_{it}$, so
+generating Model A data with per-respondent cut points $c + z_i$ produces
+exactly $u^*_{it}$ graded against $c + z_i$, which is the persistent model.
+:::
+
+```{r}
+#| label: setup
+set.seed(1)
+options(digits = 5)
+```
+
+## 1. Machinery
+
+Designs, the panel simulator, and a sampler that carries a respondent-level
+cut-point shift. This notebook needs neither the heterogeneous-cut mode nor the
+choice-only mode, so the sampler below is the common-cut sampler plus one
+scalar latent per respondent.
+
+```{r}
+#| label: machinery
+#| code-fold: true
+#| code-summary: "Designs, panel simulation, and the sampler with a persistent shift"
+rgumbel <- function(n) -log(-log(runif(n)))
+row_max <- function(M) do.call(pmax, as.data.frame(M))
+
+# ---- designs (R/lib/dgp.R) --------------------------------------------------
+make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+  set.seed(seed)
+  n_rows <- n_tasks * J
+  a <- sample(1:3, n_rows, replace = TRUE)
+  b <- sample(1:3, n_rows, replace = TRUE)
+  price <- runif(n_rows, 0.5, 2.5)
+  X <- cbind(a2 = as.numeric(a == 2), a3 = as.numeric(a == 3),
+             b2 = as.numeric(b == 2), b3 = as.numeric(b == 3), price = price)
+  if (intercept) X <- cbind(X, const = 1)
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+}
+make_panel_design <- function(N, T_tasks, J, seed) {
+  des <- make_design(N * T_tasks, J, seed = seed)
+  des$N <- N; des$T_tasks <- T_tasks
+  des$resp <- rep(seq_len(N), each = T_tasks)
+  des$resp_row <- rep(des$resp, each = J)
+  des
+}
+
+# ---- cut-point parameterization and link (R/lib/likelihood.R) --------------
+par_to_cut <- function(par, P, W) {
+  if (W == 2) return(par[P + 1])
+  par[P + 1] + c(0, cumsum(exp(par[(P + 2):(P + W - 1)])))
+}
+cut_to_par <- function(cut) if (length(cut) == 1) cut else c(cut[1], log(diff(cut)))
+ord_prob_z <- function(lo, hi, model) {
+  if (model == "B") {
+    plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
+  } else {
+    ea <- exp(-lo); eb <- exp(-hi)
+    p <- exp(-eb) * (-expm1(-(ea - eb)))
+    p[!is.finite(eb)] <- 0
+    p
+  }
+}
+
+# ---- panel simulation (R/hierarchical/dgp_panel.R) -------------------------
+draw_betas <- function(N, beta_bar, Sigma, seed) {
+  set.seed(seed)
+  sweep(matrix(rnorm(N * length(beta_bar)), N, length(beta_bar)) %*% chol(Sigma),
+        2, beta_bar, "+")
+}
+simulate_dual_hb <- function(design, Bmat, cut, model = c("A", "B"), seed) {
+  model <- match.arg(model); set.seed(seed)
+  n <- design$n_tasks; J <- design$J; N <- design$N
+  cutmat <- if (is.matrix(cut)) cut else matrix(cut, N, length(cut), byrow = TRUE)
+  W <- ncol(cutmat) + 1L
+  Bx <- Bmat[design$resp_row, , drop = FALSE]
+  V <- matrix(rowSums(design$X * Bx), nrow = n, ncol = J, byrow = TRUE)
+  u <- V + matrix(rgumbel(n * J), n, J)
+  jstar <- max.col(u, ties.method = "first")
+  ustar <- u[cbind(seq_len(n), jstar)]
+  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  y <- 1L + rowSums(latent >= cutmat[design$resp, , drop = FALSE])
+  list(design = design, resp = design$resp, resp_row = design$resp_row,
+       N = N, jstar = jstar, y = as.integer(y), W = W, model = model,
+       Bmat_true = Bmat, cut_true = cut)
+}
+split_holdout <- function(dat, n_holdout) {
+  des <- dat$design; Tt <- des$T_tasks
+  tt <- rep(seq_len(Tt), times = des$N)
+  keep <- tt <= (Tt - n_holdout)
+  sub <- function(k) {
+    rows <- rep(k, each = des$J)
+    d <- list(X = des$X[rows, , drop = FALSE], n_tasks = sum(k), J = des$J,
+              P = des$P, N = des$N, T_tasks = if (all(k == keep)) Tt - n_holdout else n_holdout,
+              resp = des$resp[k], resp_row = des$resp_row[rows])
+    list(design = d, resp = d$resp, resp_row = d$resp_row, N = des$N,
+         jstar = dat$jstar[k], y = dat$y[k], W = dat$W, model = dat$model,
+         Bmat_true = dat$Bmat_true, cut_true = dat$cut_true)
+  }
+  list(est = sub(keep), holdout = sub(!keep))
+}
+
+# ---- the sampler -----------------------------------------------------------
+# N-vector of per-respondent joint log-likelihoods.
+resp_loglik_all <- function(dat, Bmat, cutmat) {
+  des <- dat$design; n <- des$n_tasks; J <- des$J
+  Bx <- Bmat[dat$resp_row, , drop = FALSE]
+  V <- matrix(rowSums(des$X * Bx), nrow = n, ncol = J, byrow = TRUE)
+  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
+  ll <- V[cbind(seq_len(n), dat$jstar)] - logS
+  cut_aug <- cbind(-Inf, cutmat, Inf)
+  lo <- cut_aug[cbind(dat$resp, dat$y)] - logS
+  hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - logS
+  ll <- ll + log(pmax(ord_prob_z(lo, hi, dat$model), 1e-312))
+  as.numeric(rowsum(ll, dat$resp, reorder = TRUE))
+}
+default_hb_priors <- function(P) list(
+  phibar0 = rep(0, P), A = 1/100, nu = P + 3, V0 = (P + 3) * diag(P),
+  zeta_prec = 1/100, a_z = 2, b_z = 2)
+draw_phibar <- function(B, Sigma, priors) {
+  N <- nrow(B); Sinv <- chol2inv(chol(Sigma))
+  Vb <- chol2inv(chol(N * Sinv + priors$A * diag(ncol(B))))
+  m <- Vb %*% (Sinv %*% (N * colMeans(B)) + priors$A * priors$phibar0)
+  as.numeric(m + t(chol(Vb)) %*% rnorm(ncol(B)))
+}
+draw_sigma <- function(B, betabar, priors) {
+  Vn <- priors$V0 + crossprod(sweep(B, 2, betabar))
+  chol2inv(chol(rWishart(1, priors$nu + nrow(B), chol2inv(chol(Vn)))[, , 1]))
+}
+
+EULER <- -digamma(1)   # 0.57722
+
+# persist = FALSE -> ordinary common-cut sampler.
+# persist = TRUE  -> one scalar shift z_i per respondent, cut points c + z_i.
+#   persist_prior "normal": z_i ~ N(0, s2z), s2z estimated  (the TEST)
+#   persist_prior "gumbel": z_i ~ Gumbel(0,1) - EULER, fixed (the THEORY)
+fit_hb <- function(dat, mcmc = list(R = 15000, burn = 6000, thin = 10),
+                   persist = FALSE, persist_prior = c("normal", "gumbel"),
+                   priors = NULL, seed = NULL, verbose = TRUE) {
+  persist_prior <- match.arg(persist_prior)
+  if (!is.null(seed)) set.seed(seed)
+  des <- dat$design; N <- dat$N; P <- des$P; W <- dat$W
+  if (is.null(priors)) priors <- default_hb_priors(P)
+  R_iter <- mcmc$R; burn <- mcmc$burn; thin <- mcmc$thin
+  nkeep <- floor((R_iter - burn) / thin)
+
+  lpz <- function(z) if (!persist) 0 else if (persist_prior == "gumbel") {
+    g <- z + EULER; -g - exp(-g)
+  } else -0.5 * z^2 / s2z
+
+  B <- matrix(0, N, P); z <- numeric(N)
+  freq <- tabulate(dat$y, nbins = W)
+  cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
+  ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+  cut0 <- log(des$J) + ginv(cumq)
+  if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
+  zeta <- cut_to_par(cut0)
+  betabar <- rep(0, P); Sigma <- diag(P); s2z <- 1
+
+  cutrow <- function(zz, zv) matrix(par_to_cut(zz, 0, W), N, W - 1, byrow = TRUE) + zv
+  cur_cutmat <- cutrow(zeta, z)
+  cur_ll <- resp_loglik_all(dat, B, cur_cutmat)
+
+  s_phi <- rep(2.93 / sqrt(P + persist), N); acc_phi <- rep(0, N)
+  s_zeta <- 0.05; acc_zeta <- 0; window <- 100
+
+  keep_betabar <- matrix(NA_real_, nkeep, P)
+  keep_Sigma <- array(NA_real_, c(nkeep, P, P))
+  keep_cut <- matrix(NA_real_, nkeep, W - 1)
+  keep_s2z <- numeric(nkeep)
+  keep_B <- array(NA_real_, c(nkeep, N, P))
+  keep_z <- matrix(NA_real_, nkeep, N)
+  ki <- 0
+
+  for (it in seq_len(R_iter)) {
+    # (1) respondent block: (beta_i, z_i) jointly by RW-MH
+    Bp <- B + (matrix(rnorm(N * P), N, P) %*% chol(Sigma)) * s_phi
+    zp <- if (persist) z + rnorm(N, sd = s_phi * sqrt(s2z)) else z
+    cutp <- if (persist) cutrow(zeta, zp) else cur_cutmat
+    prop_ll <- resp_loglik_all(dat, Bp, cutp)
+    Sinv <- chol2inv(chol(Sigma))
+    dc <- sweep(B, 2, betabar); dp <- sweep(Bp, 2, betabar)
+    qc <- rowSums((dc %*% Sinv) * dc); qp <- rowSums((dp %*% Sinv) * dp)
+    la <- (prop_ll - 0.5 * qp + lpz(zp)) - (cur_ll - 0.5 * qc + lpz(z))
+    acc <- log(runif(N)) < la
+    B[acc, ] <- Bp[acc, ]; cur_ll[acc] <- prop_ll[acc]
+    if (persist && any(acc)) { z[acc] <- zp[acc]; cur_cutmat[acc, ] <- cutp[acc, , drop = FALSE] }
+    acc_phi <- acc_phi + acc
+
+    # (2) common-cut block
+    zeta_prop <- zeta + rnorm(W - 1, sd = s_zeta)
+    cut_prop <- cutrow(zeta_prop, z)
+    ll_prop <- resp_loglik_all(dat, B, cut_prop)
+    lp <- (sum(ll_prop) - 0.5 * priors$zeta_prec * sum(zeta_prop^2)) -
+          (sum(cur_ll) - 0.5 * priors$zeta_prec * sum(zeta^2))
+    if (log(runif(1)) < lp) {
+      zeta <- zeta_prop; cur_cutmat <- cut_prop; cur_ll <- ll_prop
+      acc_zeta <- acc_zeta + 1
+    }
+
+    # (3) hyperparameters
+    betabar <- draw_phibar(B, Sigma, priors)
+    Sigma <- draw_sigma(B, betabar, priors)
+    if (persist && persist_prior == "normal")
+      s2z <- 1 / rgamma(1, priors$a_z + N / 2, priors$b_z + sum(z^2) / 2)
+
+    if (it <= burn && it %% window == 0) {
+      s_phi <- pmin(pmax(s_phi * exp(1.5 * (acc_phi / window - 0.23)), 0.01), 10)
+      acc_phi <- rep(0, N)
+      s_zeta <- min(max(s_zeta * exp(1.5 * (acc_zeta / window - 0.30)), 1e-3), 2)
+      acc_zeta <- 0
+    }
+    if (it == burn) { acc_phi <- rep(0, N); acc_zeta <- 0 }
+    if (it > burn && (it - burn) %% thin == 0) {
+      ki <- ki + 1
+      keep_betabar[ki, ] <- betabar; keep_Sigma[ki, , ] <- Sigma
+      keep_cut[ki, ] <- par_to_cut(zeta, 0, W); keep_s2z[ki] <- s2z
+      keep_B[ki, , ] <- B; keep_z[ki, ] <- z
+    }
+  }
+  list(draws = list(betabar = keep_betabar, Sigma = keep_Sigma, cut = keep_cut,
+                    s2z = keep_s2z, B = keep_B, z = keep_z),
+       settings = list(P = P, W = W, N = N, persist = persist,
+                       persist_prior = persist_prior, model = dat$model, mcmc = mcmc))
+}
+hb_beta_i <- function(fit) apply(fit$draws$B, c(2, 3), mean)
+```
+
+```{r}
+#| label: config
+N <- 300; T_EST <- 12; T_HOLD <- 2; J <- 4; W <- 5
+beta_bar   <- c(a2 = 0.8, a3 = -0.5, b2 = 0.4, b3 = 1.0, price = -0.9)
+Sigma_true <- diag(c(0.6, 0.6, 0.6, 0.6, 0.3))
+cut_true   <- c(-1.0, 0.2, 1.2, 2.2)
+P <- length(beta_bar)
+KBUY <- 4                        # "purchase" = top-2-box, as elsewhere
+REPS <- 6
+ITER <- 15000
+MCMC <- list(R = ITER, burn = floor(ITER * 0.4), thin = 10)
+VAR_GUMBEL <- pi^2 / 6           # 1.6449: what the theory predicts
+
+# Persistent data: Model A latent (u*) graded against per-respondent cuts c+z.
+gen_persistent <- function(seed, zvec) {
+  des <- make_panel_design(N, T_EST + T_HOLD, J, seed = seed)
+  B <- draw_betas(N, beta_bar, Sigma_true, seed = seed + 1)
+  cutmat <- outer(zvec, cut_true, "+")
+  split_holdout(simulate_dual_hb(des, B, cutmat, model = "A", seed = seed + 2), T_HOLD)
+}
+# Transient data: Model B, fresh outside shock every task.
+gen_transient <- function(seed) {
+  des <- make_panel_design(N, T_EST + T_HOLD, J, seed = seed)
+  B <- draw_betas(N, beta_bar, Sigma_true, seed = seed + 1)
+  split_holdout(simulate_dual_hb(des, B, cut_true, model = "B", seed = seed + 2), T_HOLD)
+}
+res <- list()
+```
+
+## 2. The two are marginally identical
+
+First the claim that makes this subtle. A Gumbel drawn once per respondent and
+a Gumbel drawn once per task produce *the same* per-task answer distribution,
+because in both cases the latent $u^*_{it} - (\text{Gumbel})$ is
+$\text{Logistic}(\overline\mu_{it}, 1)$. The draws differ only in how they are
+shared across a respondent's tasks.
+
+```{r}
+#| label: marginal-equivalence
+set.seed(20)
+zc <- rgumbel(N) - EULER                           # persistent, centred
+sp_p <- gen_persistent(30000, zc)
+sp_t <- gen_transient(30000)
+
+tab <- rbind(
+  persistent = tabulate(sp_p$est$y, W) / length(sp_p$est$y),
+  transient  = tabulate(sp_t$est$y, W) / length(sp_t$est$y))
+knitr::kable(round(tab, 4), caption = "Marginal distribution of the ordinal answer")
+```
+
+Now the same two datasets, looked at as panels. For each respondent take the
+correlation of her ordinal answers across task pairs.
+
+```{r}
+#| label: dependence
+within_cor <- function(dat) {
+  Y <- matrix(dat$y, nrow = dat$N, byrow = TRUE)
+  # remove the task-level mean so design variation is not mistaken for dependence
+  Yc <- sweep(Y, 2, colMeans(Y))
+  cm <- cor(Yc); mean(cm[upper.tri(cm)])
+}
+res$dependence <- c(persistent = within_cor(sp_p$est),
+                    transient  = within_cor(sp_t$est))
+round(res$dependence, 4)
+```
+
+Indistinguishable in the margin, clearly different in the panel. **A
+cross-section cannot tell these models apart at all**; the information lives
+entirely in the repeated measurements, which is the one thing conjoint data
+always has.
+
+Note that the transient figure is not zero, and should not be. Preference
+heterogeneity already correlates a respondent's answers: someone with a large
+$\beta_i$ has a high $\overline\mu_{it}$ on all of her tasks and answers high
+throughout. The persistent shock adds dependence *on top of* that, and it is the
+increment, not the level, that identifies it.
+
+## 3. Does the sampler recover the shift?
+
+Before testing the theory's number we need to know the estimator works. Simulate
+with $z_i \sim \mathcal{N}(0, \sigma_z^2)$ at three values of $\sigma_z^2$ and
+fit the free (normal-prior) persistent model.
+
+```{r}
+#| label: recovery
+sig_grid <- c(0.0, 0.8, 1.6449)
+rec <- expand.grid(rep = seq_len(REPS), s2 = sig_grid)
+rec$s2_hat <- NA_real_; rec$lo <- NA_real_; rec$hi <- NA_real_
+for (k in seq_len(nrow(rec))) {
+  sd_k <- sqrt(rec$s2[k]); sk <- 40000 + 100 * k
+  set.seed(sk)
+  zv <- if (sd_k == 0) numeric(N) else rnorm(N, sd = sd_k)
+  sp <- gen_persistent(sk, zv)
+  f <- fit_hb(sp$est, mcmc = MCMC, persist = TRUE, seed = sk + 7, verbose = FALSE)
+  q <- quantile(f$draws$s2z, c(0.025, 0.975))
+  rec[k, c("s2_hat", "lo", "hi")] <- c(mean(f$draws$s2z), q[1], q[2])
+}
+res$recovery <- rec
+agg <- do.call(rbind, lapply(split(rec, rec$s2), function(d) data.frame(
+  s2_true = d$s2[1], s2_hat = mean(d$s2_hat),
+  mc_se = sd(d$s2_hat) / sqrt(nrow(d)),
+  excludes_gumbel = mean(d$hi < VAR_GUMBEL | d$lo > VAR_GUMBEL))))
+knitr::kable(agg, digits = 4, row.names = FALSE)
+```
+
+Two things to read here, and one trap to avoid.
+
+The estimator tracks the truth where there is something to track. A
+respondent-level shift and genuine preference heterogeneity are separable
+because they leave different fingerprints: $z_i$ moves every one of respondent
+$i$'s tasks by the same amount, while $\beta_i$ variation moves them by
+task-dependent amounts.
+
+The trap is the $\sigma_z^2 = 0$ row. It does **not** return zero, and no amount
+of data will make it. Each $z_i$ is estimated from only $T$ ordinal answers, so
+the $z_i$ carry estimation noise even when the truth is zero, and $\sigma_z^2$
+absorbs that noise as variance. The inverse-gamma posterior also places no
+density at the boundary, so an interval covering zero is unavailable even in
+principle. What the null row reports instead is this design's **detection
+floor**: the smallest respondent-level shift that $T$ tasks can resolve. Read it
+as a floor, never as an estimate of zero.
+
+So the column that carries the weight is the last one. Does the interval exclude
+the $\pi^2/6$ the theory predicts? At the null it does, decisively, and that is
+the property the test in the next section needs.
+
+## 4. The theory's number
+
+Now the test the model section needs. Generate data from the *actual* behavioral
+story — a persistent $\text{Gumbel}(0,1)$ outside shock — and estimate
+$\sigma_z^2$ freely. Theory says $\pi^2/6 = 1.645$.
+
+```{r}
+#| label: theory-test
+th <- data.frame(rep = seq_len(REPS), s2_hat = NA_real_, lo = NA_real_, hi = NA_real_)
+panels <- vector("list", REPS)
+for (r in seq_len(REPS)) {
+  sk <- 50000 + 100 * r
+  set.seed(sk)
+  zv <- rgumbel(N) - EULER
+  panels[[r]] <- gen_persistent(sk, zv)
+  f <- fit_hb(panels[[r]]$est, mcmc = MCMC, persist = TRUE, seed = sk + 7, verbose = FALSE)
+  q <- quantile(f$draws$s2z, c(0.025, 0.975))
+  th[r, 2:4] <- c(mean(f$draws$s2z), q[1], q[2])
+}
+res$theory_test <- list(tab = th, target = VAR_GUMBEL,
+                        mean = mean(th$s2_hat),
+                        se = sd(th$s2_hat) / sqrt(REPS),
+                        cover = mean(th$lo <= VAR_GUMBEL & VAR_GUMBEL <= th$hi))
+knitr::kable(data.frame(
+  target_pi2_6 = VAR_GUMBEL, mean_estimate = res$theory_test$mean,
+  mc_se = res$theory_test$se, coverage_of_target = res$theory_test$cover),
+  digits = 4, row.names = FALSE)
+```
+
+This is an overidentification test of the same kind as $\lambda = 1$ and
+$\delta = 0$: the behavioral story predicts a specific number that the data are
+free to contradict.
+
+Read the estimate against the previous section's top row, though. There, with a
+genuinely *normal* shift of variance $1.6449$, the estimator returned $1.64$. Here,
+with a genuinely *Gumbel* shift of the same variance, it returns about $1.84$. The
+gap is not sampling error; it is roughly two and a half Monte Carlo standard errors.
+The population model fits a symmetric normal to a right-skewed Gumbel, and the
+fitted variance absorbs the skew.
+
+So the test is biased against its own null: an estimate modestly above $\pi^2/6$ is
+what the *correct* model produces, not evidence against it. Treat $\pi^2/6$ as a
+lower reference point rather than a target to be matched, or impose the Gumbel
+directly (next section) and give up testing it.
+
+## 5. What ignoring it costs
+
+Fit the ordinary transient model (Model B, common cuts, no $z$) to the
+persistent data from the previous section, and compare against the persistent
+fit on the same panels.
+
+```{r}
+#| label: cost
+cmp <- matrix(NA_real_, REPS, 4, dimnames = list(NULL,
+  c("rmse_beta_transient", "rmse_beta_persistent",
+    "hit_transient", "hit_persistent")))
+hit_rate <- function(fit, sp) {
+  d <- sp$holdout$design
+  Bx <- hb_beta_i(fit)[d$resp_row, , drop = FALSE]
+  V <- matrix(rowSums(d$X * Bx), ncol = d$J, byrow = TRUE)
+  mean(max.col(V, ties.method = "first") == sp$holdout$jstar)
+}
+for (r in seq_len(REPS)) {
+  sp <- panels[[r]]; sk <- 60000 + 100 * r
+  f_tr <- fit_hb(sp$est, mcmc = MCMC, persist = FALSE, seed = sk, verbose = FALSE)
+  f_pe <- fit_hb(sp$est, mcmc = MCMC, persist = TRUE,  seed = sk + 1, verbose = FALSE)
+  cmp[r, ] <- c(sqrt(mean((hb_beta_i(f_tr) - sp$est$Bmat_true)^2)),
+                sqrt(mean((hb_beta_i(f_pe) - sp$est$Bmat_true)^2)),
+                hit_rate(f_tr, sp), hit_rate(f_pe, sp))
+}
+res$cost <- list(metrics = cmp, mean = colMeans(cmp),
+                 se = apply(cmp, 2, sd) / sqrt(REPS))
+knitr::kable(rbind(mean = res$cost$mean, mc_se = res$cost$se), digits = 4)
+```
+
+The forced-choice side is untouched, as it must be: the persistent shock enters
+only the second response, so hit rates are the same either way. Whatever
+difference appears is in the individual preference estimates, where the
+transient model has to explain a respondent-constant shift using parameters that
+are not respondent-constant.
+
+## 6. Imposing the theory instead of testing it
+
+The free version spends one parameter. The theory says we need not: fix
+$z_i \sim \text{Gumbel}(0,1)$ and the model costs nothing at all. Fit both to
+the same panels and compare what they say about the population.
+
+```{r}
+#| label: imposed
+imp <- matrix(NA_real_, REPS, 2, dimnames = list(NULL, c("rmse_free", "rmse_imposed")))
+for (r in seq_len(REPS)) {
+  sp <- panels[[r]]; sk <- 70000 + 100 * r
+  f_free <- fit_hb(sp$est, mcmc = MCMC, persist = TRUE,
+                   persist_prior = "normal", seed = sk, verbose = FALSE)
+  f_imp  <- fit_hb(sp$est, mcmc = MCMC, persist = TRUE,
+                   persist_prior = "gumbel", seed = sk + 1, verbose = FALSE)
+  imp[r, ] <- c(sqrt(mean((colMeans(f_free$draws$betabar) - beta_bar)^2)),
+                sqrt(mean((colMeans(f_imp$draws$betabar)  - beta_bar)^2)))
+}
+res$imposed <- list(metrics = imp, mean = colMeans(imp),
+                    se = apply(imp, 2, sd) / sqrt(REPS))
+knitr::kable(rbind(mean = res$imposed$mean, mc_se = res$imposed$se), digits = 4)
+```
+
+Imposing the Gumbel buys whatever the restriction is worth when it is true. The
+honest sequence for an application is to fit the free version, check
+$\sigma_z^2$ against $1.645$, and impose only if the data do not reject it.
+
+## 7. What this adds up to
+
+- The persistent and transient outside options are **marginally
+  indistinguishable**. Any argument between them is a panel argument.
+- The persistent version is **location-only cut-point heterogeneity** with the
+  location's distribution fixed by theory rather than estimated — which is why
+  it costs one scalar latent per respondent and no new parameters.
+- It is **testable**: $\sigma_z^2 = \pi^2/6$ is a prediction, not a convention.
+- It gives the respondent-specific scale use of the heterogeneous-cut extension
+  a **structural reason** rather than a descriptive one. A respondent who seems
+  to use the top of the scale freely may simply have a weak outside option.
+
+## 8. Results written
+
+```{r}
+#| label: write
+PROJ <- if (file.exists("_quarto.yml")) "." else ".."
+OUT  <- file.path(PROJ, "R", "output")
+dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
+res$config <- list(N = N, T_EST = T_EST, T_HOLD = T_HOLD, J = J, W = W,
+                   beta_bar = beta_bar, Sigma_true = Sigma_true,
+                   cut_true = cut_true, REPS = REPS, MCMC = MCMC,
+                   KBUY = KBUY, var_gumbel = VAR_GUMBEL)
+saveRDS(res, file.path(OUT, "persistent_outside.rds"))
+cat("wrote", file.path(OUT, "persistent_outside.rds"), "\n")
+```
+
+## 9. Related material
+
+- Notebook 03 establishes that the hierarchical sampler works at all; this one
+  extends it by one latent per respondent.
+- Notebook 06, section 3, studies *free* cut-point heterogeneity. The model here
+  is its restricted, theory-pinned cousin: location only, variance fixed.
+- The model section derives why the persistent and transient stories share a
+  link and differ only in the panel.
