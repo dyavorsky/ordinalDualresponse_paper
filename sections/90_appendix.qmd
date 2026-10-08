@@ -2,7 +2,7 @@
 
 ### A.1 Proof of @lem-gumbel {.unnumbered}
 
-The result is classical [@Mcfadden_1981]. We give the derivation because part (ii) carries @eq-joint, and because @sec-appendix-gev generalizes precisely this calculation to generalized extreme value errors.
+The result is classical [@Mcfadden_1981]. We give the derivation because part (ii) carries @eq-joint, and because Appendix D generalizes precisely this calculation to generalized extreme value errors.
 
 Let $u_j = V_j + \eta_j$ with $\eta_j \iid \text{Gumbel}(0,1)$ for $j \in \mathcal{J}^+$, so $u_j$ has CDF $F_j(t) = \exp\left( -e^{-(t - V_j)} \right)$ and density $f_j(t) = e^{-(t-V_j)} \exp\left( -e^{-(t-V_j)} \right)$. For any $j$ and any $u$,
 $$
