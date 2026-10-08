@@ -81,7 +81,11 @@ $$
 &= \alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}},
 \end{aligned}
 $$ {#eq-modelA}
-To see this, drop subscripts and note $F_{\text{Gumbel}(\overline{\mu},1)}(z) = \exp\left( -e^{-(z - \overline{\mu})} \right) = \exp\left( -e^{-z}S \right) = \left[ \exp\left( -e^{-z} \right) \right]^{S} = F(z)^{S}$ with $S = e^{\overline{\mu}}$. Evaluate that at $z = F^{-1}(\alpha)$, where $F(z) = \alpha$ by definition, and what is left is $\alpha^{S}$. The second-response probabilities are differences of powers of the cut points, with the exponent $S_{it} = e^{\overline{\mu}_{it}}$ summarizing the attractiveness of the task's inside goods: the more attractive the set, the more probability mass shifts toward high scale points.[^beta] The distribution's mean is $\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)$: averaged over everything the researcher cannot see, the probability of purchase is the logistic of the inclusive value. The same factor reappears in the conditional expectations of @sec-toy.
+To see this, drop subscripts and note $F_{\text{Gumbel}(\overline{\mu},1)}(z) = \exp\left( -e^{-(z - \overline{\mu})} \right) = \exp\left( -e^{-z}S \right) = \left[ \exp\left( -e^{-z} \right) \right]^{S} = F(z)^{S}$ with $S = e^{\overline{\mu}}$. Evaluate that at $z = F^{-1}(\alpha)$, where $F(z) = \alpha$ by definition, and what is left is $\alpha^{S}$. The second-response probabilities are differences of powers of the cut points, with the exponent $S_{it} = e^{\overline{\mu}_{it}}$ summarizing the attractiveness of the task's inside goods: the more attractive the set, the more probability mass shifts toward high scale points.[^beta] The distribution's mean is $\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)$: averaged over everything the researcher cannot see, the probability of purchase is the logistic of the inclusive value. Conditioning on what she reported rescales it. A consumer who answers $w$ has
+$$
+\E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
+$$ {#eq-condexp}
+the unconditional mean times a correction for the bin. Because $S_{it}$ appears here as well as in the bin boundaries, the same scale point implies different purchase probabilities in different tasks: what a label is worth depends on what was on the screen. @sec-toy makes that concrete and @sec-nesting turns it against the constant-probability heuristic.
 
 [^beta]: Equivalently, from the researcher's perspective the consumer's purchase probability is Beta distributed, $p_{it} \sim \text{Beta}\left(S_{it}, 1\right)$. By the same power property, $\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}$, which is the $\text{Beta}(S,1)$ distribution function on $[0,1]$. 
 
@@ -131,9 +135,7 @@ $$
 \; + \;
 \underbrace{\ln \left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
 $$ {#eq-loglik}
-with the sample log-likelihood $\ell = \sum_i \sum_t \ell_{it}$. The forced choice contributes the chosen good's utility measured against the inclusive value, so a task adds to the log-likelihood exactly to the extent that the chosen good stands out from the set. The ordinal report contributes the log of the $\text{Beta}(S_{it},1)$ mass falling in the bin she chose, so it adds most when the attractiveness of the set sits where her answer puts it: a report near the top of the scale pulls $\overline{\mu}_{it}$ up, one near the bottom pulls it down. The first term sees only how the goods compare with one another; the second only where they sit as a group.
-
-Two features of @eq-joint are worth marking. Both factors depend on the task only through the inclusive value $S_{it}$ and the chosen good's $V_{itj^*}$, which is what makes the single substitution of Appendix D enough to carry the whole model to correlated alternatives: replace $S_{it}$ by the generalized extreme value generator and both factors follow. And the ordinal factor is estimated on the utility scale through $c_w = F^{-1}(\alpha_w)$, which turns it into the cumulative-link difference $F(c_{y_{it}} - \overline{\mu}_{it}) - F(c_{y_{it}-1} - \overline{\mu}_{it})$ of @eq-cumlink; the two are the same quantity written in the two scales, probabilities and utilities.
+with the sample log-likelihood $\ell = \sum_i \sum_t \ell_{it}$. The forced choice contributes the chosen good's utility measured against the inclusive value, so a task adds to the log-likelihood exactly to the extent that the chosen good stands out from the set. The ordinal report contributes the log of the $\text{Beta}(S_{it},1)$ mass falling in the chosen bin, so it adds most when the attractiveness of the set sits in that bin. Specifically, a report near the top of the scale pulls $\overline{\mu}_{it}$ up, and a report near the bottom pulls it down. So in summary, the first term captures only how the goods compare with one another, while the second depends only only where they sit as a group.
 
 ### The Model in Miniature {#sec-toy}
 
@@ -155,20 +157,19 @@ The walkthrough above fixed one set of draws. Averaging over all of them, as the
 
 : Two tasks that are indistinguishable in the forced choice and nearly opposite in the ordinal report ($\beta = 1$, $\mathbf{c} = (0,2)$, $W = 3$). {#tbl-toy}
 
-The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{"likely"}$, $y_2 = \text{"unlikely"}$, follows from @eq-joint, written here on the utility scale:
+The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{"likely"}$, $y_2 = \text{"unlikely"}$, follows from @eq-joint:
 $$
-L \left( \beta, c_1, c_2 \right)
-= \underbrace{\Lambda(\beta) \Big[ 1 - F \left( c_2 - \overline{\mu}_1(\beta) \right) \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
+L \left( \beta, \alpha_1, \alpha_2 \right)
+= \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
 \times
-\underbrace{\Lambda(\beta) \, F \left( c_1 - \overline{\mu}_2(\beta) \right)}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
+\underbrace{\Lambda(\beta) \, \alpha_1^{\,S_2(\beta)}}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
 $$ {#eq-toylik}
-with $\overline{\mu}_1(\beta) = \beta + \ln \left( 1 + e^{\beta} \right)$ and $\overline{\mu}_2(\beta) = -2\beta + \ln \left( 1 + e^{\beta} \right)$. The example distills two general lessons.
+with $S_1(\beta) = e^{\beta} \left( 1 + e^{\beta} \right)$ and $S_2(\beta) = e^{-2\beta} \left( 1 + e^{\beta} \right)$. The example distills two general lessons.
 
 First, the two responses divide the labor of identification. The forced-choice factors involve only utility differences, and they identify $\beta$ from within-task attribute variation. The ordinal factors involve utility levels, locating each task's $\overline{\mu}(\beta)$ against the cut points. This is the division that @prp-ident formalizes. The forced choice identifies $\beta$, as in any multinomial logit, because the two goods in a task differ in $x$. The ordinal responses then identify the cut points, by locating each task's $\overline{\mu}(\beta)$ on the utility scale.
 
-Second, the meaning of a scale label is set-dependent. The label "unsure" is fixed for the consumer, since by construction it means $p \in [0.37, 0.87)$, but what the researcher should infer from it depends on the task: the expected purchase probability of a consumer who answers "unsure" is $0.80$ in the attractive task and $0.60$ in the unattractive one (@tbl-toy, last row).[^toy-ep]
+Second, the meaning of a scale label is set-dependent. The label "unsure" is fixed for the consumer, since by construction it means $p \in [0.37, 0.87)$, but what the researcher should infer from it depends on the task: the expected purchase probability of a consumer who answers "unsure" is $0.80$ in the attractive task and $0.60$ in the unattractive one (@tbl-toy, last row), which is @eq-condexp evaluated at the two tasks.
 
-[^toy-ep]: The conditional expectation is $\E \left[ F(u^*) \mid u^* \in [c_1, c_2) \right]$ with $u^* \sim \text{Gumbel}(\overline{\mu}, 1)$, which has the closed form $\frac{S}{S+1} \left[ e^{-(S+1)e^{-c_2}} - e^{-(S+1)e^{-c_1}} \right] \big/ \left[ e^{-S e^{-c_2}} - e^{-S e^{-c_1}} \right]$.
 
 ### Special Cases and Relation to Existing Models {#sec-nesting}
 
