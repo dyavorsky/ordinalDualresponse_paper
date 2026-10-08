@@ -575,22 +575,22 @@ Lemma~\ref{lem-gumbel}(i), so
 &= F_{\text{Gumbel}(\overline{\mu}_{it},1)} \left( F^{-1}(\alpha_w) \right) - F_{\text{Gumbel}(\overline{\mu}_{it},1)} \left( F^{-1}(\alpha_{w-1}) \right) \\
 &= \alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}},
 \end{aligned}
-}\end{equation} Plugging \(c = F^{-1}(\alpha) = -\ln(-\ln \alpha)\) into
-the Gumbel distribution function gives the second line. That choice of
-\(c\) makes \(e^{-c} = -\ln \alpha\), hence
-\(e^{-(c - \overline{\mu}_{it})} = e^{\overline{\mu}_{it}} e^{-c} = -S_{it} \ln \alpha\),
-and so
-\(F_{\text{Gumbel}(\overline{\mu}_{it},1)}(c) = \exp\left( -e^{-(c - \overline{\mu}_{it})} \right) = \exp\left( S_{it} \ln \alpha \right) = \alpha^{S_{it}}\).
-The second-response probabilities are differences of powers of the cut
-points, with the exponent \(S_{it} = e^{\overline{\mu}_{it}}\)
-summarizing the attractiveness of the task's inside goods: the more
-attractive the set, the more probability mass shifts toward high scale
-points.\footnote{Equivalently, from the researcher's perspective the
-  consumer's purchase probability is Beta distributed,
-  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\). The Gumbel family
-  is max-stable, so a shift in location is a power of the distribution
-  function, \(F_{\text{Gumbel}(\overline{\mu},1)}(z) = F(z)^{S}\) with
-  \(S = e^{\overline{\mu}}\), and therefore
+}\end{equation} The second line uses one property of the Gumbel family:
+shifting the location raises the distribution function to a power.
+Dropping subscripts,
+\(\exp\left( -e^{-(z - \overline{\mu})} \right) = \exp\left( -e^{\overline{\mu}} e^{-z} \right) = \left[ \exp\left( -e^{-z} \right) \right]^{S}\),
+so \(F_{\text{Gumbel}(\overline{\mu},1)}(z) = F(z)^{S}\) with
+\(S = e^{\overline{\mu}}\). Evaluate that at \(z = F^{-1}(\alpha)\),
+where \(F(z) = \alpha\) by definition, and what is left is
+\(\alpha^{S}\). The second-response probabilities are differences of
+powers of the cut points, with the exponent
+\(S_{it} = e^{\overline{\mu}_{it}}\) summarizing the attractiveness of
+the task's inside goods: the more attractive the set, the more
+probability mass shifts toward high scale points.\footnote{Equivalently,
+  from the researcher's perspective the consumer's purchase probability
+  is Beta distributed,
+  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\). By the same power
+  property,
   \(\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}\),
   which is the \(\text{Beta}(S,1)\) distribution function on \([0,1]\).
   Equation~\ref{eq-modelA} is that distribution function differenced
