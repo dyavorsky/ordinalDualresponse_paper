@@ -24,7 +24,7 @@ j^*_{it} = \underset{j \in \mathcal{J}^+}{\operatorname{arg max}} \ u_{itj}.
 $$ {#eq-firstresponse}
 This is a forced choice: the outside good is not among the options.
 
-2. **Second response (ordinal purchase evaluation).** She reports a value $y_{it}$ on a discrete ordinal scale $w \in \mathcal{W} = \lbrace 1, \ldots, W \rbrace$ (e.g., "very unlikely" to "very likely" on a five-point scale) that characterizes her evaluation of purchasing $j^*_{it}$, that is, of choosing it over the outside good. The binary dual-response format of @Brazell_2006 and @Diener_2006 is the special case $W=2$ of this design.
+2. **Second response (the ordinal report).** She reports a value $y_{it}$ on a discrete ordinal scale $w \in \mathcal{W} = \lbrace 1, \ldots, W \rbrace$ (e.g., "very unlikely" to "very likely" on a five-point scale) that characterizes her evaluation of purchasing $j^*_{it}$, that is, of choosing it over the outside good. The binary dual-response format of @Brazell_2006 and @Diener_2006 is the special case $W=2$ of this design.
 
 We model $\eta_{itj} \iid \text{Gumbel} \left( 0,1 \right)$, independent of $\x_{tj}$ and independent across goods, tasks, and consumers. This is the logit kernel standard in discrete choice [@Mcfadden_1981; @Train_2009], inherited by choice-based conjoint. The independence across goods is stronger than our derivation needs. Appendix D shows that @lem-gumbel holds for any generalized extreme value error structure once $S_{it}$ is replaced by the GEV generator, so the following results carry over to correlated alternatives, but for exposition we proceed with the independent errors assumption.
 
@@ -55,7 +55,7 @@ $$
 $$ {#eq-mnl}
 the multinomial logit over inside goods only. Note that the outside good does not appear: the forced choice does not depend on the consumer's uncertain evaluation of the outside good, which is the design's appeal [@Brazell_2006].
 
-### Second Response: An Ordinal Model of the Purchase Evaluation
+### Second Response: An Ordinal Model of the Purchase Report
 
 What does the consumer consult when answering "how likely are you to purchase the option you selected?" Our premise answers the question: she has not resolved $\eta_{it0}$, so what she has to report is a probability. That premise delivers a likelihood of *cumulative-link* form, depending on the choice set only through the inclusive value $\overline{\mu}_{it}$, and it determines the link. We derive that model first. We then ask what follows if she instead resolves the shock before answering, as @Hung_2025_dual assume. For a binary follow-up that assumption gives their Unified Model. Carried into an ordinal follow-up it is harder to interpret, for reasons we take up below.
 
@@ -118,12 +118,20 @@ the complementary log-log link, with $F$ the standard Gumbel distribution functi
 
 By @lem-gumbel(ii), the value of $u^*_{it}$ is independent of the identity of $j^*_{it}$; and $\eta_{it0}$ is independent of the inside-good components. The two responses in a task are therefore independent conditional on $(\x_t, \bfbeta_i)$, and the per-task likelihood contribution is simply the product of @eq-mnl and @eq-modelA:
 $$
-\ell_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
+L_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
 = \underbrace{\frac{\exp \left( V_{itj^*} \right)}{S_{it}}}_{\text{choice}}
 \; \times \;
-\underbrace{\left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal purchase evaluation}},
+\underbrace{\left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
 $$ {#eq-joint}
-with $\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_{W-1})$ and the full likelihood $L_i = \prod_{t} \ell_{it}$. This factorization is a consequence of @lem-gumbel(ii), the independence of the argmax and the maximum.
+with $\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_{W-1})$, and the respondent's likelihood $L_i = \prod_{t} L_{it}$. This factorization is a consequence of @lem-gumbel(ii), the independence of the argmax and the maximum.
+
+Taking logs is what the estimator actually works with, and it is worth writing down because $\ln S_{it} = \overline{\mu}_{it}$ collapses the first factor:
+$$
+\ell_{it} = \underbrace{V_{itj^*} - \overline{\mu}_{it}}_{\text{choice}}
+\; + \;
+\underbrace{\ln \left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
+$$ {#eq-loglik}
+with the sample log-likelihood $\ell = \sum_i \sum_t \ell_{it}$. The forced choice contributes the chosen good's utility measured against the inclusive value, so a task adds to the log-likelihood exactly to the extent that the chosen good stands out from the set. The second term is a difference of two numbers that are close together whenever a category is unlikely, and is computed from tail-stable expressions rather than literally as written (@sec-appendix-estimation).
 
 Two features of @eq-joint are worth marking. Both factors depend on the task only through the inclusive value $S_{it}$ and the chosen good's $V_{itj^*}$, which is what makes the single substitution of Appendix D enough to carry the whole model to correlated alternatives: replace $S_{it}$ by the generalized extreme value generator and both factors follow. And the ordinal factor is estimated on the utility scale through $c_w = F^{-1}(\alpha_w)$, which turns it into the cumulative-link difference $F(c_{y_{it}} - \overline{\mu}_{it}) - F(c_{y_{it}-1} - \overline{\mu}_{it})$ of @eq-cumlink; the two are the same quantity written in the two scales, probabilities and utilities.
 
@@ -261,4 +269,4 @@ and let $\bftheta_i = \left( c_{i1}, \delta_{i2}, \ldots, \delta_{i,W-1} \right)
 
 The aggregate (homogeneous-$\bfbeta$) model is estimated by maximum likelihood: the log of @eq-joint summed over consumers and tasks is smooth in $\left( \bfbeta, \mathbf{c} \right)$ after the monotonicity-preserving reparameterization of the cut points, and standard quasi-Newton methods converge quickly. Because the likelihood is a product of a choice component and an ordinal component, it can also be assembled in Apollo [@Hess_2019] from that package's standard building blocks, which we do as an independent check on our own code. Appendix E gives the details.
 
-The hierarchical model is estimated with a custom Markov chain Monte Carlo sampler, implemented in R and following the hybrid Gibbs architecture of @Rossi_2005: (1) a random-walk Metropolis step for each $\bfbeta_i$ (and $\bftheta_i$ in the heterogeneous-cut-point extension) using the individual likelihood $\prod_t \ell_{it}$; (2) a random-walk Metropolis step for the common cut-point block on the unconstrained scale; and (3) conjugate draws for the population moments $\left( \betabar, \Sigma_{\beta} \right)$. Model comparison uses the log marginal density approximated by the method of @Newton_1994, matching the practice in @Hung_2025_dual and permitting direct comparisons among our model, the binary dual-response models, and the practitioner heuristics. Complete replication code accompanies the paper. 
+The hierarchical model is estimated with a custom Markov chain Monte Carlo sampler, implemented in R and following the hybrid Gibbs architecture of @Rossi_2005: (1) a random-walk Metropolis step for each $\bfbeta_i$ (and $\bftheta_i$ in the heterogeneous-cut-point extension) using the individual likelihood $\prod_t L_{it}$; (2) a random-walk Metropolis step for the common cut-point block on the unconstrained scale; and (3) conjugate draws for the population moments $\left( \betabar, \Sigma_{\beta} \right)$. Model comparison uses the log marginal density approximated by the method of @Newton_1994, matching the practice in @Hung_2025_dual and permitting direct comparisons among our model, the binary dual-response models, and the practitioner heuristics. Complete replication code accompanies the paper. 
