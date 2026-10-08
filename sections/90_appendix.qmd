@@ -28,7 +28,7 @@ For independent waiting times of this kind, the identity of the first arrival an
 
 The same statement in utility terms is that the relative odds of being the maximizer are the same at every level of the maximum, because Gumbel upper tails decay exponentially and are therefore shift-invariant: $\Pr(u_1 > m) / \Pr(u_2 > m) = e^{V_1 - V_2}$ for every $m$.
 
-This is a property of the extreme-value family and not of random utility models in general. Under normal shocks with $V_1 > V_2$, the ratio of upper tails diverges as $m$ grows, so a high realized maximum is disproportionately likely to have come from the better alternative. The level of the maximum then carries information about which alternative attained it, the joint law of $\left( j^*, u^* \right)$ does not factor, and the counterpart of @eq-joint is unavailable. What Appendix D shows is that the factorization survives correlation among the inside goods, because the waiting times may be dependent and still arrive at rates whose ratios are constant over time; what fails outside the extreme-value family is the constancy of those ratios.
+This is a property of the extreme-value family and not of random utility models in general. Under normal errors with $V_1 > V_2$, the ratio of upper tails diverges as $m$ grows, so a high realized maximum is disproportionately likely to have come from the better alternative. The level of the maximum then carries information about which alternative attained it, the joint law of $\left( j^*, u^* \right)$ does not factor, and the counterpart of @eq-joint is unavailable. What Appendix D shows is that the factorization survives correlation among the inside goods, because the waiting times may be dependent and still arrive at rates whose ratios are constant over time; what fails outside the extreme-value family is the constancy of those ratios.
 
 ### A.2 Derivation of the information increment (@eq-fisher) {.unnumbered}
 
@@ -73,14 +73,14 @@ Because the bias is similar for models of similar dimension, Newton–Raftery *r
 
 ## Appendix D: Correlated Alternatives {#sec-appendix-gev .unnumbered}
 
-@lem-gumbel is stated for independent Gumbel shocks, and the whole of @sec-model rests on it. This appendix shows that both of its properties hold for the entire generalized extreme value (GEV) family of @Mcfadden_1981, so that correlation among the inside goods costs the framework nothing beyond a redefinition of the inclusive value.
+@lem-gumbel is stated for independent Gumbel errors, and the whole of @sec-model rests on it. This appendix shows that both of its properties hold for the entire generalized extreme value (GEV) family of @Mcfadden_1981, so that correlation among the inside goods costs the framework nothing beyond a redefinition of the inclusive value.
 
-Let the inside-good shocks have the GEV joint distribution
+Let the inside-good components have the GEV joint distribution
 $$
 \Pr \left( \eta_1 \le e_1, \ldots, \eta_J \le e_J \right)
 = \exp \left( - G \left( e^{-e_1}, \ldots, e^{-e_J} \right) \right),
 $$ {#eq-gevcdf}
-where the generator $G : \mathbb{R}^J_{+} \to \mathbb{R}_{+}$ is homogeneous of degree one, tends to infinity in each argument, and has mixed partial derivatives that alternate in sign. Independent Gumbel shocks are the special case $G(y) = \sum_j y_j$. Write $y_j = \exp(V_j)$, $G_j = \partial G / \partial y_j$, and
+where the generator $G : \mathbb{R}^J_{+} \to \mathbb{R}_{+}$ is homogeneous of degree one, tends to infinity in each argument, and has mixed partial derivatives that alternate in sign. Independent Gumbel errors are the special case $G(y) = \sum_j y_j$. Write $y_j = \exp(V_j)$, $G_j = \partial G / \partial y_j$, and
 $$
 S^{G} \coloneqq G \left( y_1, \ldots, y_J \right),
 \qquad
