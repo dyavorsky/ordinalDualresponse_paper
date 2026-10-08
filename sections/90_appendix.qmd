@@ -32,17 +32,17 @@ This is a property of the extreme-value family and not of random utility models 
 
 ### A.2 Derivation of the information increment (@eq-fisher) {.unnumbered}
 
-The second response contributes the multinomial log-likelihood $\ell = \sum_w \mathbb{1}\lbrace y = w \rbrace \ln \pi_w$ with $\pi_w = G(c_w - \overline{\mu}) - G(c_{w-1} - \overline{\mu})$. Since $\partial \overline{\mu} / \partial \bfbeta = \sum_j \Pr(j^* = j) \, \x_j = \overline{\x}$, the score with respect to $\bfbeta$ in category $w$ is $- \left[ g_w - g_{w-1} \right] / \pi_w \cdot \overline{\x}$, writing $g_w = g \left( c_w - \overline{\mu} \right)$ and $g = G'$ (with $g_0 = g_W = 0$). The information is the expected outer product of the score:
+The second response contributes the multinomial log-likelihood $\ell = \sum_w \mathbb{1}\lbrace y = w \rbrace \ln \pi_w$ with $\pi_w = F(c_w - \overline{\mu}) - F(c_{w-1} - \overline{\mu})$. Since $\partial \overline{\mu} / \partial \bfbeta = \sum_j \Pr(j^* = j) \, \x_j = \overline{\x}$, the score with respect to $\bfbeta$ in category $w$ is $- \left[ f_w - f_{w-1} \right] / \pi_w \cdot \overline{\x}$, writing $f_w = f \left( c_w - \overline{\mu} \right)$ and $f = F'$ (with $f_0 = f_W = 0$). The information is the expected outer product of the score:
 $$
-\mathcal{I}^{(2)} = \sum_{w=1}^{W} \pi_w \left( \frac{g_w - g_{w-1}}{\pi_w} \right)^2 \overline{\x} \, \overline{\x}'
-= \left[ \sum_{w=1}^{W} \frac{ \left( g_w - g_{w-1} \right)^2 }{ \pi_w } \right] \overline{\x} \, \overline{\x}'
+\mathcal{I}^{(2)} = \sum_{w=1}^{W} \pi_w \left( \frac{f_w - f_{w-1}}{\pi_w} \right)^2 \overline{\x} \, \overline{\x}'
+= \left[ \sum_{w=1}^{W} \frac{ \left( f_w - f_{w-1} \right)^2 }{ \pi_w } \right] \overline{\x} \, \overline{\x}'
 = \omega \left( \overline{\mu}; \mathbf{c} \right) \overline{\x} \, \overline{\x}'. \qquad \square
 $$
-The joint information over $\left( \bfbeta, \mathbf{c} \right)$, including the cut-point blocks used by the estimation code, follows from the same score with $\partial \pi_w / \partial c_m = g_w \mathbb{1}\lbrace m = w \rbrace - g_{w-1} \mathbb{1}\lbrace m = w-1 \rbrace$.
+The joint information over $\left( \bfbeta, \mathbf{c} \right)$, including the cut-point blocks used by the estimation code, follows from the same score with $\partial \pi_w / \partial c_m = f_w \mathbb{1}\lbrace m = w \rbrace - f_{w-1} \mathbb{1}\lbrace m = w-1 \rbrace$.
 
 ### A.3 Monotonicity of $\omega$ under refinement {.unnumbered}
 
-Let $\mathcal{C}'$ be a coarsening of the partition $\mathcal{C}$ obtained by merging adjacent categories $w$ and $w+1$. The merged cell contributes $\left( g_{w+1} - g_{w-1} \right)^2 / \left( \pi_w + \pi_{w+1} \right)$ to $\omega'$, while the two original cells contribute $\left( g_w - g_{w-1} \right)^2 / \pi_w + \left( g_{w+1} - g_w \right)^2 / \pi_{w+1}$ to $\omega$. Writing $a = g_w - g_{w-1}$, $b = g_{w+1} - g_w$, $u = \pi_w$, $v = \pi_{w+1}$, the Cauchy–Schwarz inequality in Engel form gives
+Let $\mathcal{C}'$ be a coarsening of the partition $\mathcal{C}$ obtained by merging adjacent categories $w$ and $w+1$. The merged cell contributes $\left( f_{w+1} - f_{w-1} \right)^2 / \left( \pi_w + \pi_{w+1} \right)$ to $\omega'$, while the two original cells contribute $\left( f_w - f_{w-1} \right)^2 / \pi_w + \left( f_{w+1} - f_w \right)^2 / \pi_{w+1}$ to $\omega$. Writing $a = f_w - f_{w-1}$, $b = f_{w+1} - f_w$, $u = \pi_w$, $v = \pi_{w+1}$, the Cauchy–Schwarz inequality in Engel form gives
 $$
 \frac{(a + b)^2}{u + v} \;\le\; \frac{a^2}{u} + \frac{b^2}{v},
 $$
