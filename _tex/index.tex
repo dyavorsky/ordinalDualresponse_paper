@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{lemma}{Lemma}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -643,14 +643,12 @@ Equation~\ref{eq-reportruleA} sit on the utility scale alongside those
 of Equation~\ref{eq-reportruleB}. The second response is then a
 cumulative link in the inclusive value,
 \begin{equation}\protect\phantomsection\label{eq-cumlink}{
-\Pr \left( y_{it} \le w \right) = G \left( c_w - \overline{\mu}_{it} \right),
-\qquad
-G = F \ \left(\text{standard Gumbel}\right),
-}\end{equation} the complementary log-log link. Replacing \(G\) with the
+\Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right),
+}\end{equation} the complementary log-log link, with \(F\) the standard
+Gumbel distribution function throughout. Replacing \(F\) with the
 logistic \(\Lambda\) gives Equation~\ref{eq-modelB}, which we invoke
 only at \(W=2\), where it is the incumbent binary model
-(Section~\ref{sec-nesting}). We write the derivations in terms of a
-general \(G\) because they do not depend on its form.
+(Section~\ref{sec-nesting}).
 
 \subsection{Joint Likelihood}\label{joint-likelihood}
 
@@ -659,16 +657,29 @@ of the identity of \(j^*_{it}\); and \(\eta_{it0}\) is independent of
 the inside-good components. The two responses in a task are therefore
 independent conditional on \((\x_t, \bfbeta_i)\), and the per-task
 likelihood contribution is simply the product of Equation~\ref{eq-mnl}
-and Equation~\ref{eq-cumlink}:
+and Equation~\ref{eq-modelA}:
 \begin{equation}\protect\phantomsection\label{eq-joint}{
-\ell_{it} \left( \bfbeta_i, \mathbf{c} \right)
-= \underbrace{\frac{\exp \left( V_{itj^*} \right)}{S_{it}}}_{\text{choice (MNL)}}
+\ell_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
+= \underbrace{\frac{\exp \left( V_{itj^*} \right)}{S_{it}}}_{\text{choice}}
 \; \times \;
-\underbrace{\Big[ G \left( c_{y_{it}} - \overline{\mu}_{it} \right) - G \left( c_{y_{it}-1} - \overline{\mu}_{it} \right) \Big]}_{\text{ordinal purchase evaluation}},
-}\end{equation} with \(\mathbf{c} = (c_1, \ldots, c_{W-1})\) and the
-full likelihood \(L_i = \prod_{t} \ell_{it}\). This factorization is a
+\underbrace{\left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal purchase evaluation}},
+}\end{equation} with
+\(\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_{W-1})\) and the full
+likelihood \(L_i = \prod_{t} \ell_{it}\). This factorization is a
 consequence of Lemma~\ref{lem-gumbel}(ii), the independence of the
 argmax and the maximum.
+
+Two features of Equation~\ref{eq-joint} are worth marking. Both factors
+depend on the task only through the inclusive value \(S_{it}\) and the
+chosen good's \(V_{itj^*}\), which is what makes the single substitution
+of Appendix D enough to carry the whole model to correlated
+alternatives: replace \(S_{it}\) by the generalized extreme value
+generator and both factors follow. And the ordinal factor is estimated
+on the utility scale through \(c_w = F^{-1}(\alpha_w)\), which turns it
+into the cumulative-link difference
+\(F(c_{y_{it}} - \overline{\mu}_{it}) - F(c_{y_{it}-1} - \overline{\mu}_{it})\)
+of Equation~\ref{eq-cumlink}; the two are the same quantity written in
+the two scales, probabilities and utilities.
 
 \subsection{The Model in Miniature}\label{sec-toy}
 
@@ -758,13 +769,13 @@ Attribute values \(x\) & \((2,\ 1)\) & \((-1,\ -2)\) \\
 
 The joint likelihood of the observed data, in which each consumer chose
 her better good and \(y_1 = \text{"likely"}\),
-\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint}, and
-is the same expression under either link:
+\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint},
+written here on the utility scale:
 \begin{equation}\protect\phantomsection\label{eq-toylik}{
 L \left( \beta, c_1, c_2 \right)
-= \underbrace{\Lambda(\beta) \Big[ 1 - G \left( c_2 - \overline{\mu}_1(\beta) \right) \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
+= \underbrace{\Lambda(\beta) \Big[ 1 - F \left( c_2 - \overline{\mu}_1(\beta) \right) \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
 \times
-\underbrace{\Lambda(\beta) \, G \left( c_1 - \overline{\mu}_2(\beta) \right)}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
+\underbrace{\Lambda(\beta) \, F \left( c_1 - \overline{\mu}_2(\beta) \right)}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
 }\end{equation} with
 \(\overline{\mu}_1(\beta) = \beta + \ln \left( 1 + e^{\beta} \right)\)
 and
@@ -907,9 +918,8 @@ for all \(j,k,t\); hence
 \(\x_{tj}' \left( \bfbeta - \bfbeta' \right) = a_t\), a constant within
 each task. Marginalizing over \(j\) equates the cumulative ordinal
 probabilities:
-\(G \left( c_w - \overline{\mu}_t(\bfbeta) \right) = G \left( c'_w - \overline{\mu}_t(\bfbeta') \right)\)
-for all \(w,t\). Since \(G\) is strictly increasing (for both links in
-Equation~\ref{eq-cumlink}),
+\(F \left( c_w - \overline{\mu}_t(\bfbeta) \right) = F \left( c'_w - \overline{\mu}_t(\bfbeta') \right)\)
+for all \(w,t\). Since \(F\) is strictly increasing,
 \(c_w - c'_w = \overline{\mu}_t(\bfbeta) - \overline{\mu}_t(\bfbeta')\)
 for all \(w,t\); the left side is free of \(t\) and the right side free
 of \(w\), so both equal a constant \(\delta\). Direct computation gives
@@ -923,7 +933,7 @@ satisfies \(\x_{tj}'v = \delta\) everywhere, then
 \(\theta' = \left( \bfbeta + v, \mathbf{c} + \delta \iota \right)\)
 shifts every \(V_{tj}\) and every cut point by \(\delta\), leaving the
 MNL probabilities (a within-task constant drops out) and the ordinal
-probabilities (\(G(c_w + \delta - (\overline{\mu}_t + \delta))\))
+probabilities (\(F(c_w + \delta - (\overline{\mu}_t + \delta))\))
 unchanged, so \(\theta' \ne \theta\) is observationally equivalent to
 \(\theta\). \(\square\)
 \end{proof}
@@ -1057,7 +1067,7 @@ operating characteristics (Section~\ref{sec-simstudy}).
 on the inclusive value in the second stage at exactly one, because the
 same utility draw generates both responses, so the natural one-parameter
 enlargement \begin{equation}\protect\phantomsection\label{eq-lambda}{
-\Pr \left( y_{it} \le w \right) = G \left( c_w - \lambda \, \overline{\mu}_{it} \right)
+\Pr \left( y_{it} \le w \right) = F \left( c_w - \lambda \, \overline{\mu}_{it} \right)
 }\end{equation} nests the model at \(\lambda = 1\). A free \(\lambda\)
 is identified by how the ordinal response distribution shifts as task
 attractiveness varies (Section~\ref{sec-identification}), and departures
@@ -1073,7 +1083,7 @@ response depends on the choice set only through \(\overline{\mu}_{it}\)
 (Lemma~\ref{lem-gumbel}), whereas the DR-2Max tradition conditions on
 the chosen alternative's utility. The enlargement
 \begin{equation}\protect\phantomsection\label{eq-delta}{
-\Pr \left( y_{it} \le w \right) = G \left( c_w - \left[ \overline{\mu}_{it} + \delta \left( V_{itj^*} - \overline{\mu}_{it} \right) \right] \right)
+\Pr \left( y_{it} \le w \right) = F \left( c_w - \left[ \overline{\mu}_{it} + \delta \left( V_{itj^*} - \overline{\mu}_{it} \right) \right] \right)
 }\end{equation} spans the two: \(\delta = 0\) is our model and
 \(\delta = 1\) puts the full weight on the chosen option's deterministic
 utility, the DR-2Max predictor. Both points are testable against the
@@ -1097,13 +1107,13 @@ ordinal second responses.
 The per-task Fisher information about \(\bfbeta\) decomposes into the
 familiar MNL term (Huber and Zwerina 1996) plus a second-response
 increment. Writing
-\(\pi_w = G(c_w - \overline{\mu}) - G(c_{w-1} - \overline{\mu})\) and
-\(g = G'\), the second response contributes
+\(\pi_w = F(c_w - \overline{\mu}) - F(c_{w-1} - \overline{\mu})\) and
+\(f = F'\), the second response contributes
 \begin{equation}\protect\phantomsection\label{eq-fisher}{
 \mathcal{I}^{(2)}_{it}
 = \omega \left( \overline{\mu}_{it}; \mathbf{c} \right) \, \overline{\x}_{it} \, \overline{\x}_{it}',
 \qquad
-\omega = \sum_{w=1}^{W} \frac{ \left[ g \left( c_w - \overline{\mu} \right) - g \left( c_{w-1} - \overline{\mu} \right) \right]^2 }{ \pi_w },
+\omega = \sum_{w=1}^{W} \frac{ \left[ f \left( c_w - \overline{\mu} \right) - f \left( c_{w-1} - \overline{\mu} \right) \right]^2 }{ \pi_w },
 }\end{equation} where
 \(\overline{\x}_{it} = \sum_{j \in \mathcal{J}^+} \Pr\left(j^*_{it}=j\right) \x_{tj}\)
 is the choice-probability-weighted average attribute vector (the
@@ -1876,20 +1886,20 @@ increment (Equation~\ref{eq-fisher})}
 
 The second response contributes the multinomial log-likelihood
 \(\ell = \sum_w \mathbb{1}\lbrace y = w \rbrace \ln \pi_w\) with
-\(\pi_w = G(c_w - \overline{\mu}) - G(c_{w-1} - \overline{\mu})\). Since
+\(\pi_w = F(c_w - \overline{\mu}) - F(c_{w-1} - \overline{\mu})\). Since
 \(\partial \overline{\mu} / \partial \bfbeta = \sum_j \Pr(j^* = j) \, \x_j = \overline{\x}\),
 the score with respect to \(\bfbeta\) in category \(w\) is
-\(- \left[ g_w - g_{w-1} \right] / \pi_w \cdot \overline{\x}\), writing
-\(g_w = g \left( c_w - \overline{\mu} \right)\) and \(g = G'\) (with
-\(g_0 = g_W = 0\)). The information is the expected outer product of the
+\(- \left[ f_w - f_{w-1} \right] / \pi_w \cdot \overline{\x}\), writing
+\(f_w = f \left( c_w - \overline{\mu} \right)\) and \(f = F'\) (with
+\(f_0 = f_W = 0\)). The information is the expected outer product of the
 score: \[
-\mathcal{I}^{(2)} = \sum_{w=1}^{W} \pi_w \left( \frac{g_w - g_{w-1}}{\pi_w} \right)^2 \overline{\x} \, \overline{\x}'
-= \left[ \sum_{w=1}^{W} \frac{ \left( g_w - g_{w-1} \right)^2 }{ \pi_w } \right] \overline{\x} \, \overline{\x}'
+\mathcal{I}^{(2)} = \sum_{w=1}^{W} \pi_w \left( \frac{f_w - f_{w-1}}{\pi_w} \right)^2 \overline{\x} \, \overline{\x}'
+= \left[ \sum_{w=1}^{W} \frac{ \left( f_w - f_{w-1} \right)^2 }{ \pi_w } \right] \overline{\x} \, \overline{\x}'
 = \omega \left( \overline{\mu}; \mathbf{c} \right) \overline{\x} \, \overline{\x}'. \qquad \square
 \] The joint information over \(\left( \bfbeta, \mathbf{c} \right)\),
 including the cut-point blocks used by the estimation code, follows from
 the same score with
-\(\partial \pi_w / \partial c_m = g_w \mathbb{1}\lbrace m = w \rbrace - g_{w-1} \mathbb{1}\lbrace m = w-1 \rbrace\).
+\(\partial \pi_w / \partial c_m = f_w \mathbb{1}\lbrace m = w \rbrace - f_{w-1} \mathbb{1}\lbrace m = w-1 \rbrace\).
 
 \subsection*{\texorpdfstring{A.3 Monotonicity of \(\omega\) under
 refinement}{A.3 Monotonicity of \textbackslash omega under refinement}}\label{a.3-monotonicity-of-omega-under-refinement}
@@ -1899,10 +1909,10 @@ refinement}
 Let \(\mathcal{C}'\) be a coarsening of the partition \(\mathcal{C}\)
 obtained by merging adjacent categories \(w\) and \(w+1\). The merged
 cell contributes
-\(\left( g_{w+1} - g_{w-1} \right)^2 / \left( \pi_w + \pi_{w+1} \right)\)
+\(\left( f_{w+1} - f_{w-1} \right)^2 / \left( \pi_w + \pi_{w+1} \right)\)
 to \(\omega'\), while the two original cells contribute
-\(\left( g_w - g_{w-1} \right)^2 / \pi_w + \left( g_{w+1} - g_w \right)^2 / \pi_{w+1}\)
-to \(\omega\). Writing \(a = g_w - g_{w-1}\), \(b = g_{w+1} - g_w\),
+\(\left( f_w - f_{w-1} \right)^2 / \pi_w + \left( f_{w+1} - f_w \right)^2 / \pi_{w+1}\)
+to \(\omega\). Writing \(a = f_w - f_{w-1}\), \(b = f_{w+1} - f_w\),
 \(u = \pi_w\), \(v = \pi_{w+1}\), the Cauchy--Schwarz inequality in
 Engel form gives \[
 \frac{(a + b)^2}{u + v} \;\le\; \frac{a^2}{u} + \frac{b^2}{v},
