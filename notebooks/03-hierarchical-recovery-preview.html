@@ -247,6 +247,7 @@
   \newcommand{\betabar}{\bar{\bfbeta}}
   \newcommand{\bftheta}{\boldsymbol{\theta}}
   \newcommand{\iid}{\stackrel{iid}{\sim}}
+  \newcommand{\E}{\operatorname{E}}
   \newcommand{\coloneqq}{\mathrel{:=}}
 \]</span></p>
 <section id="what-this-notebook-does" class="level2">
@@ -303,7 +304,7 @@
 <details class="code-fold">
 <summary>Designs, the behavioral panel simulator, and the sampler</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- designs and shocks (R/lib/dgp.R) --------------------------------------</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- designs and errors (R/lib/dgp.R) --------------------------------------</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>rgumbel <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="sc">-</span><span class="fu">log</span>(<span class="sc">-</span><span class="fu">log</span>(<span class="fu">runif</span>(n)))</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>make_design <span class="ot">&lt;-</span> <span class="cf">function</span>(n_tasks, J, seed, <span class="at">intercept =</span> <span class="cn">FALSE</span>) {</span>
@@ -635,7 +636,7 @@ category shares: 0.141 0.166 0.181 0.192 0.32
 |c3      |     1.059|   0.079|   1.2| -1.792|
 |c4      |     2.082|   0.079|   2.2| -1.495|
 posterior mean diag(Sigma): 0.705 0.669 0.695 0.805 0.357 | truth: 0.6 0.6 0.6 0.6 0.3 
-acceptance: phi 0.23, cut block 0.28 | runtime 0.9 min
+acceptance: phi 0.23, cut block 0.28 | runtime 0.7 min
 individual beta_i posterior-mean RMSE: 0.527 (sd of true beta_i: 0.735)
 
 === Model A ===
@@ -654,7 +655,7 @@ category shares: 0.058 0.169 0.226 0.214 0.332
 |c3      |     1.208|   0.062|   1.2|  0.133|
 |c4      |     2.167|   0.065|   2.2| -0.517|
 posterior mean diag(Sigma): 0.677 0.523 0.82 0.813 0.403 | truth: 0.6 0.6 0.6 0.6 0.3 
-acceptance: phi 0.23, cut block 0.27 | runtime 0.8 min
+acceptance: phi 0.23, cut block 0.27 | runtime 0.7 min
 individual beta_i posterior-mean RMSE: 0.498 (sd of true beta_i: 0.735)</code></pre>
 </div>
 </div></div>

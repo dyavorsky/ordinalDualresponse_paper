@@ -247,18 +247,19 @@
   \newcommand{\betabar}{\bar{\bfbeta}}
   \newcommand{\bftheta}{\boldsymbol{\theta}}
   \newcommand{\iid}{\stackrel{iid}{\sim}}
+  \newcommand{\E}{\operatorname{E}}
   \newcommand{\coloneqq}{\mathrel{:=}}
 \]</span></p>
 <section id="what-this-notebook-does" class="level2">
 <h2 class="anchored" data-anchor-id="what-this-notebook-does">What this notebook does</h2>
-<p>Notebook 01 worked one configuration of Model A end to end. This one asks whether that was luck.</p>
+<p>Notebook 01 worked one configuration of the model end to end. This one asks whether that was luck.</p>
 <p>Three questions, in increasing order of what they would catch:</p>
 <ol type="1">
 <li><strong>Does recovery hold across configurations and both links?</strong> One cell showing recovery is an anecdote; six is a pattern.</li>
 <li><strong>Is the estimator unbiased, and are its standard errors honest?</strong> Recovery on a single dataset says nothing about repeated sampling. Forty independent datasets per link do.</li>
 <li><strong>Is the residual bias the ordinary finite-sample kind?</strong> One parameter comes in near the conventional threshold. Ordinary maximum-likelihood bias shrinks like <span class="math inline">\(O(1/n)\)</span>; a structural problem does not.</li>
 </ol>
-<p>The machinery below is the general form of what notebook 01 built: it carries both links rather than Model A alone, and it is defined once here rather than twice.</p>
+<p>The machinery below is the general form of what notebook 01 built: it carries both links rather than one link alone, and it is defined once here rather than twice.</p>
 <p>This notebook is the source of <code>aggregate_recovery.rds</code>, <code>replication_study.rds</code> and <code>bias_scaling_check.rds</code>.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
@@ -267,7 +268,7 @@
 </section>
 <section id="the-machinery" class="level2">
 <h2 class="anchored" data-anchor-id="the-machinery">1. The machinery</h2>
-<p>The general form of what notebook 01 built. Two differences: these carry both links rather than Model A alone, and they are defined once rather than twice.</p>
+<p>The general form of what notebook 01 built. Two differences: these carry both links rather than one link alone, and they are defined once rather than twice.</p>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Designs, the scale maps, and the cut-point parameterization</summary>
@@ -325,11 +326,11 @@
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div></div>
 <p>The <code>set3_stress</code> configuration is the demanding one. Its <span class="math inline">\(\alpha_1 = 0.02\)</span> puts the bottom category at two percent of the probability scale, so only about one task in fifty lands there and the corresponding cut point has to be pinned down from little data.</p>
-<p>Model B needs the general machinery: a logistic link rather than a Gumbel one. The only thing that changes is the interval probability.</p>
+<p>The logistic link needs the general machinery: a logistic link rather than a Gumbel one. The only thing that changes is the interval probability.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Interval probability G(hi) - G(lo), tail-stable, for either link.</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Model A: G = standard Gumbel CDF   (she reports the probability she holds)</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Model B: G = standard logistic CDF (she resolves, then grades)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Gumbel link:   G = standard Gumbel CDF   (she reports the probability she holds)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Logistic link: G = standard logistic CDF (she resolves, then grades)</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>ord_prob_z <span class="ot">&lt;-</span> <span class="cf">function</span>(lo, hi, model) {</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (model <span class="sc">==</span> <span class="st">"B"</span>) {</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plogis</span>(hi) <span class="sc">*</span> <span class="fu">plogis</span>(<span class="sc">-</span>lo) <span class="sc">*</span> (<span class="sc">-</span><span class="fu">expm1</span>(lo <span class="sc">-</span> hi))</span>
@@ -373,7 +374,7 @@
 <span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>  }, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
 <span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div></div>
-<p>The simulator likewise generalizes. Model B differs in one line: she resolves her uncertainty by drawing the outside good, and grades the comparison <span class="math inline">\(u^* - \eta_0\)</span> rather than reporting <span class="math inline">\(F(u^*)\)</span>.</p>
+<p>The simulator likewise generalizes. The logistic link differs in one line: she resolves her uncertainty by drawing the outside good, and grades the comparison <span class="math inline">\(u^* - \eta_0\)</span> rather than reporting <span class="math inline">\(F(u^*)\)</span>.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>simulate_dual <span class="ot">&lt;-</span> <span class="cf">function</span>(design, beta, cut, <span class="at">model =</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"B"</span>), seed) {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  model <span class="ot">&lt;-</span> <span class="fu">match.arg</span>(model)</span>

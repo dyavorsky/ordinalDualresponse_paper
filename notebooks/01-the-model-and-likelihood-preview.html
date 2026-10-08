@@ -183,7 +183,7 @@
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
       <h1 class="title">The Model and the Likelihood</h1>
-            <p class="subtitle lead">Model A, worked end to end on a single configuration</p>
+            <p class="subtitle lead">The model, worked end to end on a single configuration</p>
           </div>
 
     
@@ -254,12 +254,13 @@
   \newcommand{\betabar}{\bar{\bfbeta}}
   \newcommand{\bftheta}{\boldsymbol{\theta}}
   \newcommand{\iid}{\stackrel{iid}{\sim}}
+  \newcommand{\E}{\operatorname{E}}
   \newcommand{\coloneqq}{\mathrel{:=}}
 \]</span></p>
 <section id="what-this-notebook-does" class="level2">
 <h2 class="anchored" data-anchor-id="what-this-notebook-does">What this notebook does</h2>
-<p>This notebook is the walkthrough. It takes one parameter configuration of Model A and follows it the whole way: draw a design, simulate the behavioral process, write out the joint likelihood, maximize it, and check what comes back.</p>
-<p>Everything is self-contained, and the code is deliberately the simplest that will work. It handles Model A only and one configuration only, so nothing is generalized before it has been shown once. Notebook 02 takes the same machinery, generalizes it to both links, and runs it across configurations and repeated samples.</p>
+<p>This notebook is the walkthrough. It takes one parameter configuration of the model and follows it the whole way: draw a design, simulate the behavioral process, write out the joint likelihood, maximize it, and check what comes back.</p>
+<p>Everything is self-contained, and the code is deliberately the simplest that will work. It handles one link only and one configuration only, so nothing is generalized before it has been shown once. Notebook 02 takes the same machinery, generalizes it to both links, and runs it across configurations and repeated samples.</p>
 <p>The functions are copies of <code>R/lib/dgp.R</code> and <code>R/lib/likelihood.R</code>, unrolled and commented so the mechanics are visible without opening the archive.</p>
 <p>A word on why the data are simulated behaviorally rather than from the closed form. If we drew responses from <code>alpha_w^S - alpha_{w-1}^S</code> and then fit <code>alpha_w^S - alpha_{w-1}^S</code>, recovery would confirm only that <code>optim</code> works. By drawing utilities, taking an argmax, and applying the reporting rule, recovery tests the derivation itself: the claim that the maximum of Gumbel utilities is Gumbel with location equal to the log-sum inclusive value, and that it is independent of which alternative attained it.</p>
 <p>This notebook writes no results files. Nothing in the article depends on it, so it can be edited freely.</p>
@@ -276,7 +277,7 @@ u_j = x_j'\beta + \varepsilon_j, \qquad \varepsilon_j \sim \text{Gumbel}(0, 1) \
 p = \Pr(\eta_0 &lt; u^* \mid u^*) = F(u^*), \qquad u^* = \max_j u_j,
 \]</span></p>
 <p>where <span class="math inline">\(F(z) = \exp(-e^{-z})\)</span> is the standard Gumbel CDF.</p>
-<p><strong>Model A</strong> says she reports the interval containing that probability. Given cut points <span class="math inline">\(0 = \alpha_0 &lt; \alpha_1 &lt; \cdots &lt; \alpha_{W-1} &lt; \alpha_W = 1\)</span> on the probability scale,</p>
+<p><strong>The model</strong> says she reports the interval containing that probability. Given cut points <span class="math inline">\(0 = \alpha_0 &lt; \alpha_1 &lt; \cdots &lt; \alpha_{W-1} &lt; \alpha_W = 1\)</span> on the probability scale,</p>
 <p><span class="math display">\[
 y = w \iff p \in [\alpha_{w-1}, \alpha_w).
 \]</span></p>
@@ -330,7 +331,7 @@ y = w \iff p \in [\alpha_{w-1}, \alpha_w).
 </section>
 <section id="true-parameters" class="level2">
 <h2 class="anchored" data-anchor-id="true-parameters">3. True parameters</h2>
-<p>We set the scale labels on the probability scale to make Model A interpretable: <span class="math inline">\(\alpha_1 = 0.10\)</span> says that answering “1” means a purchase probability below ten percent.</p>
+<p>We set the scale labels on the probability scale to make the model interpretable: <span class="math inline">\(\alpha_1 = 0.10\)</span> says that answering “1” means a purchase probability below ten percent.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>beta_true  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">a2 =</span> <span class="fl">0.8</span>, <span class="at">a3 =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">b2 =</span> <span class="fl">0.4</span>, <span class="at">b3 =</span> <span class="fl">1.0</span>, <span class="at">price =</span> <span class="sc">-</span><span class="fl">0.9</span>)</span>
@@ -377,7 +378,7 @@ cut   -0.8340324 -0.1856268 0.671727 1.816961</code></pre>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (code operates as a matrix subset with a two-col matrix of positions)</span></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  ustar <span class="ot">&lt;-</span> u[<span class="fu">cbind</span>(<span class="fu">seq_len</span>(n), jstar)]</span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Model A: she reports the interval holding p = F(ustar). Binning p against</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># She reports the interval holding p = F(ustar). Binning p against</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># alpha is the same as binning ustar against cut, since F is increasing.</span></span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">findInterval</span>(ustar, cut) <span class="sc">+</span> <span class="dv">1</span>L</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>

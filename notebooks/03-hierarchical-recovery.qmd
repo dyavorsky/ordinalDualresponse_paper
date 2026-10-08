@@ -96,7 +96,7 @@ uninteresting: the sampler is the object under test.
 #| code-fold: true
 #| code-summary: "Designs, the behavioral panel simulator, and the sampler"
 
-# ---- designs and shocks (R/lib/dgp.R) --------------------------------------
+# ---- designs and errors (R/lib/dgp.R) --------------------------------------
 rgumbel <- function(n) -log(-log(runif(n)))
 
 make_design <- function(n_tasks, J, seed, intercept = FALSE) {

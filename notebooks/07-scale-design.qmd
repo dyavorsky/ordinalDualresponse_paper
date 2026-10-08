@@ -28,8 +28,8 @@ three concrete decisions a researcher has to make before fielding a study.
 2. **Where do the cut points fall?** Scale size is only half the problem. The
    labels a respondent sees determine where the thresholds land, and placement
    turns out to matter about as much as count, at least for one of the two links.
-3. **What must the design vary?** Separately from the scale, telling Model A from
-   Model B requires the tasks to vary in attractiveness. This is a property of
+3. **What must the design vary?** Separately from the scale, identifying the link
+   requires the tasks to vary in attractiveness. This is a property of
    the design, not of the sample size, and the distinction has real consequences:
    a study can collect unlimited data and still learn nothing about the link.
 
@@ -194,11 +194,11 @@ knitr::kable(
 #| fig-cap: "Share of the continuous-report information captured by a W-point second response, cut points at equal expected shares."
 suppressMessages(library(ggplot2))
 tab_w$regime <- factor(tab_w$regime, levels = names(REGIMES))
-g1 <- ggplot(tab_w, aes(W, frac, colour = regime, linetype = model)) +
+g1 <- ggplot(subset(tab_w, model == "A"), aes(W, frac, colour = regime)) +
   geom_line() + geom_point(size = 1.8) +
   scale_x_continuous(breaks = WGRID) +
   labs(x = "scale points W", y = "share of continuous-report information",
-       colour = "task regime", linetype = "link",
+       colour = "task regime",
        title = "Second-stage information by scale size",
        subtitle = "cut points at equal expected shares") +
   theme_minimal(base_size = 11)
@@ -290,7 +290,7 @@ ggplot(om_tab, aes(placement, omega, fill = model)) +
 
 Now a different question. Scale design controls how much information the second
 response carries *about the parameters*. It does not control whether the data
-can tell Model A from Model B. That depends on how much the tasks vary in
+can identify the link. That depends on how much the tasks vary in
 attractiveness.
 
 The reason is the identification argument in the model section. At a single value

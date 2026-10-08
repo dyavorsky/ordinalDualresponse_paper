@@ -248,6 +248,7 @@
   \newcommand{\betabar}{\bar{\bfbeta}}
   \newcommand{\bftheta}{\boldsymbol{\theta}}
   \newcommand{\iid}{\stackrel{iid}{\sim}}
+  \newcommand{\E}{\operatorname{E}}
   \newcommand{\coloneqq}{\mathrel{:=}}
 \]</span></p>
 <section id="what-this-notebook-does" class="level2">
@@ -256,7 +257,7 @@
 <ol type="1">
 <li><strong>How many scale points?</strong> A binary follow-up is the least informative member of the family and a continuous report is the limit. Where between them does a five- or seven-point scale sit?</li>
 <li><strong>Where do the cut points fall?</strong> Scale size is only half the problem. The labels a respondent sees determine where the thresholds land, and placement turns out to matter about as much as count, at least for one of the two links.</li>
-<li><strong>What must the design vary?</strong> Separately from the scale, telling Model A from Model B requires the tasks to vary in attractiveness. This is a property of the design, not of the sample size, and the distinction has real consequences: a study can collect unlimited data and still learn nothing about the link.</li>
+<li><strong>What must the design vary?</strong> Separately from the scale, identifying the link requires the tasks to vary in attractiveness. This is a property of the design, not of the sample size, and the distinction has real consequences: a study can collect unlimited data and still learn nothing about the link.</li>
 </ol>
 <p>The third result is the sharpest, and it is a negative one. It is also the cleanest empirical demonstration of the identification argument in the model section, since it shows exactly what is lost when the identifying variation is removed.</p>
 <p>This notebook is the source of <code>link_discrimination.rds</code>, <code>link_discrimination_squashed.rds</code>, <code>design_guidance.rds</code>, and the figure the article displays.</p>
@@ -499,11 +500,11 @@
 <div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div id="cell-fig-infoW" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(ggplot2))</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>tab_w<span class="sc">$</span>regime <span class="ot">&lt;-</span> <span class="fu">factor</span>(tab_w<span class="sc">$</span>regime, <span class="at">levels =</span> <span class="fu">names</span>(REGIMES))</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>g1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tab_w, <span class="fu">aes</span>(W, frac, <span class="at">colour =</span> regime, <span class="at">linetype =</span> model)) <span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>g1 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="fu">subset</span>(tab_w, model <span class="sc">==</span> <span class="st">"A"</span>), <span class="fu">aes</span>(W, frac, <span class="at">colour =</span> regime)) <span class="sc">+</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">1.8</span>) <span class="sc">+</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> WGRID) <span class="sc">+</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"scale points W"</span>, <span class="at">y =</span> <span class="st">"share of continuous-report information"</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">colour =</span> <span class="st">"task regime"</span>, <span class="at">linetype =</span> <span class="st">"link"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">colour =</span> <span class="st">"task regime"</span>,</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Second-stage information by scale size"</span>,</span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"cut points at equal expected shares"</span>) <span class="sc">+</span></span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>)</span>
@@ -625,7 +626,7 @@ Cut placement and the cost of conventional labels at W = 5.
 </section>
 <section id="what-the-design-must-vary" class="level2">
 <h2 class="anchored" data-anchor-id="what-the-design-must-vary">4. What the design must vary</h2>
-<p>Now a different question. Scale design controls how much information the second response carries <em>about the parameters</em>. It does not control whether the data can tell Model A from Model B. That depends on how much the tasks vary in attractiveness.</p>
+<p>Now a different question. Scale design controls how much information the second response carries <em>about the parameters</em>. It does not control whether the data can identify the link. That depends on how much the tasks vary in attractiveness.</p>
 <p>The reason is the identification argument in the model section. At a single value of <span class="math inline">\(\overline{\mu}\)</span>, any two strictly increasing links reproduce the <span class="math inline">\(W\)</span> category frequencies exactly by relabelling cut points. Only variation in <span class="math inline">\(\overline{\mu}\)</span> separates them, because the two links disagree about how the response distribution should <em>move</em> as tasks get better or worse.</p>
 <p>We manipulate that variation directly. A task-level shift added to every alternative’s price moves the whole task’s inclusive value, and because it lives in the price column rather than a new constant, the design stays identified in the rank-condition sense.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [8]:</pre></div><div class="cell">

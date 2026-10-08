@@ -19,7 +19,7 @@ execute:
 
 ## What this notebook does
 
-Notebook 01 worked one configuration of Model A end to end. This one asks
+Notebook 01 worked one configuration of the model end to end. This one asks
 whether that was luck.
 
 Three questions, in increasing order of what they would catch:
@@ -34,7 +34,7 @@ Three questions, in increasing order of what they would catch:
    like $O(1/n)$; a structural problem does not.
 
 The machinery below is the general form of what notebook 01 built: it carries
-both links rather than Model A alone, and it is defined once here rather than
+both links rather than one link alone, and it is defined once here rather than
 twice.
 
 This notebook is the source of `aggregate_recovery.rds`,
@@ -49,7 +49,7 @@ options(digits = 5)
 ## 1. The machinery
 
 The general form of what notebook 01 built. Two differences: these carry both
-links rather than Model A alone, and they are defined once rather than twice.
+links rather than one link alone, and they are defined once rather than twice.
 
 ```{r}
 #| label: machinery-base
@@ -119,14 +119,14 @@ the bottom category at two percent of the probability scale, so only about one
 task in fifty lands there and the corresponding cut point has to be pinned down
 from little data.
 
-Model B needs the general machinery: a logistic link rather than a Gumbel one.
+The logistic link needs the general machinery: a logistic link rather than a Gumbel one.
 The only thing that changes is the interval probability.
 
 ```{r}
 #| label: general-likelihood
 # Interval probability G(hi) - G(lo), tail-stable, for either link.
-# Model A: G = standard Gumbel CDF   (she reports the probability she holds)
-# Model B: G = standard logistic CDF (she resolves, then grades)
+# Gumbel link:   G = standard Gumbel CDF   (she reports the probability she holds)
+# Logistic link: G = standard logistic CDF (she resolves, then grades)
 ord_prob_z <- function(lo, hi, model) {
   if (model == "B") {
     plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
@@ -171,7 +171,7 @@ num_grad <- function(f, x, eps = 1e-6) {
 }
 ```
 
-The simulator likewise generalizes. Model B differs in one line: she resolves
+The simulator likewise generalizes. The logistic link differs in one line: she resolves
 her uncertainty by drawing the outside good, and grades the comparison
 $u^* - \eta_0$ rather than reporting $F(u^*)$.
 
