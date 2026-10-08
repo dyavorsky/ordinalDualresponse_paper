@@ -593,8 +593,16 @@ probability mass shifts toward high scale points.\footnote{Equivalently,
 The distribution's mean is
 \(\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)\):
 averaged over everything the researcher cannot see, the probability of
-purchase is the logistic of the inclusive value. The same factor
-reappears in the conditional expectations of Section~\ref{sec-toy}.
+purchase is the logistic of the inclusive value. Conditioning on what
+she reported rescales it. A consumer who answers \(w\) has
+\begin{equation}\protect\phantomsection\label{eq-condexp}{
+\E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
+}\end{equation} the unconditional mean times a correction for the bin.
+Because \(S_{it}\) appears here as well as in the bin boundaries, the
+same scale point implies different purchase probabilities in different
+tasks: what a label is worth depends on what was on the screen.
+Section~\ref{sec-toy} makes that concrete and Section~\ref{sec-nesting}
+turns it against the constant-probability heuristic.
 
 \subsubsection{The Resolved Comparison, and the Binary
 Incumbent}\label{sec-modelB}
@@ -678,23 +686,12 @@ The per-task log-likelihood is therefore:
 chosen good's utility measured against the inclusive value, so a task
 adds to the log-likelihood exactly to the extent that the chosen good
 stands out from the set. The ordinal report contributes the log of the
-\(\text{Beta}(S_{it},1)\) mass falling in the bin she chose, so it adds
-most when the attractiveness of the set sits where her answer puts it: a
-report near the top of the scale pulls \(\overline{\mu}_{it}\) up, one
-near the bottom pulls it down. The first term sees only how the goods
-compare with one another; the second only where they sit as a group.
-
-Two features of Equation~\ref{eq-joint} are worth marking. Both factors
-depend on the task only through the inclusive value \(S_{it}\) and the
-chosen good's \(V_{itj^*}\), which is what makes the single substitution
-of Appendix D enough to carry the whole model to correlated
-alternatives: replace \(S_{it}\) by the generalized extreme value
-generator and both factors follow. And the ordinal factor is estimated
-on the utility scale through \(c_w = F^{-1}(\alpha_w)\), which turns it
-into the cumulative-link difference
-\(F(c_{y_{it}} - \overline{\mu}_{it}) - F(c_{y_{it}-1} - \overline{\mu}_{it})\)
-of Equation~\ref{eq-cumlink}; the two are the same quantity written in
-the two scales, probabilities and utilities.
+\(\text{Beta}(S_{it},1)\) mass falling in the chosen bin, so it adds
+most when the attractiveness of the set sits in that bin. Specifically,
+a report near the top of the scale pulls \(\overline{\mu}_{it}\) up, and
+a report near the bottom pulls it down. So in summary, the first term
+captures only how the goods compare with one another, while the second
+depends only only where they sit as a group.
 
 \subsection{The Model in Miniature}\label{sec-toy}
 
@@ -784,18 +781,16 @@ Attribute values \(x\) & \((2,\ 1)\) & \((-1,\ -2)\) \\
 
 The joint likelihood of the observed data, in which each consumer chose
 her better good and \(y_1 = \text{"likely"}\),
-\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint},
-written here on the utility scale:
+\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint}:
 \begin{equation}\protect\phantomsection\label{eq-toylik}{
-L \left( \beta, c_1, c_2 \right)
-= \underbrace{\Lambda(\beta) \Big[ 1 - F \left( c_2 - \overline{\mu}_1(\beta) \right) \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
+L \left( \beta, \alpha_1, \alpha_2 \right)
+= \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
 \times
-\underbrace{\Lambda(\beta) \, F \left( c_1 - \overline{\mu}_2(\beta) \right)}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
+\underbrace{\Lambda(\beta) \, \alpha_1^{\,S_2(\beta)}}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
 }\end{equation} with
-\(\overline{\mu}_1(\beta) = \beta + \ln \left( 1 + e^{\beta} \right)\)
-and
-\(\overline{\mu}_2(\beta) = -2\beta + \ln \left( 1 + e^{\beta} \right)\).
-The example distills two general lessons.
+\(S_1(\beta) = e^{\beta} \left( 1 + e^{\beta} \right)\) and
+\(S_2(\beta) = e^{-2\beta} \left( 1 + e^{\beta} \right)\). The example
+distills two general lessons.
 
 First, the two responses divide the labor of identification. The
 forced-choice factors involve only utility differences, and they
@@ -813,12 +808,8 @@ Second, the meaning of a scale label is set-dependent. The label
 \(p \in [0.37, 0.87)\), but what the researcher should infer from it
 depends on the task: the expected purchase probability of a consumer who
 answers ``unsure'' is \(0.80\) in the attractive task and \(0.60\) in
-the unattractive one (Table~\ref{tbl-toy}, last row).\footnote{The
-  conditional expectation is
-  \(\E \left[ F(u^*) \mid u^* \in [c_1, c_2) \right]\) with
-  \(u^* \sim \text{Gumbel}(\overline{\mu}, 1)\), which has the closed
-  form
-  \(\frac{S}{S+1} \left[ e^{-(S+1)e^{-c_2}} - e^{-(S+1)e^{-c_1}} \right] \big/ \left[ e^{-S e^{-c_2}} - e^{-S e^{-c_1}} \right]\).}
+the unattractive one (Table~\ref{tbl-toy}, last row), which is
+Equation~\ref{eq-condexp} evaluated at the two tasks.
 
 \subsection{Special Cases and Relation to Existing
 Models}\label{sec-nesting}
