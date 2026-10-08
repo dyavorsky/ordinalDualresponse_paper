@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{lemma}{Lemma}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -303,32 +303,32 @@ eleven-point scale from ``very unlikely'' to ``very likely.''
 We formalize that uncertainty as a component of utility for the outside
 good that she has not yet resolved, and, in our primary specification,
 we let the error components (for both the inside goods and the outside
-good) be Gumbel (McFadden 1981; Train 2009). (Appendix D relaxes
-independence across goods to any generalized extreme value structure.)
-Together the behavioral premise and distributional kernel do two things
-for the model. First, they deliver a closed-form likelihood: the maximum
-of Gumbel utilities is itself Gumbel, with location equal to the log-sum
-inclusive value, and independent of which alternative attains it, so the
-two responses factor and the model pairs a multinomial logit for the
-forced choice with a cumulative link for the ordinal report. Second,
-they determine the link to be complementary log-log. The familiar
-ordered logit (logistic link) arises instead when the uncertainty is
-resolved before the follow-up, which is the assumption underlying the
-binary dual-response models and is stated explicitly by Hung, Liu, et
-al. (2025). At two scale points the logistic link is the ``Unified
-Model'' of Hung, Liu, et al. (2025), equivalently the DR-AnyMax model of
-Diener et al. (2006) and, once the inclusive value cancels, the
-single-stage multinomial logit with a no-choice constant (Haaijer et al.
-2001). Our model predicts a complementary log-log binary response, so
-the familiar yes/no follow-up is mildly misspecified whenever
-respondents remain uncertain.
+good) be independent Gumbel (McFadden 1981; Train 2009). (Appendix D
+relaxes independence across goods to any generalized extreme value
+structure.) Together the behavioral premise and distributional kernel do
+two things for the model. First, they deliver a closed-form likelihood:
+the maximum of Gumbel utilities is itself Gumbel, with location equal to
+the log-sum inclusive value, and independent of which alternative
+attains it, so the two responses factor and the model pairs a
+multinomial logit for the forced choice with a cumulative link for the
+ordinal report. Second, they determine the link to be complementary
+log-log. The familiar ordered logit (logistic link) arises instead when
+the uncertainty is resolved before the follow-up, which is the
+assumption underlying the binary dual-response models and is stated
+explicitly by Hung, Liu, et al. (2025). At two scale points the logistic
+link is the ``Unified Model'' of Hung, Liu, et al. (2025), equivalently
+the DR-AnyMax model of Diener et al. (2006) and, once the inclusive
+value cancels, the single-stage multinomial logit with a no-choice
+constant (Haaijer et al. 2001). Our model predicts a complementary
+log-log binary response, so the familiar yes/no follow-up is
+misspecified (if only mildly) whenever respondents remain uncertain.
 
 We make four contributions. First, we develop the behavioral model: a
 utility-theoretic account of dual-response conjoint in which
 outside-good uncertainty is the primitive. That premise rationalizes the
 design and fixes the link function, and the cumulative-link family it
 generates contains the existing binary models as the two-point case of
-the alternative link, so the assumption those models rest on becomes
+the alternative link, so the assumptions undelying those models become
 explicit and testable. Second, we analyze the information content of the
 ordinal follow-up: we derive the information a second response of a
 given length contributes and show that it is always non-negative and
@@ -343,8 +343,8 @@ differences in scale usage (Greene and Hensher 2010; Falco et al. 2015).
 We also express the model in Apollo (Hess and Palma 2019) both as a
 check on our implementation and as a route for readers already working
 in that framework. Fourth, we supply evidence, including simulation
-studies that demonstrate parameter recovery and quantify the losses from
-dichotomization and constant-probability weighting, as well as an
+studies, that demonstrate parameter recovery and quantify the losses
+from dichotomization and constant-probability weighting, as well as an
 empirical application to a commercial choice-based conjoint study with
 an ordinal dual response, conducted in partnership with a consumer
 insights consultancy. Complete replication code accompanies the paper,
@@ -353,20 +353,20 @@ notebook.
 
 Several literatures stand behind the model. Marketing work on
 dual-response and no-choice designs established why asking two questions
-beats adding ``none of these'' to the list of products: the preference
-information in a task survives even when the respondent would not buy.
-That work set the conventions for estimating such models (Brazell et al.
-2006; Diener et al. 2006; Haaijer et al. 2001; Hung, Liu, et al. 2025),
-and it continues to refine the design. Schlereth and Skiera (2017)
-separate the forced and the free questions into blocks and add an
-adaptive rule for choosing which free questions to ask, which limits
-context effects and extreme response behavior when willingness to pay is
-the target. The appeal of the no-buy option also shifts as a respondent
-works through a long survey (Hung, Kurz, et al. 2025). The opt-out
-literature in choice modeling documents the consequences of getting the
-no-buy option wrong: predicted market shares and estimates of the value
-consumers get from a product both come out distorted (Campbell and Erdem
-2019).
+beats a single question with ``none of these'' as an option: the
+preference information in a task survives even when the respondent would
+not buy. That work set the conventions for estimating such models
+(Brazell et al. 2006; Diener et al. 2006; Haaijer et al. 2001; Hung,
+Liu, et al. 2025), and the format itself is still being refined. For
+example, Schlereth and Skiera (2017) separate the forced and the free
+questions into blocks and add an adaptive rule for choosing which free
+questions to ask, which limits context effects and extreme response
+behavior when willingness to pay is the target. The appeal of the no-buy
+option has been demonstrated to shift as a respondent works through the
+choice tasks (Hung, Kurz, et al. 2025). The opt-out literature in choice
+modeling documents the consequences of getting the no-buy option wrong:
+misspecifying it degrades the accuracy of both willingness-to-pay
+estimates and market shares forecasts (Campbell and Erdem 2019).
 
 The separation of the two decisions is older than the dual-response
 design. Demand models fit to supermarket scanner data have long
@@ -381,13 +381,13 @@ scale differently (Greene and Hensher 2010; Falco et al. 2015). A
 further literature explains why the follow-up should ask for a
 probability. A yes/no question forces a rounding to zero or one, and
 Manski (2004) argues that economists should elicit the probability
-itself. Marketing research made the same case earlier: Juster (1966)
-replaced the yes/no buying-intentions question with an eleven-point
-probability scale, and Morrison (1979) showed that stated intentions
-predict purchases only probabilistically, and that the mapping from one
-to the other depends on context. To our knowledge, no prior work derives
-the forced choice and the ordinal purchase answer from a single account
-of the consumer.
+itself. Marketing research made the same case decades earlier: Juster
+(1966) replaced the yes/no buying-intentions question with an
+eleven-point probability scale, and Morrison (1979) showed that stated
+intentions predict purchases only probabilistically, and that the
+mapping from one to the other depends on context. To our knowledge, no
+prior work derives the forced choice and the ordinal purchase answer
+from a single account of the consumer.
 
 The remainder of the paper proceeds as follows. Section~\ref{sec-model}
 develops the behavioral model, derives the joint likelihood, establishes
@@ -399,7 +399,8 @@ including guidance on scale design, and Section~\ref{sec-conclusion}
 concludes. Appendix A collects the proofs, Appendices B and C give the
 sampler and marginal-likelihood details, Appendix D extends the model to
 choice sets whose alternatives are correlated, and Appendix E gives the
-implementation in Apollo.
+implementation in Apollo, a flexible R package for estimating choice
+models.
 
 \section{Model}\label{sec-model}
 
@@ -479,7 +480,7 @@ alternatives, but for exposition we proceed with the independent errors
 assumption.
 
 Two classical properties of the Gumbel family are used throughout
-(McFadden 1981; Cardell 1997).
+(McFadden 1981).
 
 \begin{lemma}[]\protect\hypertarget{lem-gumbel}{}\label{lem-gumbel}
 
@@ -498,8 +499,8 @@ define \(u^*_{it} = \max_{j \in \mathcal{J}^+} u_{itj}\). Then
   S_{it} \coloneqq \sum_{j\in\mathcal{J}^{+}} \exp \left( V_{itj} \right);
   }\end{equation}
 \item
-  the \emph{identity} of the maximizer \(j^*_{it}\) and the \emph{value}
-  of the maximum \(u^*_{it}\) are statistically independent.
+  the identity of the maximizer \(j^*_{it}\) and the value of the
+  maximum \(u^*_{it}\) are statistically independent.
 \end{enumerate}
 
 \end{lemma}
@@ -507,8 +508,9 @@ define \(u^*_{it} = \max_{j \in \mathcal{J}^+} u_{itj}\). Then
 Property (ii) makes the dual-response likelihood tractable: whatever the
 consumer tells us about the level of her best utility (the second
 response) is independent of which good delivered it (the first
-response), conditional on the deterministic utilities. Proofs are in
-Appendix A.
+response), conditional on the deterministic utilities. Both properties
+are standard; Appendix A reproduces the short derivation, since the
+factorization in (ii) is what the rest of the paper rests on.
 
 \subsection{First Response: Multinomial
 Logit}\label{first-response-multinomial-logit}
@@ -1811,6 +1813,11 @@ to identify budget constraints, and on the design of the scale itself.
 Lemma~\ref{lem-gumbel}}{A.1 Proof of Lemma~}}\label{a.1-proof-of-lem-gumbel}
 \addcontentsline{toc}{subsection}{A.1 Proof of Lemma~\ref{lem-gumbel}}
 
+The result is classical (McFadden 1981). We give the derivation because
+part (ii) carries Equation~\ref{eq-joint}, and because
+\textbf{?@sec-appendix-gev} generalizes precisely this calculation to
+generalized extreme value errors.
+
 Let \(u_j = V_j + \eta_j\) with \(\eta_j \iid \text{Gumbel}(0,1)\) for
 \(j \in \mathcal{J}^+\), so \(u_j\) has CDF
 \(F_j(t) = \exp\left( -e^{-(t - V_j)} \right)\) and density
@@ -2291,12 +2298,6 @@ Campbell, Danny, and Seda Erdem. 2019. {``Including Opt-Out Options in
 Discrete Choice Experiments: Issues to Consider.''} \emph{The Patient -
 Patient-Centered Outcomes Research} 12 (1): 1--14.
 \url{https://doi.org/10.1007/s40271-018-0324-6}.
-
-\bibitem[\citeproctext]{ref-Cardell_1997}
-Cardell, N. Scott. 1997. {``Variance Components Structures for the
-Extreme-Value and Logistic Distributions with Application to Models of
-Heterogeneity.''} \emph{Econometric Theory} 13 (2): 185--213.
-\url{https://doi.org/10.1017/s0266466600005727}.
 
 \bibitem[\citeproctext]{ref-Daly_2012}
 Daly, Andrew, Stephane Hess, Bhanu Patruni, Dimitris Potoglou, and
