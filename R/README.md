@@ -54,3 +54,24 @@ own directory regardless.
 Editing a section under `sections/` does **not** invalidate the article's freeze,
 since Quarto fingerprints `index.qmd` alone. After any such edit run
 `rm -rf _freeze/index && quarto render` or the site will publish stale prose.
+
+## R package dependencies
+
+Rendering the manuscript needs: **ggplot2**, **knitr**, **bayesm** (notebook 03's
+independent cross-check), **bridgesampling** (notebook 03's marginal-likelihood
+comparison). Re-running `R/apollo/compare_apollo.R` additionally needs **apollo**,
+which is not required to render because the appendix reads the saved
+`apollo_compare.rds`.
+
+Frozen notebooks do not execute, so a missing package stays invisible until some
+edit invalidates a freeze. After an R upgrade, check all four before assuming the
+project builds:
+
+```r
+for (p in c("bayesm","bridgesampling","ggplot2","knitr")) 
+  cat(p, requireNamespace(p, quietly = TRUE), "\n")
+```
+
+The 2026-10 upgrade to R 4.6 silently dropped bayesm, bridgesampling and apollo;
+notebook 03 had been un-renderable for weeks before a one-word comment edit
+surfaced it.

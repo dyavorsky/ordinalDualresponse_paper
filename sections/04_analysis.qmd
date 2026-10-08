@@ -10,7 +10,7 @@ We illustrate the model with data from a commercial choice-based conjoint study 
 
 ### Model Specifications and Estimation {#sec-empirical-spec}
 
-We estimate six specifications on the same data: our model and the logistic alternative (@sec-model), each in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-two-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
+We estimate four specifications on the same data: our model (@sec-model) in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-two-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
 
 **Pre-specified test battery.** Before any model comparison, we commit to the three specification tests of @sec-spectests on the aggregate fit: the unit-slope test ($\lambda = 1$), the conditioning test ($\delta = 0$), and the DR-2Max test ($\delta = 1$) — whose operating characteristics are established in @sec-sim-spectests — together with the A-versus-B link comparison by holdout likelihood and WAIC. We also pre-commit to re-running the pricing counterfactual of @sec-sim-counterfactual on the empirical posteriors, replacing the synthetic market with the study's own category structure.
 

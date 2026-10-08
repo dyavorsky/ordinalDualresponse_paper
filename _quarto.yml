@@ -28,7 +28,6 @@ project:
     - notebooks/06-misspecification.qmd
     - notebooks/07-scale-design.qmd
     - notebooks/08-pricing-counterfactual.qmd
-    - notebooks/09-persistent-outside-option.qmd
     - index.qmd
 
 manuscript:
@@ -50,8 +49,6 @@ manuscript:
       title: "07. Designing the Scale"
     - notebook: notebooks/08-pricing-counterfactual.qmd
       title: "08. Economic Stakes"
-    - notebook: notebooks/09-persistent-outside-option.qmd
-      title: "09. The Persistent Outside Option"
 
 execute:
   freeze: auto

@@ -24,9 +24,9 @@ j^*_{it} = \underset{j \in \mathcal{J}^+}{\operatorname{arg max}} \ u_{itj}.
 $$ {#eq-firstresponse}
 This is a forced choice: the outside good is not among the options.
 
-2. **Second response (ordinal purchase evaluation).** She reports a value $y_{it}$ on a discrete ordinal scale $w \in \mathcal{W} = \lbrace 1, \ldots, W \rbrace$ (e.g., "very unlikely" to "very likely" on a five-point scale) that characterizes her evaluation of purchasing $j^*_{it}$, that is, of choosing it over the outside good. The binary dual-response format of @Brazell_2006 and @Diener_2006 is the special case $W=2$.
+2. **Second response (ordinal purchase evaluation).** She reports a value $y_{it}$ on a discrete ordinal scale $w \in \mathcal{W} = \lbrace 1, \ldots, W \rbrace$ (e.g., "very unlikely" to "very likely" on a five-point scale) that characterizes her evaluation of purchasing $j^*_{it}$, that is, of choosing it over the outside good. The binary dual-response format of @Brazell_2006 and @Diener_2006 is the special case $W=2$ of this design.
 
-We model $\eta_{itj} \iid \text{Gumbel} \left( 0,1 \right)$, independent of $\x_{tj}$ and independent across goods, tasks, and consumers. This is the logit kernel of conjoint analysis [@Mcfadden_1981; @Train_2009]. The independence across goods is stronger than our derivation needs. Appendix D shows that @lem-gumbel holds for any generalized extreme value error structure once $S_{it}$ is replaced by the GEV generator, so the following results carry over to correlated alternatives, but for exposition we proceed with the independent errors assumption.
+We model $\eta_{itj} \iid \text{Gumbel} \left( 0,1 \right)$, independent of $\x_{tj}$ and independent across goods, tasks, and consumers. This is the logit kernel standard in discrete choice [@Mcfadden_1981; @Train_2009], inherited by choice-based conjoint. The independence across goods is stronger than our derivation needs. Appendix D shows that @lem-gumbel holds for any generalized extreme value error structure once $S_{it}$ is replaced by the GEV generator, so the following results carry over to correlated alternatives, but for exposition we proceed with the independent errors assumption.
 
 Two classical properties of the Gumbel family are used throughout [@Mcfadden_1981; @Cardell_1997].
 
@@ -53,11 +53,11 @@ $$
 = \frac{\exp \left( V_{itj} \right)}{\sum_{k\in\mathcal{J}^{+}} \exp \left( V_{itk} \right)}
 = \frac{\exp \left( V_{itj} \right)}{S_{it}},
 $$ {#eq-mnl}
-the multinomial logit over inside goods only. Note that the outside good does not appear: the forced choice is uncontaminated by the consumer's uncertain evaluation of the outside good, which is the design's appeal [@Brazell_2006].
+the multinomial logit over inside goods only. Note that the outside good does not appear: the forced choice does not depend on the consumer's uncertain evaluation of the outside good, which is the design's appeal [@Brazell_2006].
 
 ### Second Response: An Ordinal Model of the Purchase Evaluation
 
-What does the consumer consult when answering "how likely are you to purchase the option you selected?" Our premise answers the question: she has not resolved $\eta_{it0}$, so what she has to report is a probability. That premise delivers a likelihood of *cumulative-link* form, depending on the choice set only through the inclusive value $\overline{\mu}_{it}$, and it fixes the link. We derive that model first. We then derive the link that would follow if she instead resolved the shock before answering, which is what the binary dual-response literature implicitly assumes, and show that the two accounts stand in a particular relation: the resolved account is exact for a binary follow-up and strains as the scale lengthens.
+What does the consumer consult when answering "how likely are you to purchase the option you selected?" Our premise answers the question: she has not resolved $\eta_{it0}$, so what she has to report is a probability. That premise delivers a likelihood of *cumulative-link* form, depending on the choice set only through the inclusive value $\overline{\mu}_{it}$, and it determines the link. We derive that model first. We then ask what follows if she instead resolves the shock before answering, as @Hung_2025_dual assume. For a binary follow-up that assumption gives their Unified Model. Carried into an ordinal follow-up it is harder to interpret, for reasons we take up below.
 
 #### Reporting a Purchase Probability {#sec-modelA}
 
@@ -83,12 +83,12 @@ $$
 $$ {#eq-modelA}
 using $F_{\text{Gumbel}(\overline{\mu},1)}(c) = \exp\left(-e^{-(c - \overline{\mu})}\right) = \exp\left( e^{\overline{\mu}} \ln \alpha \right) = \alpha^{S}$ when $c = F^{-1}(\alpha) = -\ln(-\ln \alpha)$. The second-response probabilities are differences of powers of the cut points, with the exponent $S_{it} = e^{\overline{\mu}_{it}}$ summarizing the attractiveness of the task's inside goods: the more attractive the set, the more probability mass shifts toward high scale points.[^beta]
 
-[^beta]: Equivalently, from the researcher's perspective the consumer's purchase probability is Beta distributed, $p_{it} \sim \text{Beta}\left(S_{it}, 1\right)$. The Gumbel family is max-stable, so a shift in location is a power of the distribution function, $F_{\text{Gumbel}(\overline{\mu},1)}(z) = F(z)^{S}$ with $S = e^{\overline{\mu}}$, and therefore $\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}$, which is the $\text{Beta}(S,1)$ distribution function on $[0,1]$. @eq-modelA is that distribution function differenced across the cut points. Its mean, $\operatorname{E}\left[ p_{it} \right] = S_{it} \big/ \left( S_{it}+1 \right) = \Lambda \left( \overline{\mu}_{it} \right)$, is the factor that appears in the conditional expectation of @sec-toy.
+[^beta]: Equivalently, from the researcher's perspective the consumer's purchase probability is Beta distributed, $p_{it} \sim \text{Beta}\left(S_{it}, 1\right)$. The Gumbel family is max-stable, so a shift in location is a power of the distribution function, $F_{\text{Gumbel}(\overline{\mu},1)}(z) = F(z)^{S}$ with $S = e^{\overline{\mu}}$, and therefore $\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}$, which is the $\text{Beta}(S,1)$ distribution function on $[0,1]$. @eq-modelA is that distribution function differenced across the cut points. Its mean, $\E\left[ p_{it} \right] = S_{it} \big/ \left( S_{it}+1 \right) = \Lambda \left( \overline{\mu}_{it} \right)$, is the factor that appears in the conditional expectation of @sec-toy.
 
 
-#### The Logistic Alternative: Grading a Resolved Comparison {#sec-modelB}
+#### The Resolved Comparison, and the Binary Incumbent {#sec-modelB}
 
-Suppose instead that the consumer resolves the outside-good shock before answering, as the binary dual-response literature implicitly assumes, and evaluates the realized utility difference
+Suppose instead that the consumer resolves the outside-good shock before answering and evaluates the realized utility difference
 $$
 d_{it} = u^*_{it} - \eta_{it0}.
 $$
@@ -105,22 +105,16 @@ $$
 \qquad
 \Lambda(z) = \frac{1}{1+e^{-z}}.
 $$ {#eq-modelB}
-This is an ordered logit [@Greene_2010] with the inclusive value $\overline{\mu}_{it}$ as the (negatively signed) linear predictor. It is not our model, but it is the specification the existing binary literature uses, and @sec-nesting shows why that use is well founded at $W=2$.
+This is an ordered logit [@Greene_2010] with the inclusive value $\overline{\mu}_{it}$ as the (negatively signed) linear predictor. The assumption that she resolves the shock before answering is what underlies the binary dual-response models. @Hung_2025_dual state it explicitly, specifying that respondents bring the same private information to both responses, and derive the binary case from it; @Diener_2006 reach the same functional form by a different route. It is not our model, but it is the specification the existing binary literature uses, and @sec-nesting shows why that use is well founded at $W=2$.
 
-#### Cumulative-Link Form
-
-Define $c_w = F^{-1}(\alpha_w)$ so that both accounts carry utility-scale cut points. Both then take the cumulative-link form
+Both accounts therefore share a form. Define $c_w = F^{-1}(\alpha_w)$ so that the probability-scale cut points of @eq-reportruleA sit on the utility scale alongside those of @eq-reportruleB. The second response is then a cumulative link in the inclusive value,
 $$
 \Pr \left( y_{it} \le w \right) = G \left( c_w - \overline{\mu}_{it} \right),
 \qquad
-G = \begin{cases}
-F \ \left(\text{standard Gumbel}\right) & \text{uncertainty unresolved}, \\[2pt]
-\Lambda \ \left(\text{standard logistic}\right) & \text{uncertainty resolved}.
-\end{cases}
+G = F \ \left(\text{standard Gumbel}\right),
 $$ {#eq-cumlink}
-The behavioral story determines the link function, and our premise picks out the first case: a consumer who still carries her outside-good uncertainty generates the Gumbel, or complementary log-log, link. The logistic link is what the second case delivers. The two are numerically close over most of their range and diverge in the tails, so which one better describes respondents is an empirical question, and we treat it as one, estimating both in @sec-simstudy and @sec-analysis.
+the complementary log-log link. Replacing $G$ with the logistic $\Lambda$ gives @eq-modelB, which we invoke only at $W=2$, where it is the incumbent binary model (@sec-nesting). We write the derivations in terms of a general $G$ because they do not depend on its form.
 
-**Why we carry one model rather than two.** Scale length bears on the two accounts unevenly. At $W=2$ the follow-up asks for a verdict, and a consumer who has resolved $\eta_{it0}$ has one: the resolved account describes her exactly, which is why it reproduces the existing binary models at that point (@sec-nesting). As the scale lengthens the fit loosens. A consumer who has resolved the outside-good shock knows whether she would buy, so her purchase probability is zero or one, and a scale running from "very unlikely" to "very likely" offers her only its endpoints. Its interior categories therefore carry an assumption the utility model does not supply, that respondents express the magnitude of a resolved comparison in the vocabulary of likelihood. That assumption is consistent with evidence that stated intentions map onto behavior only probabilistically [@Morrison_1979], but it is a claim about scale use rather than a consequence of the theory. The unresolved account needs no such assumption at any $W$, since the consumer reports a probability because she holds one; its distinctive claim runs the other way, that even the binary question is answered probabilistically. The two thus trade places along the scale, and since the ordinal follow-up is the object of this paper, we develop the unresolved account as the model and treat the logistic link as the alternative specification against which it is tested. 
 
 ### Joint Likelihood
 
@@ -131,7 +125,7 @@ $$
 \; \times \;
 \underbrace{\Big[ G \left( c_{y_{it}} - \overline{\mu}_{it} \right) - G \left( c_{y_{it}-1} - \overline{\mu}_{it} \right) \Big]}_{\text{ordinal purchase evaluation}},
 $$ {#eq-joint}
-with $\mathbf{c} = (c_1, \ldots, c_{W-1})$ and the full likelihood $L_i = \prod_{t} \ell_{it}$. This factorization is not an assumption of independent errors across the two responses, as in the "DR-2Max" tradition [@Diener_2006; @Sawtooth_2017]; it is a consequence of @lem-gumbel(ii), the independence of the argmax and the maximum, which holds within a single utility draw and so requires no second draw for the follow-up question. The same realized utilities generate both responses.
+with $\mathbf{c} = (c_1, \ldots, c_{W-1})$ and the full likelihood $L_i = \prod_{t} \ell_{it}$. This factorization is a consequence of @lem-gumbel(ii), the independence of the argmax and the maximum.
 
 ### The Model in Miniature {#sec-toy}
 
@@ -139,7 +133,7 @@ Before turning to special cases, we make the machinery concrete with the smalles
 
 Let both respondents share the scalar taste parameter $\beta = 1$, which we treat as known for the arithmetic. Each faces one task with two inside goods described by a single attribute $x$, answers the forced choice, and then reports on the three-point scale $\mathcal{W} = \lbrace \text{"unlikely"}, \text{"unsure"}, \text{"likely"} \rbrace$ with utility-scale cut points $\mathbf{c} = (c_1, c_2) = (0, 2)$. (In our model these correspond to probability-scale cut points $\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)$: the consumer answers "unsure" when her purchase probability lies between 37% and 87%.) The two tasks (one facing each respondent) differ only in the level of the attribute and not in its spread: consumer 1 faces an attractive pair, $x = (2, 1)$, and consumer 2 an unattractive pair, $x = (-1, -2)$.
 
-Consider the model's account of their behavior, giving both consumers the *same* realized components $\eta = (0.30, -0.86)$ on their two inside goods. Consumer 1's utilities are $u = (2.30, 0.14)$: she picks her first good and knows her best utility, $u^* = 2.30$. She cannot resolve the outside-good shock $\eta_0$, so she reports the bin containing her purchase probability $p = F(2.30) = 0.90$, namely "likely." Consumer 2's utilities are $u = (-0.70, -2.86)$: she also picks her first good, but her best utility is $u^* = -0.70$, her purchase probability is $F(-0.70) = 0.13$, and she reports "unlikely." (Under the logistic alternative the consumers instead resolve $\eta_0$, say $\eta_0 = 0.10$, and grade $u^* - \eta_0$ against the same cut points: $2.20$ and $-0.80$, again "likely" and "unlikely.") The two consumers made identical first-response choices from identical realizations, yet gave opposite second responses.
+Consider the model's account of their behavior, giving both consumers the *same* realized components $\eta = (0.30, -0.86)$ on their two inside goods. Consumer 1's utilities are $u = (2.30, 0.14)$: she picks her first good and knows her best utility, $u^* = 2.30$. She cannot resolve the outside-good shock $\eta_0$, so she reports the bin containing her purchase probability $p = F(2.30) = 0.90$, namely "likely." Consumer 2's utilities are $u = (-0.70, -2.86)$: she also picks her first good, but her best utility is $u^* = -0.70$, her purchase probability is $F(-0.70) = 0.13$, and she reports "unlikely." The two consumers made identical first-response choices from identical realizations, yet gave opposite second responses.
 
 The walkthrough above fixed one set of draws. Averaging over all of them, as the researcher must, we see that the pattern is not an accident of that particular draw (see @tbl-toy). The forced-choice probabilities are the same function of the data for both consumers: the MNL depends only on the within-task difference $x_1 - x_2 = 1$, so $\Pr(\text{choose better good}) = \Lambda(\beta) = 0.73$ in both tasks, and no quantity of forced-choice data could ever distinguish them. The tasks separate only through the inclusive value ($S_1 = e^2 + e^1 = 10.11$ versus $S_2 = e^{-1} + e^{-2} = 0.50$, i.e., $\overline{\mu}_1 = 2.31$ versus $\overline{\mu}_2 = -0.69$), which the cumulative-link stage compares against the cut points. (With $c_1 = 0$, consumer 2's probability of "unlikely" is $\Lambda(-\overline{\mu}_2) = 1/(1+S_2) = 0.67$, the familiar no-choice probability of the single-stage MNL, which previews the nesting results below.)
 
@@ -148,28 +142,25 @@ The walkthrough above fixed one set of draws. Averaging over all of them, as the
 | Attribute values $x$ | $(2,\ 1)$ | $(-1,\ -2)$ |
 | $\Pr(\text{choose better good})$ | $0.73$ | $0.73$ |
 | $S = \sum_j e^{V_j}$, $\ \overline{\mu} = \ln S$ | $10.11$, $\ 2.31$ | $0.50$, $\ -0.69$ |
-| $\Pr(y = w)$, our model | $(0.00,\ 0.25,\ 0.75)$ | $(0.60,\ 0.33,\ 0.07)$ |
-| $\Pr(y = w)$, logistic link | $(0.09,\ 0.33,\ 0.58)$ | $(0.67,\ 0.27,\ 0.06)$ |
-| $\operatorname{E} \left[ p \mid y = \text{"unsure"} \right]$ | $0.80$ | $0.60$ |
+| $\Pr(y = w)$ | $(0.00,\ 0.25,\ 0.75)$ | $(0.60,\ 0.33,\ 0.07)$ |
+| $\E \left[ p \mid y = \text{"unsure"} \right]$ | $0.80$ | $0.60$ |
 
 : Two tasks that are indistinguishable in the forced choice and nearly opposite in the ordinal report ($\beta = 1$, $\mathbf{c} = (0,2)$, $W = 3$). {#tbl-toy}
 
-The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{"likely"}$, $y_2 = \text{"unlikely"}$, follows from @eq-joint (shown here for the logistic link, whose algebra is the lighter of the two):
+The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{"likely"}$, $y_2 = \text{"unlikely"}$, follows from @eq-joint, and is the same expression under either link:
 $$
 L \left( \beta, c_1, c_2 \right)
-= \underbrace{\Lambda(\beta) \Big[ 1 - \Lambda \left( c_2 - \overline{\mu}_1(\beta) \right) \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.58}
+= \underbrace{\Lambda(\beta) \Big[ 1 - G \left( c_2 - \overline{\mu}_1(\beta) \right) \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
 \times
-\underbrace{\Lambda(\beta) \, \Lambda \left( c_1 - \overline{\mu}_2(\beta) \right)}_{\text{consumer 2:} \ \ 0.73 \times 0.67},
+\underbrace{\Lambda(\beta) \, G \left( c_1 - \overline{\mu}_2(\beta) \right)}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
 $$ {#eq-toylik}
-with $\overline{\mu}_1(\beta) = \beta + \ln \left( 1 + e^{\beta} \right)$ and $\overline{\mu}_2(\beta) = -2\beta + \ln \left( 1 + e^{\beta} \right)$. The example distills three general lessons.
+with $\overline{\mu}_1(\beta) = \beta + \ln \left( 1 + e^{\beta} \right)$ and $\overline{\mu}_2(\beta) = -2\beta + \ln \left( 1 + e^{\beta} \right)$. The example distills two general lessons.
 
 First, the two responses divide the labor of identification. The forced-choice factors involve only utility differences, and they identify $\beta$ from within-task attribute variation. The ordinal factors involve utility levels, locating each task's $\overline{\mu}(\beta)$ against the cut points. This is the division that @prp-ident formalizes. The forced choice identifies $\beta$, as in any multinomial logit, because the two goods in a task differ in $x$. The ordinal responses then identify the cut points, by locating each task's $\overline{\mu}(\beta)$ on the utility scale.
 
 Second, the meaning of a scale label is set-dependent. The label "unsure" is fixed for the consumer, since by construction it means $p \in [0.37, 0.87)$, but what the researcher should infer from it depends on the task: the expected purchase probability of a consumer who answers "unsure" is $0.80$ in the attractive task and $0.60$ in the unattractive one (@tbl-toy, last row).[^toy-ep]
 
-Third, the links agree where tasks are ordinary and part ways where they are extreme. The two links produce nearly identical distributions for the unattractive task but visibly different ones for the attractive task (@tbl-toy), a miniature of the general point from upcoming @sec-identification that discriminating between the links requires designs that vary task attractiveness.
-
-[^toy-ep]: The conditional expectation is $\operatorname{E} \left[ F(u^*) \mid u^* \in [c_1, c_2) \right]$ with $u^* \sim \text{Gumbel}(\overline{\mu}, 1)$, which has the closed form $\frac{S}{S+1} \left[ e^{-(S+1)e^{-c_2}} - e^{-(S+1)e^{-c_1}} \right] \big/ \left[ e^{-S e^{-c_2}} - e^{-S e^{-c_1}} \right]$.
+[^toy-ep]: The conditional expectation is $\E \left[ F(u^*) \mid u^* \in [c_1, c_2) \right]$ with $u^* \sim \text{Gumbel}(\overline{\mu}, 1)$, which has the closed form $\frac{S}{S+1} \left[ e^{-(S+1)e^{-c_2}} - e^{-(S+1)e^{-c_1}} \right] \big/ \left[ e^{-S e^{-c_2}} - e^{-S e^{-c_1}} \right]$.
 
 ### Special Cases and Relation to Existing Models {#sec-nesting}
 
@@ -187,36 +178,6 @@ With $\gamma = 0$ these are exactly the joint probabilities of the "Unified Mode
 
 **Reductions to the binary model.** An ordinal response can be reduced to a form the binary model accepts in two ways: (i) *dichotomization*, collapsing the scale at some point (e.g., top box or top two boxes) and estimating the binary model, which discards the ordinal information and hard-codes an arbitrary cut; or (ii) *constant-probability weighting*, mapping each scale point to a fixed purchase probability (e.g., "definitely would buy" $= 0.9$) independent of the choice set. Both are nested within, or dominated by, @eq-joint: dichotomization is @eq-collapseB applied to a coarsened $y_{it}$, and constant-probability weighting violates @eq-modelA, under which the mapping from scale point to purchase probability necessarily depends on the attractiveness of the inside goods through $S_{it}$. These two reductions are the benchmarks in our simulation study (@sec-simstudy).
 
-### Heterogeneity {#sec-heterogeneity}
-
-We accommodate preference heterogeneity with a standard hierarchical Bayesian specification [@Rossi_2005; @Train_2001]:
-$$
-\bfbeta_i \iid \mathcal{N} \left( \betabar, \Sigma_{\beta} \right),
-$$ {#eq-hb}
-with conjugate priors on $\left( \betabar, \Sigma_{\beta} \right)$. In the main model the cut points $\mathbf{c}$ are common across consumers: the scale labels ("very likely," "somewhat likely," ...) are assumed to mean the same thing to everyone, while preferences vary.
-
-#### A Persistent Outside Option {#sec-persist}
-
-The logistic alternative as written gives the outside-good shock a task subscript: the consumer draws $\eta_{it0}$ afresh on every screen. The inside goods legitimately draw new components each task, since each task shows new goods, but the outside option is the same object throughout her survey, and re-randomizing it between consecutive screens is a strong assumption to make silently. The alternative draws it once,
-$$
-d_{it} = u^*_{it} - \eta_{i0},
-\qquad
-\eta_{i0} \sim \text{Gumbel}(0,1),
-$$ {#eq-persist}
-held fixed across her tasks. Marginally the two are indistinguishable: a Gumbel drawn once per respondent and one drawn once per task both give $d_{it} \sim \text{Logistic}(\overline{\mu}_{it},1)$, so a single task cannot separate them. They differ in the panel, where the persistent version correlates a respondent's ordinal answers beyond what preference heterogeneity already induces.
-
-Conditional on $\eta_{i0}$ the second-response probability is $F \left( c_w + \eta_{i0} - \overline{\mu}_{it} \right)$, our model's link with every cut point shifted by a common amount. The persistent outside option is therefore location-only cut-point heterogeneity, with the location's distribution fixed by the theory rather than estimated: it costs one scalar latent per respondent and no free parameters. It also supplies a structural reason for the scale-use heterogeneity documented below, since a respondent who appears to use the top of the scale freely may simply hold a weak outside option. Because the implied variance is exactly $\pi^2/6$, estimating it freely and testing that value is an overidentification test of the same kind as $\lambda = 1$ and $\delta = 0$; notebook 09 develops the estimator and the test. In simulation a persistent shock is clearly separable from preference heterogeneity, raising the within-respondent correlation of ordinal answers from $0.16$ to $0.58$, and ignoring one when it is present costs about a sixth of the accuracy in recovering individual preferences while leaving choice prediction untouched. Two caveats attach to the test itself. Fitting a normal population distribution to a shock that is actually Gumbel inflates the estimate by roughly twelve percent, so $\pi^2/6$ is better read as a lower reference point than as a value to be matched; and because each respondent's shift is informed by only her $T$ ordinal answers, the estimate cannot reach zero but returns a detection floor below which a persistent shift is indistinguishable from estimation noise.
-
-#### Heterogeneous Cut Points {#sec-hetcut}
-
-The assumption of a shared reporting scale is convenient but contestable: @Greene_2010 and @Falco_2015 document individual differences in the use of ordinal response scales. @sec-persist supplies one structural source of such differences; here we let the scale vary freely. We therefore develop an extension with consumer-specific cut points. Parameterize
-$$
-c_{i1} \in \mathbb{R},
-\qquad
-c_{iw} = c_{i,w-1} + \exp \left( \delta_{iw} \right) \ \text{for} \ w = 2, \ldots, W-1,
-$$ {#eq-hetcutparam}
-and let $\bftheta_i = \left( c_{i1}, \delta_{i2}, \ldots, \delta_{i,W-1} \right)'$ follow a multivariate normal population distribution, estimated jointly with (and, if desired, correlated with) $\bfbeta_i$. The exponentiated increments enforce monotonicity without constrained sampling. Identification at the individual level is necessarily partial, because with $T$ tasks per consumer the $W-1$ individual cut points and $P$ individual preference parameters are jointly informed by only $T$ ordinal reports. The hierarchy therefore matters here since it shrinks each respondent's scale usage toward a population distribution that is estimated from the whole sample. @sec-simstudy examines both the payoff to permitting cut-point heterogeneity when it is present in the data-generating process and the robustness of the common-cut-point model when it is not.
-
 ### Identification {#sec-identification}
 
 Because the second response depends on the choice set only through $\overline{\mu}_{it}$, and because the cut points sit on the same utility scale as $\overline{\mu}_{it}$, the model requires a location normalization, and given a suitable design it requires nothing further. This subsection makes the requirement precise. Fix the aggregate model ($\bfbeta_i = \bfbeta$) and let the data consist of tasks $t=1,\ldots,n$ with inside-good attribute vectors $\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}$ and responses $\left( j^*_t, y_t \right)$ generated by @eq-joint with parameter $\theta = \left( \bfbeta, \mathbf{c} \right) \in \mathbb{R}^P \times \mathcal{C}$, where $\mathcal{C} = \lbrace \mathbf{c} : c_1 < \cdots < c_{W-1} \rbrace$. Call $\theta$ and $\theta'$ *observationally equivalent* if they imply the same joint probabilities $\Pr_\theta \left( j^*_t = j, y_t = w \right)$ for every task design in the support of the design distribution, and let $X$ denote the design matrix that stacks the rows $\x_{tj}'$ over all inside goods and tasks in that support.
@@ -229,13 +190,15 @@ $\theta = \left( \bfbeta, \mathbf{c} \right)$ is identified if and only if the a
 (*Sufficiency.*) Suppose $\theta$ and $\theta' = \left( \bfbeta', \mathbf{c}' \right)$ are observationally equivalent. Marginalizing the joint probabilities over $y$ equates the MNL choice probabilities task by task, which implies $\left( \x_{tj} - \x_{tk} \right)' \left( \bfbeta - \bfbeta' \right) = 0$ for all $j,k,t$; hence $\x_{tj}' \left( \bfbeta - \bfbeta' \right) = a_t$, a constant within each task. Marginalizing over $j$ equates the cumulative ordinal probabilities: $G \left( c_w - \overline{\mu}_t(\bfbeta) \right) = G \left( c'_w - \overline{\mu}_t(\bfbeta') \right)$ for all $w,t$. Since $G$ is strictly increasing (for both links in @eq-cumlink), $c_w - c'_w = \overline{\mu}_t(\bfbeta) - \overline{\mu}_t(\bfbeta')$ for all $w,t$; the left side is free of $t$ and the right side free of $w$, so both equal a constant $\delta$. Direct computation gives $\overline{\mu}_t(\bfbeta') = \ln \sum_j \exp \left( V_{tj} - a_t \right) = \overline{\mu}_t(\bfbeta) - a_t$, so $a_t = \delta$ for every $t$; that is, $\x_{tj}' \left( \bfbeta - \bfbeta' \right) = \delta$ for all $j,t$. The rank condition then forces $\bfbeta = \bfbeta'$ and $\delta = 0$, hence $\mathbf{c} = \mathbf{c}'$. (*Necessity.*) If some $\left( v, \delta \right) \ne \left( \mathbf{0}, 0 \right)$ satisfies $\x_{tj}'v = \delta$ everywhere, then $\theta' = \left( \bfbeta + v, \mathbf{c} + \delta \iota \right)$ shifts every $V_{tj}$ and every cut point by $\delta$, leaving the MNL probabilities (a within-task constant drops out) and the ordinal probabilities ($G(c_w + \delta - (\overline{\mu}_t + \delta))$) unchanged, so $\theta' \ne \theta$ is observationally equivalent to $\theta$. $\square$
 :::
 
+**The condition in miniature.** Return to the two consumers of @sec-toy, with $\beta = 1$ and $\mathbf{c} = (0,2)$, so that $\overline{\mu}_1 = 2.31$ and $\overline{\mu}_2 = -0.69$. Suppose the design had carried a constant: one extra attribute, equal to one for every good, with part-worth $\beta_{\text{const}}$. Setting $\beta_{\text{const}} = 1$ raises every $V_{tj}$ by one and therefore raises both inclusive values by exactly one, to $3.31$ and $0.31$. Raise both cut points by one as well, to $\mathbf{c} = (1,3)$, and every difference $c_w - \overline{\mu}_t$ returns to the value it had: $(-2.31, -0.31)$ for the first consumer and $(0.69, 2.69)$ for the second. The two ordinal distributions are therefore exactly what they were. The forced choice never saw the constant at all, since it turns on $\x_{t1} - \x_{t2}$. No quantity of data separates $\left( \beta_{\text{const}}, \mathbf{c} \right) = \left( 0, (0,2) \right)$ from $\left( 1, (1,3) \right)$, or from any other point along that ridge, and it is the cut points rather than the part-worths that do the absorbing.
+
 Several remarks unpack the content of @prp-ident.
 
 **What the condition rules out.** A violating direction $\left( v, \delta \right)$ is an attribute combination whose value is the same for every inside good ever shown. The leading case is an intercept: a column of ones in $X$ makes $\left[ X \;\; \iota \right]$ rank deficient by construction. The subtler case is a *hidden* intercept: if an attribute is dummy-coded with all $L$ of its levels included, every alternative carries exactly one of them, so the dummies sum to $\iota$ and the same invariance appears (shift all $L$ part-worths and all cut points equally). Attributes must therefore be coded against omitted reference levels (or effects-coded), and the design must contain no global constant. This requirement is stricter than in the single-stage MNL with a no-choice alternative, where a full set of brand dummies is identified because the no-choice row of zeros breaks the constancy [@Haaijer_2001]. In the dual-response model the outside good never appears as a design row, since its role is absorbed by the cut points, so anything the design holds constant across inside goods is absorbed along with it.
 
 **What the normalizations do.** The convention $\x_{t0} = \mathbf{0}$ with a $\text{Gumbel}(0,1)$ shock fixes the origin against which the cut points are measured: an outside-good alternative-specific constant would shift all cut points equally and is exactly the invariance in the proof, so it is subsumed rather than restricted. (Its visible trace is the binary case: at $W=2$, the logistic link's single cut point $c_1$ *is* the no-choice constant of @eq-collapseB.) The unit Gumbel scale fixes the scale of $\bfbeta$, as in any logit. Beyond these, the model imposes a genuine restriction rather than a normalization: the coefficient on $\overline{\mu}_{it}$ in @eq-cumlink is fixed at $1$ by the theory, because both responses are driven by the same utility draw, so estimating a free slope $\lambda$ on $\overline{\mu}_{it}$ and testing $\lambda = 1$ is an overidentification test of the behavioral model, not a required normalization.
 
-**Cut points versus the link.** Given $\bfbeta$ (identified from the forced choice alone whenever $X$'s within-task differences have full rank), the cut points are exactly identified even *without* variation in task attractiveness: $c_w = \overline{\mu} + G^{-1} \left( \Pr(y \le w) \right)$ pointwise. Variation in $\overline{\mu}_{it}$ across tasks therefore overidentifies $\mathbf{c}$, and it is what identifies the link: at a single value of $\overline{\mu}$, any two strictly increasing links fit the $W$ category frequencies perfectly by relabeling cut points, so the two links are distinguishable only through how the ordinal distribution shifts as $S_{it}$ varies. Designs intended to compare the links should vary task attractiveness deliberately.
+**Cut points versus the link.** Given $\bfbeta$ (identified from the forced choice alone whenever $X$'s within-task differences have full rank), the cut points are exactly identified even *without* variation in task attractiveness: $c_w = \overline{\mu} + G^{-1} \left( \Pr(y \le w) \right)$ pointwise. Variation in $\overline{\mu}_{it}$ across tasks therefore overidentifies $\mathbf{c}$, and it is what identifies the link: at a single value of $\overline{\mu}$, any two strictly increasing links fit the $W$ category frequencies perfectly by relabeling cut points, so the shape of the link is identified only through how the ordinal distribution shifts as $S_{it}$ varies. Designs that hold task attractiveness fixed cannot speak to it at all.
 
 **Population versus sample.** Under @prp-ident every scale category has strictly positive probability in every task ($G$ is strictly increasing on $\mathbb{R}$ and the cut points are finite), so no support condition is needed for point identification. In finite samples, however, rarely used categories leave their adjacent cut points weakly identified, and near-violations of the rank condition (attribute combinations *nearly* constant across inside goods) manifest as an ill-conditioned information matrix. Both pathologies are visible in the smallest eigenvalues of the observed information, a diagnostic we report alongside the simulation results in @sec-simstudy.
 
@@ -276,8 +239,26 @@ where $\overline{\x}_{it} = \sum_{j \in \mathcal{J}^+} \Pr\left(j^*_{it}=j\right
 
 <!-- TODO: verify placement — full derivation of @eq-fisher and the refinement argument in an appendix. -->
 
+### Heterogeneity {#sec-heterogeneity}
+
+We accommodate preference heterogeneity with a standard hierarchical Bayesian specification [@Rossi_2005; @Train_2001]:
+$$
+\bfbeta_i \iid \mathcal{N} \left( \betabar, \Sigma_{\beta} \right),
+$$ {#eq-hb}
+with conjugate priors on $\left( \betabar, \Sigma_{\beta} \right)$. In the main model the cut points $\mathbf{c}$ are common across consumers: the scale labels ("very likely," "somewhat likely," ...) are assumed to mean the same thing to everyone, while preferences vary.
+
+#### Heterogeneous Cut Points {#sec-hetcut}
+
+The assumption of a shared reporting scale is convenient but contestable: @Greene_2010 and @Falco_2015 document individual differences in the use of ordinal response scales. We therefore develop an extension with consumer-specific cut points. Parameterize
+$$
+c_{i1} \in \mathbb{R},
+\qquad
+c_{iw} = c_{i,w-1} + \exp \left( \delta_{iw} \right) \ \text{for} \ w = 2, \ldots, W-1,
+$$ {#eq-hetcutparam}
+and let $\bftheta_i = \left( c_{i1}, \delta_{i2}, \ldots, \delta_{i,W-1} \right)'$ follow a multivariate normal population distribution, estimated jointly with (and, if desired, correlated with) $\bfbeta_i$. The exponentiated increments enforce monotonicity without constrained sampling. Identification at the individual level is necessarily partial, because with $T$ tasks per consumer the $W-1$ individual cut points and $P$ individual preference parameters are jointly informed by only $T$ ordinal reports. The hierarchy therefore matters here since it shrinks each respondent's scale usage toward a population distribution that is estimated from the whole sample. @sec-simstudy examines both the payoff to permitting cut-point heterogeneity when it is present in the data-generating process and the robustness of the common-cut-point model when it is not.
+
 ### Estimation {#sec-estimation}
 
 The aggregate (homogeneous-$\bfbeta$) model is estimated by maximum likelihood: the log of @eq-joint summed over consumers and tasks is smooth in $\left( \bfbeta, \mathbf{c} \right)$ after the monotonicity-preserving reparameterization of the cut points, and standard quasi-Newton methods converge quickly. Because the likelihood is a product of a choice component and an ordinal component, it can also be assembled in Apollo [@Hess_2019] from that package's standard building blocks, which we do as an independent check on our own code. Appendix E gives the details.
 
-The hierarchical model is estimated with a custom Markov chain Monte Carlo sampler, implemented in R and following the hybrid Gibbs architecture of @Rossi_2005: (1) a random-walk Metropolis step for each $\bfbeta_i$ (and $\bftheta_i$ in the heterogeneous-cut-point extension) using the individual likelihood $\prod_t \ell_{it}$; (2) a random-walk Metropolis step for the common cut-point block on the unconstrained scale; and (3) conjugate draws for the population moments $\left( \betabar, \Sigma_{\beta} \right)$. Model comparison uses the log marginal density approximated by the method of @Newton_1994, matching the practice in @Hung_2025_dual and permitting direct comparisons among our model, the logistic alternative, the binary dual-response models, and the practitioner heuristics. Complete replication code accompanies the paper. 
+The hierarchical model is estimated with a custom Markov chain Monte Carlo sampler, implemented in R and following the hybrid Gibbs architecture of @Rossi_2005: (1) a random-walk Metropolis step for each $\bfbeta_i$ (and $\bftheta_i$ in the heterogeneous-cut-point extension) using the individual likelihood $\prod_t \ell_{it}$; (2) a random-walk Metropolis step for the common cut-point block on the unconstrained scale; and (3) conjugate draws for the population moments $\left( \betabar, \Sigma_{\beta} \right)$. Model comparison uses the log marginal density approximated by the method of @Newton_1994, matching the practice in @Hung_2025_dual and permitting direct comparisons among our model, the binary dual-response models, and the practitioner heuristics. Complete replication code accompanies the paper. 

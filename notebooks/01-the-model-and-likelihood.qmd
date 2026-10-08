@@ -1,6 +1,6 @@
 ---
 title: "The Model and the Likelihood"
-subtitle: "Model A, worked end to end on a single configuration"
+subtitle: "The model, worked end to end on a single configuration"
 author:
   - name: Dan Yavorsky
   - name: Geoffery Zheng
@@ -19,12 +19,12 @@ execute:
 
 ## What this notebook does
 
-This notebook is the walkthrough. It takes one parameter configuration of Model A
+This notebook is the walkthrough. It takes one parameter configuration of the model
 and follows it the whole way: draw a design, simulate the behavioral process,
 write out the joint likelihood, maximize it, and check what comes back.
 
 Everything is self-contained, and the code is deliberately the simplest that will
-work. It handles Model A only and one configuration only, so nothing is
+work. It handles one link only and one configuration only, so nothing is
 generalized before it has been shown once. Notebook 02 takes the same machinery,
 generalizes it to both links, and runs it across configurations and repeated
 samples.
@@ -65,7 +65,7 @@ $$
 
 where $F(z) = \exp(-e^{-z})$ is the standard Gumbel CDF.
 
-**Model A** says she reports the interval containing that probability. Given cut
+**The model** says she reports the interval containing that probability. Given cut
 points $0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1$ on the
 probability scale,
 
@@ -125,7 +125,7 @@ One task is a set of rows: rows 1 to 4 are the four profiles of task 1, rows
 
 ## 3. True parameters
 
-We set the scale labels on the probability scale to make Model A
+We set the scale labels on the probability scale to make the model
 interpretable: $\alpha_1 = 0.10$ says that answering "1" means a purchase
 probability below ten percent.
 
@@ -174,7 +174,7 @@ simulate_modelA <- function(design, beta, cut, seed) {
   # (code operates as a matrix subset with a two-col matrix of positions)
   ustar <- u[cbind(seq_len(n), jstar)]
 
-  # Model A: she reports the interval holding p = F(ustar). Binning p against
+  # She reports the interval holding p = F(ustar). Binning p against
   # alpha is the same as binning ustar against cut, since F is increasing.
   y <- findInterval(ustar, cut) + 1L
 

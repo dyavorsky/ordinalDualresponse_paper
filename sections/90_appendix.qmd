@@ -145,14 +145,14 @@ The replication archive implements the model twice: once directly, in the routin
 
 **The logistic specification is native; ours is not.** With the second stage a cumulative logit in $\overline{\mu}_{it}$, The logistic specification is assembled from stock parts: `apollo_mnl` for the choice, `apollo_ol` for the follow-up with the task's inclusive value passed as its single explanatory variable and the cut points as its thresholds, and `apollo_combineModels` to join them. Our model has no stock part. Apollo supplies ordered components for the logistic and normal links and no others, so the complementary-log-log form @eq-modelA must be written out and passed through `apollo_ownModel`, the hook for user-defined likelihoods. This is a small piece of code, and once supplied it inherits the rest of the package. The asymmetry is worth noting for its own sake: the standard toolkit anticipates the behavior in which the respondent resolves her uncertainty before answering, and not the behavior in which she reports the probability she still holds.
 
-**Agreement.** @tbl-apollo reports the largest discrepancy between the two implementations over `r ap$settings$R_REPS` independent datasets of `r format(ap$settings$N_TASKS, big.mark = ",")` tasks in each of three configurations, with both implementations started from the same values.
+**Agreement.** @tbl-apollo reports the largest discrepancy between the two implementations over `r ap$settings$R_REPS` independent datasets of `r format(ap$settings$N_TASKS, big.mark = ",")` tasks in each of two configurations, with both implementations started from the same values.
 
 ```{r}
 #| label: tbl-apollo
 #| tbl-cap: "Largest absolute discrepancy between our maximum-likelihood routine and the same model estimated in Apollo, over five independent datasets per configuration (from R/apollo/compare_apollo.R)."
 #| echo: false
-tb <- ap$res
-tb$configuration <- c("Logistic, W = 5", "Our model, W = 5", "Logistic, W = 2 (binary)")
+tb <- ap$res[c(2, 3), ]
+tb$configuration <- c("Our model, W = 5", "Logistic, W = 2 (binary)")
 sci <- function(x) sprintf("%.0e", x)
 knitr::kable(
   data.frame(
