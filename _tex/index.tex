@@ -668,9 +668,8 @@ respondent's likelihood \(L_i = \prod_{t} L_{it}\). This factorization
 is a consequence of Lemma~\ref{lem-gumbel}(ii), the independence of the
 argmax and the maximum.
 
-Taking logs is what the estimator actually works with, and it is worth
-writing down because \(\ln S_{it} = \overline{\mu}_{it}\) collapses the
-first factor: \begin{equation}\protect\phantomsection\label{eq-loglik}{
+The per-task log-likelihood is therefore:
+\begin{equation}\protect\phantomsection\label{eq-loglik}{
 \ell_{it} = \underbrace{V_{itj^*} - \overline{\mu}_{it}}_{\text{choice}}
 \; + \;
 \underbrace{\ln \left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
@@ -678,11 +677,12 @@ first factor: \begin{equation}\protect\phantomsection\label{eq-loglik}{
 \(\ell = \sum_i \sum_t \ell_{it}\). The forced choice contributes the
 chosen good's utility measured against the inclusive value, so a task
 adds to the log-likelihood exactly to the extent that the chosen good
-stands out from the set. The second term needs care in computation. When
-a scale point is rarely used, the two powers differ only in a late
-decimal place, and subtracting them as written would discard most of the
-precision the computer has. The code evaluates an algebraically
-identical rearrangement that never forms that difference (Appendix B).
+stands out from the set. The ordinal report contributes the log of the
+\(\text{Beta}(S_{it},1)\) mass falling in the bin she chose, so it adds
+most when the attractiveness of the set sits where her answer puts it: a
+report near the top of the scale pulls \(\overline{\mu}_{it}\) up, one
+near the bottom pulls it down. The first term sees only how the goods
+compare with one another; the second only where they sit as a group.
 
 Two features of Equation~\ref{eq-joint} are worth marking. Both factors
 depend on the task only through the inclusive value \(S_{it}\) and the
@@ -1188,11 +1188,16 @@ The aggregate (homogeneous-\(\bfbeta\)) model is estimated by maximum
 likelihood: the log of Equation~\ref{eq-joint} summed over consumers and
 tasks is smooth in \(\left( \bfbeta, \mathbf{c} \right)\) after the
 monotonicity-preserving reparameterization of the cut points, and
-standard quasi-Newton methods converge quickly. Because the likelihood
-is a product of a choice component and an ordinal component, it can also
-be assembled in Apollo (Hess and Palma 2019) from that package's
-standard building blocks, which we do as an independent check on our own
-code. Appendix E gives the details.
+standard quasi-Newton methods converge quickly. One term needs care.
+When a scale point is rarely used, the two powers in
+Equation~\ref{eq-loglik} differ only in a late decimal place, and
+subtracting them as written would discard most of the precision the
+computer has; the code evaluates an algebraically identical
+rearrangement that never forms that difference (Appendix B). Because the
+likelihood is a product of a choice component and an ordinal component,
+it can also be assembled in Apollo (Hess and Palma 2019) from that
+package's standard building blocks, which we do as an independent check
+on our own code. Appendix E gives the details.
 
 The hierarchical model is estimated with a custom Markov chain Monte
 Carlo sampler, implemented in R and following the hybrid Gibbs
