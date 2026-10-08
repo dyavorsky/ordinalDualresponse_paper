@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{lemma}{Lemma}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -224,7 +224,7 @@ outside good}},
 \makeatother
 \subtitle{Ordinal Dual Response in Choice-Based Conjoint Analysis}
 \author{Dan Yavorsky \and Geoffery Zheng}
-\date{2026-10-07}
+\date{2026-10-08}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -284,41 +284,41 @@ ordinal.
 We start from the behavioral premise that a respondent facing a
 dual-response conjoint task can indicate her most-preferred product
 profile in the forced choice, but whether she would purchase her
-selection turns on the value of the outside good, which belongs to a
-future occasion about which she remains genuinely uncertain. That second
-question has been canonically binary: ``would you buy the option you
-selected above?'', answered yes or no and modeled by pairing a
-multinomial logit for the forced choice with a binary logit for the
-purchase question (Diener et al. 2006; Hung, Liu, et al. 2025). But a
-yes-or-no answer requires the respondent to settle something she has not
-yet had reason to settle. What she holds is a probability (Manski 1990).
-A finer scale asks instead for her degree of conviction, and carries
-more information about what she will do. The natural extension is
-therefore an ordinal dual-response follow-up, ``how likely are you to
-buy the option you selected above?'', answered, e.g., on a five-,
-seven-, or eleven-point scale from ``very unlikely'' to ``very likely.''
+selection is a question pertaining to a hypothetical future occasion
+about which she remains genuinely uncertain. That second question has
+been canonically binary: ``would you buy the option you selected
+above?'', answered yes or no and modeled by pairing a multinomial logit
+for the forced choice with a binary logit for the purchase question
+(Diener et al. 2006; Hung, Liu, et al. 2025). But a yes-or-no answer
+requires the respondent to settle something she has not yet had reason
+to settle. What she holds is a probability (Manski 1990). A finer scale
+would ask instead for her degree of conviction, and carry more
+information about what she will do. The natural extension is therefore
+an \emph{ordinal} dual-response follow-up, ``how likely are you to buy
+the option you selected above?'', answered, e.g., on a five-, seven-, or
+eleven-point scale from ``very unlikely'' to ``very likely.''
 
-The premise does two things. First, it delivers a closed-form
-likelihood: the maximum of Gumbel utilities is itself Gumbel, with
-location equal to the log-sum inclusive value, and independent of which
-alternative attains it, so the two responses factor and the model pairs
-a multinomial logit for the forced choice with a cumulative link for the
-ordinal report. Second, it fixes that link: because she has not resolved
-the outside good when she answers, she reports how likely she is to
-purchase, and the link is complementary log-log. The familiar ordered
-logit arises instead when the uncertainty is resolved before the
-follow-up, which is what the binary dual-response literature implicitly
-assumes. That assumption is exact for the question that literature asks:
-at two scale points the logistic link reproduces the ``Unified Model''
-of Hung, Liu, et al. (2025), equivalently the DR-AnyMax model of Diener
-et al. (2006) and, once the inclusive value cancels, the single-stage
-multinomial logit with a no-choice constant (Haaijer et al. 2001). It
-sits less comfortably on a longer scale, since a respondent who has
-resolved the outside good knows whether she would buy and has only the
-endpoints of a likelihood scale to report. Our model predicts a
-complementary log-log response even at two points, so the familiar
-yes/no follow-up is mildly misspecified whenever respondents remain
-uncertain.
+We formalize that uncertainty as a component of utility for the outside
+good that she has not yet resolved, and, in our primary specification,
+we let the error components (for both the inside goods and the outside
+good) be Gumbel (McFadden 1981; Train 2009). (Appendix D relaxes
+independence across goods to any generalized extreme value structure.)
+Together the behavioral premise and distributional kernel do two things
+for the model. First, they deliver a closed-form likelihood: the maximum
+of Gumbel utilities is itself Gumbel, with location equal to the log-sum
+inclusive value, and independent of which alternative attains it, so the
+two responses factor and the model pairs a multinomial logit for the
+forced choice with a cumulative link for the ordinal report. Second,
+they determine the link to be complementary log-log. The familiar
+ordered logit (logistic link) arises instead when the uncertainty is
+resolved before the follow-up, which is what the binary dual-response
+literature implicitly assumes. At two scale points the logistic link
+reproduces the ``Unified Model'' of Hung, Liu, et al. (2025),
+equivalently the DR-AnyMax model of Diener et al. (2006) and, once the
+inclusive value cancels, the single-stage multinomial logit with a
+no-choice constant (Haaijer et al. 2001). Our model predicts a
+complementary log-log binary response, so the familiar yes/no follow-up
+is mildly misspecified whenever respondents remain uncertain.
 
 We make four contributions. First, we develop the behavioral model: a
 utility-theoretic account of dual-response conjoint in which
@@ -339,12 +339,9 @@ with respondent-specific cut points that accommodates individual
 differences in scale usage (Greene and Hensher 2010; Falco et al. 2015),
 and an extension in which the outside-good shock persists across a
 respondent's tasks rather than being redrawn. We also express the model
-in Apollo (Hess and Palma 2019), a choice-modeling toolkit, both as an
-independent check on our own implementation and as a route for readers
-already working in that framework. The logistic specification assembles
-from standard Apollo components, while our model requires a user-defined
-component for the complementary log-log link. Fourth, we supply
-evidence, including simulation studies that demonstrate parameter
+in Apollo (Hess and Palma 2019) both as a check on our implementation
+and as a route for readers already working in that framework. Fourth, we
+supply evidence, including simulation studies that demonstrate parameter
 recovery and quantify the losses from dichotomization and
 constant-probability weighting, as well as an empirical application to a
 commercial choice-based conjoint study with an ordinal dual response,
@@ -356,10 +353,10 @@ Several literatures stand behind the model. Marketing work on
 dual-response and no-choice designs established why asking two questions
 beats adding ``none of these'' to the list of products: the preference
 information in a task survives even when the respondent would not buy.
-That work settled the conventions for estimating such models (Brazell et
-al. 2006; Diener et al. 2006; Haaijer et al. 2001; Hung, Liu, et al.
-2025), and it continues to refine the design. Schlereth and Skiera
-(2017) separate the forced and the free questions into blocks and add an
+That work set the conventions for estimating such models (Brazell et al.
+2006; Diener et al. 2006; Haaijer et al. 2001; Hung, Liu, et al. 2025),
+and it continues to refine the design. Schlereth and Skiera (2017)
+separate the forced and the free questions into blocks and add an
 adaptive rule for choosing which free questions to ask, which limits
 context effects and extreme response behavior when willingness to pay is
 the target. The appeal of the no-buy option also shifts as a respondent
@@ -670,7 +667,7 @@ alternative specification against which it is tested.
 
 By Lemma~\ref{lem-gumbel}(ii), the value of \(u^*_{it}\) is independent
 of the identity of \(j^*_{it}\); and \(\eta_{it0}\) is independent of
-the inside-good shocks. The two responses in a task are therefore
+the inside-good components. The two responses in a task are therefore
 independent conditional on \((\x_t, \bfbeta_i)\), and the per-task
 likelihood contribution is simply the product of Equation~\ref{eq-mnl}
 and Equation~\ref{eq-cumlink}:
@@ -711,10 +708,10 @@ consumer 1 faces an attractive pair, \(x = (2, 1)\), and consumer 2 an
 unattractive pair, \(x = (-1, -2)\).
 
 Consider the model's account of their behavior, giving both consumers
-the \emph{same} realized shocks \(\eta = (0.30, -0.86)\) on their two
-inside goods. Consumer 1's utilities are \(u = (2.30, 0.14)\): she picks
-her first good and knows her best utility, \(u^* = 2.30\). She cannot
-resolve the outside-good shock \(\eta_0\), so she reports the bin
+the \emph{same} realized components \(\eta = (0.30, -0.86)\) on their
+two inside goods. Consumer 1's utilities are \(u = (2.30, 0.14)\): she
+picks her first good and knows her best utility, \(u^* = 2.30\). She
+cannot resolve the outside-good shock \(\eta_0\), so she reports the bin
 containing her purchase probability \(p = F(2.30) = 0.90\), namely
 ``likely.'' Consumer 2's utilities are \(u = (-0.70, -2.86)\): she also
 picks her first good, but her best utility is \(u^* = -0.70\), her
@@ -723,10 +720,9 @@ purchase probability is \(F(-0.70) = 0.13\), and she reports
 resolve \(\eta_0\), say \(\eta_0 = 0.10\), and grade \(u^* - \eta_0\)
 against the same cut points: \(2.20\) and \(-0.80\), again ``likely''
 and ``unlikely.'') The two consumers made identical first-response
-choices from identical shock realizations, yet gave opposite second
-responses.
+choices from identical realizations, yet gave opposite second responses.
 
-The walkthrough above fixed one set of shocks. Averaging over all of
+The walkthrough above fixed one set of draws. Averaging over all of
 them, as the researcher must, we see that the pattern is not an accident
 of that particular draw (see Table~\ref{tbl-toy}). The forced-choice
 probabilities are the same function of the data for both consumers: the
@@ -911,7 +907,7 @@ same thing to everyone, while preferences vary.
 
 The logistic alternative as written gives the outside-good shock a task
 subscript: the consumer draws \(\eta_{it0}\) afresh on every screen. The
-inside goods legitimately earn new shocks each task, since each task
+inside goods legitimately draw new components each task, since each task
 shows new goods, but the outside option is the same object throughout
 her survey, and re-randomizing it between consecutive screens is a
 strong assumption to make silently. The alternative draws it once,
@@ -1503,7 +1499,7 @@ describe and fitting the model anyway on hierarchical panels.
   robustness insurance and a diagnostic, not a default, which is what
   the identification discussion anticipated.
 \item
-  \textbf{Non-Gumbel shocks.} With variance-matched normal first-stage
+  \textbf{Non-Gumbel errors.} With variance-matched normal first-stage
   errors, preference recovery and demand prediction are essentially
   unimpaired (individual RMSE 0.514, prediction RMSE 0.110); the
   misspecification is absorbed almost entirely by the cut-point
@@ -1806,7 +1802,7 @@ families outside that class do break the closed form: under a probit or
 a mixed logit with a correlated kernel the max utility has no
 closed-form distribution, and the second response would require
 simulation over it. Our robustness experiments soften the concern in one
-direction: with variance-matched normal shocks, preference and demand
+direction: with variance-matched normal errors, preference and demand
 estimates are essentially unimpaired, the misspecification being
 absorbed by the cut-point locations --- so structural interpretation of
 the cut points deserves more caution than the demand quantities built
@@ -1866,7 +1862,7 @@ second because the meaning of a scale label depends on what was on the
 screen. Simulation evidence confirms that the aggregate and hierarchical
 Bayesian estimators recover the model's parameters, including the cut
 points that give the scale labels quantitative meaning, and that the
-conclusions survive correlated alternatives, non-Gumbel shocks, and
+conclusions survive correlated alternatives, non-Gumbel errors, and
 drift in the outside good across a respondent's task sequence.
 
 The broader point is that a response format and the model that reads it
@@ -1942,7 +1938,7 @@ upper tails decay exponentially and are therefore shift-invariant:
 \(\Pr(u_1 > m) / \Pr(u_2 > m) = e^{V_1 - V_2}\) for every \(m\).
 
 This is a property of the extreme-value family and not of random utility
-models in general. Under normal shocks with \(V_1 > V_2\), the ratio of
+models in general. Under normal errors with \(V_1 > V_2\), the ratio of
 upper tails diverges as \(m\) grows, so a high realized maximum is
 disproportionately likely to have come from the better alternative. The
 level of the maximum then carries information about which alternative
@@ -2091,21 +2087,21 @@ and holdout comparisons as primary whenever the two disagree.
 \section*{Appendix D: Correlated Alternatives}\label{sec-appendix-gev}
 \addcontentsline{toc}{section}{Appendix D: Correlated Alternatives}
 
-Lemma~\ref{lem-gumbel} is stated for independent Gumbel shocks, and the
+Lemma~\ref{lem-gumbel} is stated for independent Gumbel errors, and the
 whole of Section~\ref{sec-model} rests on it. This appendix shows that
 both of its properties hold for the entire generalized extreme value
 (GEV) family of McFadden (1981), so that correlation among the inside
 goods costs the framework nothing beyond a redefinition of the inclusive
 value.
 
-Let the inside-good shocks have the GEV joint distribution
+Let the inside-good components have the GEV joint distribution
 \begin{equation}\protect\phantomsection\label{eq-gevcdf}{
 \Pr \left( \eta_1 \le e_1, \ldots, \eta_J \le e_J \right)
 = \exp \left( - G \left( e^{-e_1}, \ldots, e^{-e_J} \right) \right),
 }\end{equation} where the generator
 \(G : \mathbb{R}^J_{+} \to \mathbb{R}_{+}\) is homogeneous of degree
 one, tends to infinity in each argument, and has mixed partial
-derivatives that alternate in sign. Independent Gumbel shocks are the
+derivatives that alternate in sign. Independent Gumbel errors are the
 special case \(G(y) = \sum_j y_j\). Write \(y_j = \exp(V_j)\),
 \(G_j = \partial G / \partial y_j\), and
 \begin{equation}\protect\phantomsection\label{eq-gevmu}{
