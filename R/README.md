@@ -63,6 +63,14 @@ comparison). Re-running `R/apollo/compare_apollo.R` additionally needs **apollo*
 which is not required to render because the appendix reads the saved
 `apollo_compare.rds`.
 
+`compare_apollo.R` is reproducible within a fixed environment but not across
+dependency upgrades. Re-running it after apollo and its optimizer stack
+(`maxLik`, `bgw`) were reinstalled in 2026-10 moved the reported discrepancies
+by up to 13 percent, from 1.3e-06 to 1.5e-06 on the worst cell. These are
+gaps between two implementations, not estimates, so a shift of that size is
+convergence noise rather than a result changing. Expect small movement; worry
+only if a discrepancy leaves the 1e-06 neighbourhood.
+
 Frozen notebooks do not execute, so a missing package stays invisible until some
 edit invalidates a freeze. After an R upgrade, check all four before assuming the
 project builds:
