@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{lemma}{Lemma}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -458,8 +458,8 @@ In each task the consumer provides two responses:
   }\end{equation} This is a forced choice: the outside good is not among
   the options.
 \item
-  \textbf{Second response (ordinal purchase evaluation).} She reports a
-  value \(y_{it}\) on a discrete ordinal scale
+  \textbf{Second response (the ordinal report).} She reports a value
+  \(y_{it}\) on a discrete ordinal scale
   \(w \in \mathcal{W} = \lbrace 1, \ldots, W \rbrace\) (e.g., ``very
   unlikely'' to ``very likely'' on a five-point scale) that
   characterizes her evaluation of purchasing \(j^*_{it}\), that is, of
@@ -527,7 +527,7 @@ the consumer's uncertain evaluation of the outside good, which is the
 design's appeal (Brazell et al. 2006).
 
 \subsection{Second Response: An Ordinal Model of the Purchase
-Evaluation}\label{second-response-an-ordinal-model-of-the-purchase-evaluation}
+Report}\label{second-response-an-ordinal-model-of-the-purchase-report}
 
 What does the consumer consult when answering ``how likely are you to
 purchase the option you selected?'' Our premise answers the question:
@@ -658,15 +658,30 @@ independent conditional on \((\x_t, \bfbeta_i)\), and the per-task
 likelihood contribution is simply the product of Equation~\ref{eq-mnl}
 and Equation~\ref{eq-modelA}:
 \begin{equation}\protect\phantomsection\label{eq-joint}{
-\ell_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
+L_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
 = \underbrace{\frac{\exp \left( V_{itj^*} \right)}{S_{it}}}_{\text{choice}}
 \; \times \;
-\underbrace{\left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal purchase evaluation}},
+\underbrace{\left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
 }\end{equation} with
-\(\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_{W-1})\) and the full
-likelihood \(L_i = \prod_{t} \ell_{it}\). This factorization is a
-consequence of Lemma~\ref{lem-gumbel}(ii), the independence of the
+\(\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_{W-1})\), and the
+respondent's likelihood \(L_i = \prod_{t} L_{it}\). This factorization
+is a consequence of Lemma~\ref{lem-gumbel}(ii), the independence of the
 argmax and the maximum.
+
+Taking logs is what the estimator actually works with, and it is worth
+writing down because \(\ln S_{it} = \overline{\mu}_{it}\) collapses the
+first factor: \begin{equation}\protect\phantomsection\label{eq-loglik}{
+\ell_{it} = \underbrace{V_{itj^*} - \overline{\mu}_{it}}_{\text{choice}}
+\; + \;
+\underbrace{\ln \left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
+}\end{equation} with the sample log-likelihood
+\(\ell = \sum_i \sum_t \ell_{it}\). The forced choice contributes the
+chosen good's utility measured against the inclusive value, so a task
+adds to the log-likelihood exactly to the extent that the chosen good
+stands out from the set. The second term is a difference of two numbers
+that are close together whenever a category is unlikely, and is computed
+from tail-stable expressions rather than literally as written
+(\textbf{?@sec-appendix-estimation}).
 
 Two features of Equation~\ref{eq-joint} are worth marking. Both factors
 depend on the task only through the inclusive value \(S_{it}\) and the
@@ -1183,7 +1198,7 @@ Carlo sampler, implemented in R and following the hybrid Gibbs
 architecture of Rossi et al. (2005): (1) a random-walk Metropolis step
 for each \(\bfbeta_i\) (and \(\bftheta_i\) in the
 heterogeneous-cut-point extension) using the individual likelihood
-\(\prod_t \ell_{it}\); (2) a random-walk Metropolis step for the common
+\(\prod_t L_{it}\); (2) a random-walk Metropolis step for the common
 cut-point block on the unconstrained scale; and (3) conjugate draws for
 the population moments \(\left( \betabar, \Sigma_{\beta} \right)\).
 Model comparison uses the log marginal density approximated by the
@@ -1783,7 +1798,7 @@ model's binary case is a complementary log-log response, which implies
 that the familiar yes/no follow-up is mildly misspecified and can be
 checked on data already collected. A finer scale never subtracts
 information, and five points capture most of the gap between a binary
-answer and a continuous one. The two ways an ordinal answer is otherwise
+answer and a continuous one. The two ways an ordinal report is otherwise
 reduced to something the binary model accepts, collapsing the scale at
 an arbitrary point and assigning each point a fixed purchase
 probability, are respectively wasteful and internally inconsistent, the
