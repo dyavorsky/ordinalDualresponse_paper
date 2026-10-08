@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{lemma}{Lemma}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -733,14 +733,13 @@ forced-choice probabilities are the same function of the data for both
 consumers: the MNL depends only on the within-task difference
 \(x_1 - x_2 = 1\), so
 \(\Pr(\text{choose better good}) = \Lambda(\beta) = 0.73\) in both
-tasks. The forced choice records which option she preferred, never how
-much she wanted either one. More forced choices would not help, because
-every one of them has the same blind spot. The tasks separate only
-through the inclusive value (\(S_1 = e^2 + e^1 = 10.11\) versus
-\(S_2 = e^{-1} + e^{-2} = 0.50\), i.e., \(\overline{\mu}_1 = 2.31\)
-versus \(\overline{\mu}_2 = -0.69\)), which the cumulative-link stage
-compares against the cut points. (With \(c_1 = 0\), consumer 2's
-probability of ``unlikely'' is
+tasks. The forced choice reveals how much she prefers one option to the
+other, but nothing about how much she wants either. Instead, the tasks
+separate only through the inclusive value (\(S_1 = e^2 + e^1 = 10.11\)
+versus \(S_2 = e^{-1} + e^{-2} = 0.50\), i.e.,
+\(\overline{\mu}_1 = 2.31\) versus \(\overline{\mu}_2 = -0.69\)), which
+the cumulative-link stage compares against the cut points. (With
+\(c_1 = 0\), consumer 2's probability of ``unlikely'' is
 \(\Lambda(-\overline{\mu}_2) = 1/(1+S_2) = 0.67\), the familiar
 no-choice probability of the single-stage MNL, which previews the
 nesting results below.)
@@ -877,10 +876,15 @@ fixed purchase probability (e.g., ``definitely would buy'' \(= 0.9\))
 independent of the choice set. Both are nested within, or dominated by,
 Equation~\ref{eq-joint}: dichotomization is Equation~\ref{eq-collapseB}
 applied to a coarsened \(y_{it}\), and constant-probability weighting
-violates Equation~\ref{eq-modelA}, under which the mapping from scale
-point to purchase probability necessarily depends on the attractiveness
-of the inside goods through \(S_{it}\). These two reductions are the
-benchmarks in our simulation study (Section~\ref{sec-simstudy}).
+fixes a quantity the model makes variable: what a scale point is worth
+is Equation~\ref{eq-condexp}, which moves with the task through
+\(S_{it}\). Section~\ref{sec-toy} puts a number on it. Its two consumers
+are indistinguishable in the forced choice and both answer ``unsure,''
+yet the expected purchase probability behind that answer is \(0.80\) in
+one task and \(0.60\) in the other. No single value assigned to
+``unsure'' can be right for both, and the forced choice gives the
+analyst no way to tell which task she is in. These two reductions are
+the benchmarks in our simulation study (Section~\ref{sec-simstudy}).
 
 \subsection{Identification}\label{sec-identification}
 
@@ -1693,7 +1697,7 @@ threshold --- the pricing counterfactual's top-box analyst misstates the
 profit forecast by more than half for exactly that reason. Second,
 constant-probability weighting has a \emph{structural} flaw, not a
 statistical one: beyond the set-dependence of scale-point meaning
-(Equation~\ref{eq-modelA} and Table~\ref{tbl-toy}), a fixed purchase
+(Equation~\ref{eq-condexp} and Table~\ref{tbl-toy}), a fixed purchase
 incidence cancels out of every pricing first-order condition, so the
 heuristic's price recommendations ignore the no-buy margin entirely ---
 no amount of data fixes this. Third, the information results in
