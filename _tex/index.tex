@@ -590,6 +590,7 @@ probability mass shifts toward high scale points.\footnote{Equivalently,
   property,
   \(\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}\),
   which is the \(\text{Beta}(S,1)\) distribution function on \([0,1]\).}
+
 The distribution's mean is
 \(\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)\):
 averaged over everything the researcher cannot see, the probability of
@@ -601,8 +602,6 @@ she reported rescales it. A consumer who answers \(w\) has
 Because \(S_{it}\) appears here as well as in the bin boundaries, the
 same scale point implies different purchase probabilities in different
 tasks: what a label is worth depends on what was on the screen.
-Section~\ref{sec-toy} makes that concrete and Section~\ref{sec-nesting}
-turns it against the constant-probability heuristic.
 
 \subsubsection{The Resolved Comparison, and the Binary
 Incumbent}\label{sec-modelB}
@@ -710,16 +709,16 @@ with utility-scale cut points \(\mathbf{c} = (c_1, c_2) = (0, 2)\). (In
 our model these correspond to probability-scale cut points
 \(\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)\):
 the consumer answers ``unsure'' when her purchase probability lies
-between 37\% and 87\%.) The two tasks (one facing each respondent)
-differ only in the level of the attribute and not in its spread:
-consumer 1 faces an attractive pair, \(x = (2, 1)\), and consumer 2 an
-unattractive pair, \(x = (-1, -2)\).
+between 37\% and 87\%.) The two tasks (one facing each respondent) are
+designed such that they differ only in the level of the attribute and
+not in its spread: consumer 1 faces an attractive pair, \(x = (2, 1)\),
+and consumer 2 an unattractive pair, \(x = (-1, -2)\).
 
 Consider the model's account of their behavior, giving both consumers
-the \emph{same} realized components \(\eta = (0.30, -0.86)\) on their
-two inside goods. Consumer 1's utilities are \(u = (2.30, 0.14)\): she
-picks her first good and knows her best utility, \(u^* = 2.30\). She
-cannot resolve the outside-good shock \(\eta_0\), so she reports the bin
+the same realized components \(\eta = (0.30, -0.86)\) on their two
+inside goods. Consumer 1's utilities are \(u = (2.30, 0.14)\): she picks
+her first good and knows her best utility, \(u^* = 2.30\). She cannot
+resolve the outside-good shock \(\eta_0\), so she reports the bin
 containing her purchase probability \(p = F(2.30) = 0.90\), namely
 ``likely.'' Consumer 2's utilities are \(u = (-0.70, -2.86)\): she also
 picks her first good, but her best utility is \(u^* = -0.70\), her
@@ -729,16 +728,19 @@ from identical realizations, yet gave opposite second responses.
 
 The walkthrough above fixed one set of draws. Averaging over all of
 them, as the researcher must, we see that the pattern is not an accident
-of that particular draw (see Table~\ref{tbl-toy}). The forced-choice
-probabilities are the same function of the data for both consumers: the
-MNL depends only on the within-task difference \(x_1 - x_2 = 1\), so
+of that particular draw (see Table~\ref{tbl-toy} below). The
+forced-choice probabilities are the same function of the data for both
+consumers: the MNL depends only on the within-task difference
+\(x_1 - x_2 = 1\), so
 \(\Pr(\text{choose better good}) = \Lambda(\beta) = 0.73\) in both
-tasks, and no quantity of forced-choice data could ever distinguish
-them. The tasks separate only through the inclusive value
-(\(S_1 = e^2 + e^1 = 10.11\) versus \(S_2 = e^{-1} + e^{-2} = 0.50\),
-i.e., \(\overline{\mu}_1 = 2.31\) versus \(\overline{\mu}_2 = -0.69\)),
-which the cumulative-link stage compares against the cut points. (With
-\(c_1 = 0\), consumer 2's probability of ``unlikely'' is
+tasks. The forced choice records which option she preferred, never how
+much she wanted either one. More forced choices would not help, because
+every one of them has the same blind spot. The tasks separate only
+through the inclusive value (\(S_1 = e^2 + e^1 = 10.11\) versus
+\(S_2 = e^{-1} + e^{-2} = 0.50\), i.e., \(\overline{\mu}_1 = 2.31\)
+versus \(\overline{\mu}_2 = -0.69\)), which the cumulative-link stage
+compares against the cut points. (With \(c_1 = 0\), consumer 2's
+probability of ``unlikely'' is
 \(\Lambda(-\overline{\mu}_2) = 1/(1+S_2) = 0.67\), the familiar
 no-choice probability of the single-stage MNL, which previews the
 nesting results below.)
