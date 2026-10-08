@@ -573,15 +573,18 @@ Lemma~\ref{lem-gumbel}(i), so
 &= F_{\text{Gumbel}(\overline{\mu}_{it},1)} \left( F^{-1}(\alpha_w) \right) - F_{\text{Gumbel}(\overline{\mu}_{it},1)} \left( F^{-1}(\alpha_{w-1}) \right) \\
 &= \alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}},
 \end{aligned}
-}\end{equation} using
-\(F_{\text{Gumbel}(\overline{\mu},1)}(c) = \exp\left(-e^{-(c - \overline{\mu})}\right) = \exp\left( e^{\overline{\mu}} \ln \alpha \right) = \alpha^{S}\)
-when \(c = F^{-1}(\alpha) = -\ln(-\ln \alpha)\). The second-response
-probabilities are differences of powers of the cut points, with the
-exponent \(S_{it} = e^{\overline{\mu}_{it}}\) summarizing the
-attractiveness of the task's inside goods: the more attractive the set,
-the more probability mass shifts toward high scale points.\footnote{Equivalently,
-  from the researcher's perspective the consumer's purchase probability
-  is Beta distributed,
+}\end{equation} Plugging \(c = F^{-1}(\alpha) = -\ln(-\ln \alpha)\) into
+the Gumbel distribution function gives the second line. That choice of
+\(c\) makes \(e^{-c} = -\ln \alpha\), hence
+\(e^{-(c - \overline{\mu}_{it})} = e^{\overline{\mu}_{it}} e^{-c} = -S_{it} \ln \alpha\),
+and so
+\(F_{\text{Gumbel}(\overline{\mu}_{it},1)}(c) = \exp\left( -e^{-(c - \overline{\mu}_{it})} \right) = \exp\left( S_{it} \ln \alpha \right) = \alpha^{S_{it}}\).
+The second-response probabilities are differences of powers of the cut
+points, with the exponent \(S_{it} = e^{\overline{\mu}_{it}}\)
+summarizing the attractiveness of the task's inside goods: the more
+attractive the set, the more probability mass shifts toward high scale
+points.\footnote{Equivalently, from the researcher's perspective the
+  consumer's purchase probability is Beta distributed,
   \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\). The Gumbel family
   is max-stable, so a shift in location is a power of the distribution
   function, \(F_{\text{Gumbel}(\overline{\mu},1)}(z) = F(z)^{S}\) with
@@ -600,10 +603,16 @@ Incumbent}\label{sec-modelB}
 Suppose instead that the consumer resolves the outside-good shock before
 answering and evaluates the realized utility difference \[
 d_{it} = u^*_{it} - \eta_{it0}.
-\] The binary question asks only for the sign of \(d_{it}\). Here she
-grades its magnitude on the \(W\)-point scale: fix utility-scale cut
-points \(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and
-suppose \begin{equation}\protect\phantomsection\label{eq-reportruleB}{
+\] The binary question asks only for the sign of \(d_{it}\), which is
+exactly what a consumer in this position can supply. Suppose she were
+also asked to grade its magnitude on a \(W\)-point scale. We know of no
+natural wording for that request: having resolved the comparison she has
+no likelihood left to report, and any graded answer would have to be
+read as an intensity rather than a probability. We carry the
+construction regardless, because at \(W=2\) it reduces to the incumbent
+binary model. Formally, fix utility-scale cut points
+\(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and suppose
+\begin{equation}\protect\phantomsection\label{eq-reportruleB}{
 y_{it} = w
 \quad \Longleftrightarrow \quad
 d_{it} \in \left[ c_{w-1}, c_w \right).
