@@ -28,7 +28,7 @@ This is a forced choice: the outside good is not among the options.
 
 We model $\eta_{itj} \iid \text{Gumbel} \left( 0,1 \right)$, independent of $\x_{tj}$ and independent across goods, tasks, and consumers. This is the logit kernel standard in discrete choice [@Mcfadden_1981; @Train_2009], inherited by choice-based conjoint. The independence across goods is stronger than our derivation needs. Appendix D shows that @lem-gumbel holds for any generalized extreme value error structure once $S_{it}$ is replaced by the GEV generator, so the following results carry over to correlated alternatives, but for exposition we proceed with the independent errors assumption.
 
-Two classical properties of the Gumbel family are used throughout [@Mcfadden_1981; @Cardell_1997].
+Two classical properties of the Gumbel family are used throughout [@Mcfadden_1981].
 
 ::: {#lem-gumbel}
 Let $u_{itj} = V_{itj} + \eta_{itj}$ with $\eta_{itj} \iid \text{Gumbel}(0,1)$ for $j \in \mathcal{J}^+$, and define $u^*_{it} = \max_{j \in \mathcal{J}^+} u_{itj}$. Then
@@ -40,10 +40,10 @@ $$
 S_{it} \coloneqq \sum_{j\in\mathcal{J}^{+}} \exp \left( V_{itj} \right);
 $$ {#eq-max-mu}
 
-(ii) the *identity* of the maximizer $j^*_{it}$ and the *value* of the maximum $u^*_{it}$ are statistically independent.
+(ii) the identity of the maximizer $j^*_{it}$ and the value of the maximum $u^*_{it}$ are statistically independent.
 :::
 
-Property (ii) makes the dual-response likelihood tractable: whatever the consumer tells us about the level of her best utility (the second response) is independent of which good delivered it (the first response), conditional on the deterministic utilities. Proofs are in Appendix A.
+Property (ii) makes the dual-response likelihood tractable: whatever the consumer tells us about the level of her best utility (the second response) is independent of which good delivered it (the first response), conditional on the deterministic utilities. Both properties are standard; Appendix A reproduces the short derivation, since the factorization in (ii) is what the rest of the paper rests on.
 
 ### First Response: Multinomial Logit
 
