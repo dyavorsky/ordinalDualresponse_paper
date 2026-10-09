@@ -43,9 +43,7 @@ $$ {#eq-max-mu}
 (ii) the identity of the maximizer $j^*_{it}$ and the value of the maximum $u^*_{it}$ are statistically independent.
 :::
 
-Property (ii) makes the dual-response likelihood tractable: whatever the consumer tells us about the level of her best utility (the second response) is independent of which good delivered it (the first response), conditional on the deterministic utilities. Both properties are standard; Appendix A reproduces the short derivation, since the factorization in (ii) is what the rest of the paper rests on.
-
-The scale labels are fixed by $W-1$ interior cut points, which we carry in two equivalent representations. On the probability scale we write $\boldsymbol{\alpha} = \left( \alpha_1, \ldots, \alpha_{W-1} \right)$ with $0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1$; on the utility scale, $c_w = F^{-1}(\alpha_w)$ with $F(z) = \exp(-e^{-z})$ the standard Gumbel distribution function, so that $-\infty = c_0 < c_1 < \cdots < c_W = \infty$. These are the same thresholds in different units. We state the model in $\boldsymbol{\alpha}$, because those numbers say what a scale label is worth, and work in $\mathbf{c}$ wherever the argument concerns the location of $\overline{\mu}_{it}$. Identification, the specification tests and estimation all sit on the utility scale for the same reason: a common shift in utilities is additive in $\mathbf{c}$ and a power in $\boldsymbol{\alpha}$.
+Property (ii) makes the dual-response likelihood tractable: whatever the consumer tells us about the level of her best utility (the second response) is independent of which good delivered it (the first response), conditional on the deterministic utilities. Both properties are standard; Appendix A reproduces the short derivation.
 
 ### First Response: Multinomial Logit
 
@@ -67,7 +65,7 @@ The consumer carries her uncertainty about the outside good into her answer and 
 $$
 p_{it} = \Pr \left( \eta_{it0} < u^*_{it} \mid u^*_{it} \right) = F\left( u^*_{it} \right),
 $$ {#eq-purchprob}
-with $F$ as defined above. The ordinal scale discretizes the unit interval, and the consumer reports
+where $F(z) = \exp(-e^{-z})$ is the standard Gumbel CDF. The ordinal scale discretizes the unit interval: fix cut points $0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1$ and suppose the consumer reports
 $$
 y_{it} = w
 \quad \Longleftrightarrow \quad
@@ -100,7 +98,7 @@ Suppose instead that the consumer resolves the outside-good shock before answeri
 $$
 d_{it} = u^*_{it} - \eta_{it0}.
 $$
-The binary question asks only for the sign of $d_{it}$, which is exactly what a consumer in this position can supply. Suppose she were also asked to grade its magnitude on a $W$-point scale. We know of no natural wording for that request: having resolved the comparison she has no likelihood left to report, and any graded answer would have to be read as an intensity rather than a probability. We carry the construction regardless, because at $W=2$ it reduces to the incumbent binary model. Formally, on the utility scale, suppose
+The binary question asks only for the sign of $d_{it}$, which is exactly what a consumer in this position can supply. Suppose she were also asked to grade its magnitude on a $W$-point scale. We know of no natural wording for that request: having resolved the comparison she has no likelihood left to report, and any graded answer would have to be read as an intensity rather than a probability. We carry the construction regardless, because at $W=2$ it reduces to the incumbent binary model. Formally, fix utility-scale cut points $-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty$ and suppose
 $$
 y_{it} = w
 \quad \Longleftrightarrow \quad
@@ -115,11 +113,16 @@ $$
 $$ {#eq-modelB}
 This is an ordered logit [@Greene_2010] with the inclusive value $\overline{\mu}_{it}$ as the (negatively signed) linear predictor. The assumption that she resolves the shock before answering is what underlies the binary dual-response models. @Hung_2025_dual state it explicitly, specifying that respondents bring the same private information to both responses, and derive the binary case from it; @Diener_2006 reach the same functional form by a different route. It is not our model, but it is the specification the existing binary literature uses, and @sec-nesting shows why that use is well founded at $W=2$.
 
-Both accounts therefore share a form. Written on the utility scale, the second response is a cumulative link in the inclusive value,
+
+#### A Common Form, and the Two Scales
+
+The two accounts differ in where they place the thresholds, not in the shape of the model that results. @eq-reportruleA fixes them on the probability scale, where $\alpha_w$ says directly what a scale label means; @eq-reportruleB fixes them on the utility scale, where $\mathbf{c}$ sits alongside $\overline{\mu}_{it}$. They are the same thresholds in different units, related by $c_w = F^{-1}(\alpha_w)$. Written on the utility scale, the second response is in both cases a cumulative link in the inclusive value,
 $$
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right),
 $$ {#eq-cumlink}
 the complementary log-log link. Replacing $F$ with the logistic $\Lambda$ gives @eq-modelB, which we invoke only at $W=2$, where it is the incumbent binary model (@sec-nesting).
+
+Both scales are used below, and for a reason. We state the model in $\boldsymbol{\alpha}$, because those numbers say what a scale label is worth and are what an application reports. We work in $\mathbf{c}$ wherever the argument concerns the location of $\overline{\mu}_{it}$: identification, the specification tests, the information results and estimation all sit on the utility scale, because a common shift in utilities is additive in $\mathbf{c}$ and a power in $\boldsymbol{\alpha}$.
 
 
 ### Joint Likelihood
@@ -193,7 +196,7 @@ With $\gamma = 0$ these are exactly the joint probabilities of the "Unified Mode
 
 ### Identification {#sec-identification}
 
-Because the second response depends on the choice set only through the log-sum $\overline{\mu}_{it}$, and because the cut points sit on the same utility scale as $\overline{\mu}_{it}$, the model requires a location normalization. This subsection makes the requirement precise. Fix the aggregate model ($\bfbeta_i = \bfbeta$), which makes the consumer index redundant, and let a task $t$ have inside-good attribute vectors $\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}$ and responses $\left( j^*_t, y_t \right)$ generated by @eq-joint with parameter $\theta = \left( \bfbeta, \mathbf{c} \right) \in \mathbb{R}^P \times \mathcal{C}$, where $\mathcal{C} = \lbrace \mathbf{c} : c_1 < \cdots < c_{W-1} \rbrace$. Call $\theta$ and $\theta'$ *observationally equivalent* if they imply the same joint probabilities $\Pr_\theta \left( j^*_t = j, y_t = w \right)$ for every task design in the support of the design distribution, and let $X$ denote the design matrix that stacks the rows $\x_{tj}'$ over all inside goods and tasks in that support.
+Because the second response depends on the choice set only through the log-sum $\overline{\mu}_{it}$, and because the cut points sit on the same utility scale as $\overline{\mu}_{it}$, the model requires a location normalization. This subsection makes the requirement precise. Fix the aggregate model ($\bfbeta_i = \bfbeta$) and let a task $t$ have inside-good attribute vectors $\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}$ and responses $\left( j^*_t, y_t \right)$ generated by @eq-joint with parameter $\theta = \left( \bfbeta, \mathbf{c} \right) \in \mathbb{R}^P \times \mathcal{C}$, where $\mathcal{C} = \lbrace \mathbf{c} : c_1 < \cdots < c_{W-1} \rbrace$. Call $\theta$ and $\theta'$ *observationally equivalent* if they imply the same joint probabilities $\Pr_\theta \left( j^*_t = j, y_t = w \right)$ for every task design in the support of the design distribution, and let $X$ denote the design matrix that stacks the rows $\x_{tj}'$ over all inside goods and tasks in that support.
 
 ::: {#prp-ident}
 $\theta = \left( \bfbeta, \mathbf{c} \right)$ is identified if and only if the augmented matrix $\left[ X \;\; \iota \right]$ has full column rank $P+1$, where $\iota$ is a conformable vector of ones. Equivalently: the only $\left( v, \delta \right) \in \mathbb{R}^P \times \mathbb{R}$ satisfying $\x_{tj}'v = \delta$ for every inside good $j$ and task $t$ is $\left( v, \delta \right) = \left( \mathbf{0}, 0 \right)$.
