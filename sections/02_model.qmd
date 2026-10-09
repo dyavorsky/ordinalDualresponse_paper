@@ -116,11 +116,11 @@ This is an ordered logit [@Greene_2010] with the inclusive value $\overline{\mu}
 
 #### A Common Form, and the Two Scales
 
-Two reporting rules are now on the table: she reports the probability she still holds (@eq-reportruleA), or she resolves the outside good and grades the comparison that results (@eq-reportruleB). They produce a second response of the same form, differing in the link function and in the scale on which the thresholds are naturally written. The first places them on the probability scale, where $\alpha_w$ says directly what a scale label means; the second places them on the utility scale, alongside $\overline{\mu}_{it}$. Our thresholds have a utility-scale representation as well, $c_w = F^{-1}(\alpha_w)$, and written that way the second response is in both cases a cumulative link in the inclusive value,
+Two reporting rules — she reports the probability she still holds (@eq-reportruleA), or she resolves the outside good and grades the comparison that results (@eq-reportruleB) — produce a second response of the same form, differing in the link function and in the scale on which the thresholds are naturally written. The first places them on the probability scale, where $\alpha_w$ says directly what a scale label means; the second places them on the utility scale, alongside $\overline{\mu}_{it}$. The two scales are related by $c_w = F^{-1}(\alpha_w)$, and written on the utility scale both rules give a cumulative link in the inclusive value,
 $$
-\Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right),
+\Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right).
 $$ {#eq-cumlink}
-the complementary log-log link. Replacing $F$ with the logistic $\Lambda$ gives @eq-modelB, which we invoke only at $W=2$, where it is the incumbent binary model (@sec-nesting).
+Ours is the complementary log-log link. Replacing $F$ with the logistic $\Lambda$ gives @eq-modelB, which we invoke only at $W=2$, where it is the incumbent binary model (@sec-nesting).
 
 Both scales are used below, and for a reason. We state the model in $\boldsymbol{\alpha}$ to capture the value of the scale labels, which is what an application reports. We work in $\mathbf{c}$ wherever the argument concerns the location of $\overline{\mu}_{it}$: identification, the specification tests, the information results and estimation all sit on the utility scale, because a common shift in utilities is additive in $\mathbf{c}$ and a power in $\boldsymbol{\alpha}$.
 
