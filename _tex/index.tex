@@ -509,24 +509,7 @@ Property (ii) makes the dual-response likelihood tractable: whatever the
 consumer tells us about the level of her best utility (the second
 response) is independent of which good delivered it (the first
 response), conditional on the deterministic utilities. Both properties
-are standard; Appendix A reproduces the short derivation, since the
-factorization in (ii) is what the rest of the paper rests on.
-
-The scale labels are fixed by \(W-1\) interior cut points, which we
-carry in two equivalent representations. On the probability scale we
-write
-\(\boldsymbol{\alpha} = \left( \alpha_1, \ldots, \alpha_{W-1} \right)\)
-with \(0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1\);
-on the utility scale, \(c_w = F^{-1}(\alpha_w)\) with
-\(F(z) = \exp(-e^{-z})\) the standard Gumbel distribution function, so
-that \(-\infty = c_0 < c_1 < \cdots < c_W = \infty\). These are the same
-thresholds in different units. We state the model in
-\(\boldsymbol{\alpha}\), because those numbers say what a scale label is
-worth, and work in \(\mathbf{c}\) wherever the argument concerns the
-location of \(\overline{\mu}_{it}\). Identification, the specification
-tests and estimation all sit on the utility scale for the same reason: a
-common shift in utilities is additive in \(\mathbf{c}\) and a power in
-\(\boldsymbol{\alpha}\).
+are standard; Appendix A reproduces the short derivation.
 
 \subsection{First Response: Multinomial
 Logit}\label{first-response-multinomial-logit}
@@ -566,8 +549,10 @@ perspective the probability that she would follow through and purchase
 \(j^*_{it}\) is
 \begin{equation}\protect\phantomsection\label{eq-purchprob}{
 p_{it} = \Pr \left( \eta_{it0} < u^*_{it} \mid u^*_{it} \right) = F\left( u^*_{it} \right),
-}\end{equation} with \(F\) as defined above. The ordinal scale
-discretizes the unit interval, and the consumer reports
+}\end{equation} where \(F(z) = \exp(-e^{-z})\) is the standard Gumbel
+CDF. The ordinal scale discretizes the unit interval: fix cut points
+\(0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1\) and
+suppose the consumer reports
 \begin{equation}\protect\phantomsection\label{eq-reportruleA}{
 y_{it} = w
 \quad \Longleftrightarrow \quad
@@ -630,7 +615,8 @@ natural wording for that request: having resolved the comparison she has
 no likelihood left to report, and any graded answer would have to be
 read as an intensity rather than a probability. We carry the
 construction regardless, because at \(W=2\) it reduces to the incumbent
-binary model. Formally, on the utility scale, suppose
+binary model. Formally, fix utility-scale cut points
+\(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and suppose
 \begin{equation}\protect\phantomsection\label{eq-reportruleB}{
 y_{it} = w
 \quad \Longleftrightarrow \quad
@@ -656,14 +642,33 @@ different route. It is not our model, but it is the specification the
 existing binary literature uses, and Section~\ref{sec-nesting} shows why
 that use is well founded at \(W=2\).
 
-Both accounts therefore share a form. Written on the utility scale, the
-second response is a cumulative link in the inclusive value,
+\subsubsection{A Common Form, and the Two
+Scales}\label{a-common-form-and-the-two-scales}
+
+The two accounts differ in where they place the thresholds, not in the
+shape of the model that results. Equation~\ref{eq-reportruleA} fixes
+them on the probability scale, where \(\alpha_w\) says directly what a
+scale label means; Equation~\ref{eq-reportruleB} fixes them on the
+utility scale, where \(\mathbf{c}\) sits alongside
+\(\overline{\mu}_{it}\). They are the same thresholds in different
+units, related by \(c_w = F^{-1}(\alpha_w)\). Written on the utility
+scale, the second response is in both cases a cumulative link in the
+inclusive value,
 \begin{equation}\protect\phantomsection\label{eq-cumlink}{
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right),
 }\end{equation} the complementary log-log link. Replacing \(F\) with the
 logistic \(\Lambda\) gives Equation~\ref{eq-modelB}, which we invoke
 only at \(W=2\), where it is the incumbent binary model
 (Section~\ref{sec-nesting}).
+
+Both scales are used below, and for a reason. We state the model in
+\(\boldsymbol{\alpha}\), because those numbers say what a scale label is
+worth and are what an application reports. We work in \(\mathbf{c}\)
+wherever the argument concerns the location of \(\overline{\mu}_{it}\):
+identification, the specification tests, the information results and
+estimation all sit on the utility scale, because a common shift in
+utilities is additive in \(\mathbf{c}\) and a power in
+\(\boldsymbol{\alpha}\).
 
 \subsection{Joint Likelihood}\label{joint-likelihood}
 
@@ -888,11 +893,11 @@ Because the second response depends on the choice set only through the
 log-sum \(\overline{\mu}_{it}\), and because the cut points sit on the
 same utility scale as \(\overline{\mu}_{it}\), the model requires a
 location normalization. This subsection makes the requirement precise.
-Fix the aggregate model (\(\bfbeta_i = \bfbeta\)), which makes the
-consumer index redundant, and let a task \(t\) have inside-good
-attribute vectors \(\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}\) and
-responses \(\left( j^*_t, y_t \right)\) generated by
-Equation~\ref{eq-joint} with parameter
+Fix the aggregate model (\(\bfbeta_i = \bfbeta\)) and let a task \(t\)
+have inside-good attribute vectors
+\(\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}\) and responses
+\(\left( j^*_t, y_t \right)\) generated by Equation~\ref{eq-joint} with
+parameter
 \(\theta = \left( \bfbeta, \mathbf{c} \right) \in \mathbb{R}^P \times \mathcal{C}\),
 where
 \(\mathcal{C} = \lbrace \mathbf{c} : c_1 < \cdots < c_{W-1} \rbrace\).
