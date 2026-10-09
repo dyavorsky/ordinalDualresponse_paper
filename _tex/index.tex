@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{lemma}{Lemma}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -224,7 +224,7 @@ outside good}},
 \makeatother
 \subtitle{Ordinal Dual Response in Choice-Based Conjoint Analysis}
 \author{Dan Yavorsky \and Geoffery Zheng}
-\date{2026-10-08}
+\date{2026-10-09}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -512,6 +512,22 @@ response), conditional on the deterministic utilities. Both properties
 are standard; Appendix A reproduces the short derivation, since the
 factorization in (ii) is what the rest of the paper rests on.
 
+One piece of notation is used throughout. The scale labels are fixed by
+\(W-1\) interior cut points, which we carry in two equivalent
+representations. On the probability scale we write
+\(\boldsymbol{\alpha} = \left( \alpha_1, \ldots, \alpha_{W-1} \right)\)
+with \(0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1\);
+on the utility scale, \(c_w = F^{-1}(\alpha_w)\) with
+\(F(z) = \exp(-e^{-z})\) the standard Gumbel distribution function, so
+that \(-\infty = c_0 < c_1 < \cdots < c_W = \infty\). These are the same
+thresholds in different units. We state the model in
+\(\boldsymbol{\alpha}\), because those numbers say what a scale label is
+worth, and work in \(\mathbf{c}\) wherever the argument concerns the
+location of \(\overline{\mu}_{it}\). Identification, the specification
+tests and estimation all sit on the utility scale for the same reason: a
+common shift in utilities is additive in \(\mathbf{c}\) and a power in
+\(\boldsymbol{\alpha}\).
+
 \subsection{First Response: Multinomial
 Logit}\label{first-response-multinomial-logit}
 
@@ -550,10 +566,8 @@ perspective the probability that she would follow through and purchase
 \(j^*_{it}\) is
 \begin{equation}\protect\phantomsection\label{eq-purchprob}{
 p_{it} = \Pr \left( \eta_{it0} < u^*_{it} \mid u^*_{it} \right) = F\left( u^*_{it} \right),
-}\end{equation} where \(F(z) = \exp(-e^{-z})\) is the standard Gumbel
-CDF. The ordinal scale discretizes the unit interval: fix cut points
-\(0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1\) and
-suppose the consumer reports
+}\end{equation} with \(F\) as defined above. The ordinal scale
+discretizes the unit interval, and the consumer reports
 \begin{equation}\protect\phantomsection\label{eq-reportruleA}{
 y_{it} = w
 \quad \Longleftrightarrow \quad
@@ -616,8 +630,7 @@ natural wording for that request: having resolved the comparison she has
 no likelihood left to report, and any graded answer would have to be
 read as an intensity rather than a probability. We carry the
 construction regardless, because at \(W=2\) it reduces to the incumbent
-binary model. Formally, fix utility-scale cut points
-\(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and suppose
+binary model. Formally, on the utility scale, suppose
 \begin{equation}\protect\phantomsection\label{eq-reportruleB}{
 y_{it} = w
 \quad \Longleftrightarrow \quad
@@ -643,15 +656,11 @@ different route. It is not our model, but it is the specification the
 existing binary literature uses, and Section~\ref{sec-nesting} shows why
 that use is well founded at \(W=2\).
 
-Both accounts therefore share a form. Define \(c_w = F^{-1}(\alpha_w)\)
-so that the probability-scale cut points of
-Equation~\ref{eq-reportruleA} sit on the utility scale alongside those
-of Equation~\ref{eq-reportruleB}. The second response is then a
-cumulative link in the inclusive value,
+Both accounts therefore share a form. Written on the utility scale, the
+second response is a cumulative link in the inclusive value,
 \begin{equation}\protect\phantomsection\label{eq-cumlink}{
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right),
-}\end{equation} the complementary log-log link, with \(F\) the standard
-Gumbel distribution function throughout. Replacing \(F\) with the
+}\end{equation} the complementary log-log link. Replacing \(F\) with the
 logistic \(\Lambda\) gives Equation~\ref{eq-modelB}, which we invoke
 only at \(W=2\), where it is the incumbent binary model
 (Section~\ref{sec-nesting}).
@@ -832,10 +841,7 @@ single-stage MNL with a no-choice alternative-specific constant (Haaijer
 et al. 2001). The cumulative-link framework of Equation~\ref{eq-cumlink}
 thus contains the leading binary dual-response model exactly, as its
 two-point case under the logistic link, and for \(W>2\) the additional
-cut points are the only new parameters. What the framework contains,
-however, our model does not reproduce: at \(W=2\) it predicts a
-different link, which is the content of the next paragraph and is
-testable on data already collected.
+cut points are the only new parameters.
 
 \textbf{Binary dual response, our model.} Set \(W=2\) in
 Equation~\ref{eq-modelA}:
@@ -843,12 +849,7 @@ Equation~\ref{eq-modelA}:
 a complementary log-log rather than logistic binary response. Our model
 therefore implies that even the familiar binary dual response is
 misspecified, if mildly given the proximity of the links, when consumers
-genuinely face outside-good uncertainty at the moment they answer. This
-is where the two accounts are furthest apart in practical terms and
-closest together numerically, and it converts a modelling disagreement
-into an exercise any reader can run: refit the second stage of an
-existing binary dual-response study with a complementary log-log link
-and compare.
+genuinely face outside-good uncertainty at the moment they answer.
 
 \textbf{DR-2Max.} The other binary model in the literature, ``DR-2Max''
 (Diener et al. 2006), as implemented in Sawtooth Software's CBC/HB
@@ -860,11 +861,7 @@ stage, so that the consumer who just declared \(j^*\) best re-evaluates
 it from scratch. Under our framework such conditioning is unnecessary:
 by Lemma~\ref{lem-gumbel}(ii) the distribution of the best utility does
 not depend on which good attained it, so the second response should
-depend on the set only through \(\overline{\mu}_{it}\). This distinction
-is testable, and the existing evidence favors the inclusive-value form,
-which our framework implies rather than assumes: Diener et al. (2006)
-found DR-AnyMax fit dual-response data better than DR-2Max, and Hung,
-Liu, et al. (2025) reach the same conclusion for their Unified Model.
+depend on the set only through \(\overline{\mu}_{it}\).
 
 \textbf{Reductions to the binary model.} An ordinal response can be
 reduced to a form the binary model accepts in two ways: (i)
@@ -873,31 +870,29 @@ box or top two boxes) and estimating the binary model, which discards
 the ordinal information and hard-codes an arbitrary cut; or (ii)
 \emph{constant-probability weighting}, mapping each scale point to a
 fixed purchase probability (e.g., ``definitely would buy'' \(= 0.9\))
-independent of the choice set. Both are nested within, or dominated by,
-Equation~\ref{eq-joint}: dichotomization is Equation~\ref{eq-collapseB}
-applied to a coarsened \(y_{it}\), and constant-probability weighting
-fixes a quantity the model makes variable: what a scale point is worth
-is Equation~\ref{eq-condexp}, which moves with the task through
-\(S_{it}\). Section~\ref{sec-toy} puts a number on it. Its two consumers
-are indistinguishable in the forced choice and both answer ``unsure,''
-yet the expected purchase probability behind that answer is \(0.80\) in
-one task and \(0.60\) in the other. No single value assigned to
-``unsure'' can be right for both, and the forced choice gives the
-analyst no way to tell which task she is in. These two reductions are
-the benchmarks in our simulation study (Section~\ref{sec-simstudy}).
+independent of the choice set. These two reductions are the benchmarks
+in our simulation study (Section~\ref{sec-simstudy}). Both are nested
+within, or dominated by, Equation~\ref{eq-joint}: dichotomization is
+Equation~\ref{eq-collapseB} applied to a coarsened \(y_{it}\), and
+constant-probability weighting fixes the value of a scale point, which
+by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\).
+Section~\ref{sec-toy} demonstrates the latter: the two consumers in the
+simple example are indistinguishable in the forced choice and both
+answer ``unsure,'' yet their expected purchase probabilities are
+\(0.80\) in one task and \(0.60\) in the other. No single value assigned
+to ``unsure'' can be right for both.
 
 \subsection{Identification}\label{sec-identification}
 
-Because the second response depends on the choice set only through
-\(\overline{\mu}_{it}\), and because the cut points sit on the same
-utility scale as \(\overline{\mu}_{it}\), the model requires a location
-normalization, and given a suitable design it requires nothing further.
-This subsection makes the requirement precise. Fix the aggregate model
-(\(\bfbeta_i = \bfbeta\)) and let the data consist of tasks
-\(t=1,\ldots,n\) with inside-good attribute vectors
-\(\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}\) and responses
-\(\left( j^*_t, y_t \right)\) generated by Equation~\ref{eq-joint} with
-parameter
+Because the second response depends on the choice set only through the
+log-sum \(\overline{\mu}_{it}\), and because the cut points sit on the
+same utility scale as \(\overline{\mu}_{it}\), the model requires a
+location normalization. This subsection makes the requirement precise.
+Fix the aggregate model (\(\bfbeta_i = \bfbeta\)), which makes the
+consumer index redundant, and let a task \(t\) have inside-good
+attribute vectors \(\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}\) and
+responses \(\left( j^*_t, y_t \right)\) generated by
+Equation~\ref{eq-joint} with parameter
 \(\theta = \left( \bfbeta, \mathbf{c} \right) \in \mathbb{R}^P \times \mathcal{C}\),
 where
 \(\mathcal{C} = \lbrace \mathbf{c} : c_1 < \cdots < c_{W-1} \rbrace\).
@@ -1030,19 +1025,6 @@ manifest as an ill-conditioned information matrix. Both pathologies are
 visible in the smallest eigenvalues of the observed information, a
 diagnostic we report alongside the simulation results in
 Section~\ref{sec-simstudy}.
-
-\textbf{The hierarchical model.} With heterogeneous \(\bfbeta_i\), the
-argument applies respondent by respondent: individual-level
-identification requires the rank condition on each respondent's own
-stacked design (their \(T \times J\) rows), which rotating commercial
-designs typically satisfy. The hierarchy then supplies shrinkage, not
-identification of the model's fixed features. In the
-heterogeneous-cut-point extension (Section~\ref{sec-hetcut}) the same
-location tension reappears at the individual level, where a
-respondent-specific utility shift trades off against \(c_{i1}\) within
-that respondent's likelihood, and is resolved by the same condition
-applied to the individual design, with the hierarchical prior doing real
-work when \(T\) is small.
 
 \textbf{Numerical verification.} We verify Proposition~\ref{prp-ident}
 computationally (replication code accompanies the paper). Data simulated
@@ -1178,6 +1160,18 @@ that is estimated from the whole sample. Section~\ref{sec-simstudy}
 examines both the payoff to permitting cut-point heterogeneity when it
 is present in the data-generating process and the robustness of the
 common-cut-point model when it is not.
+
+\textbf{Identification with heterogeneity.} Proposition~\ref{prp-ident}
+applies respondent by respondent once \(\bfbeta_i\) varies:
+individual-level identification requires the rank condition on each
+respondent's own stacked design (their \(T \times J\) rows), which
+rotating commercial designs typically satisfy. The hierarchy then
+supplies shrinkage, not identification of the model's fixed features. In
+the heterogeneous-cut-point extension above, the same location tension
+reappears at the individual level, where a respondent-specific utility
+shift trades off against \(c_{i1}\) within that respondent's likelihood,
+and is resolved by the same condition applied to the individual design,
+with the hierarchical prior doing real work when \(T\) is small.
 
 \subsection{Estimation}\label{sec-estimation}
 
