@@ -116,11 +116,20 @@ This is an ordered logit [@Greene_2010] with the inclusive value $\overline{\mu}
 
 #### A Common Form, and the Two Scales
 
-Two reporting rules — she reports the probability she still holds (@eq-reportruleA), or she resolves the outside good and grades the comparison that results (@eq-reportruleB) — produce a second response of the same form, differing in the link function and in the scale on which the thresholds are naturally written. The first places them on the probability scale, where $\alpha_w$ says directly what a scale label means; the second places them on the utility scale, alongside $\overline{\mu}_{it}$. The two scales are related by $c_w = F^{-1}(\alpha_w)$, and written on the utility scale both rules give a cumulative link in the inclusive value,
+Two reporting rules — she reports the probability she still holds (@eq-reportruleA), or she resolves the outside good and grades the comparison that results (@eq-reportruleB) — produce a second response of the same form, differing in the link function and in the scale on which the thresholds are naturally written. @fig-timing sets the two side by side: they share the forced choice and differ only in whether $\eta_{it0}$ is resolved before or after the report. The first places them on the probability scale, where $\alpha_w$ says directly what a scale label means; the second places them on the utility scale, alongside $\overline{\mu}_{it}$. The two scales are related by $c_w = F^{-1}(\alpha_w)$, and written on the utility scale both rules give a cumulative link in the inclusive value,
 $$
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right).
 $$ {#eq-cumlink}
 Ours is the complementary log-log link. Replacing $F$ with the logistic $\Lambda$ gives @eq-modelB, which we invoke only at $W=2$, where it is the incumbent binary model (@sec-nesting).
+
+<!-- Source: figures/timing.tex. Rebuild timing.pdf and timing.svg with the command in its header. -->
+::: {.content-visible when-format="html"}
+![Timing within a task under the two reporting rules. Both share the forced choice. In our model the consumer reports while the outside-good shock $\eta_{it0}$ is still unresolved, which gives the complementary log-log link; under the resolved comparison she resolves $\eta_{it0}$ first and grades the realized difference, which gives the logit link.](figures/timing.svg){#fig-timing width="100%"}
+:::
+
+::: {.content-visible when-format="pdf"}
+![Timing within a task under the two reporting rules. Both share the forced choice. In our model the consumer reports while the outside-good shock $\eta_{it0}$ is still unresolved, which gives the complementary log-log link; under the resolved comparison she resolves $\eta_{it0}$ first and grades the realized difference, which gives the logit link.](figures/timing.pdf){#fig-timing width="100%"}
+:::
 
 Both scales are used below, and for a reason. We state the model in $\boldsymbol{\alpha}$ to capture the value of the scale labels, which is what an application reports. We work in $\mathbf{c}$ wherever the argument concerns the location of $\overline{\mu}_{it}$: identification, the specification tests, the information results and estimation all sit on the utility scale, because a common shift in utilities is additive in $\mathbf{c}$ and a power in $\boldsymbol{\alpha}$.
 
