@@ -1,6 +1,6 @@
 ## Empirical Application {#sec-analysis}
 
-We illustrate the model with data from a commercial choice-based conjoint study conducted in partnership with a consumer insights consultancy, in which each choice task was followed by an ordinal purchase-likelihood question.
+We illustrate the model with data from a commercial choice-based conjoint study conducted in partnership with a consumer insights consultancy, in which an ordinal purchase-likelihood question followed each choice task.
 
 <!-- TODO [DATA — Dan to locate]: this section is fully structured but awaits the GBK study data. Fill in: product category, sample size and recruitment/screening, number of tasks and alternatives per task, attribute list and levels, the exact wording and number of points (W) of the purchase-likelihood question, and fielding dates. -->
 
@@ -10,16 +10,16 @@ We illustrate the model with data from a commercial choice-based conjoint study 
 
 ### Model Specifications and Estimation {#sec-empirical-spec}
 
-We estimate four specifications on the same data: our model (@sec-model) in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-two-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
+We estimate four specifications on the same data: our model (@sec-model) in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-2-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
 
-**Pre-specified test battery.** Before any model comparison, we commit to the three specification tests of @sec-spectests on the aggregate fit: the unit-slope test ($\lambda = 1$), the conditioning test ($\delta = 0$), and the DR-2Max test ($\delta = 1$) — whose operating characteristics are established in @sec-sim-spectests — together with the A-versus-B link comparison by holdout likelihood and WAIC. We also pre-commit to re-running the pricing counterfactual of @sec-sim-counterfactual on the empirical posteriors, replacing the synthetic market with the study's own category structure.
+**Pre-specified test battery.** Before any model comparison, we commit to the three specification tests of @sec-spectests on the aggregate fit: the unit-slope test ($\lambda = 1$), the conditioning test ($\delta = 0$), and the DR-2Max test ($\delta = 1$), whose operating characteristics @sec-sim-spectests establishes, together with a test, by holdout likelihood and WAIC, of our model's complementary log-log link against the logit link of the resolved comparison. We also commit to re-running the pricing counterfactual of @sec-sim-counterfactual on the empirical posteriors, replacing the synthetic market with the study's own category structure.
 
-<!-- TODO: report MCMC settings (iterations, burn-in, thinning), convergence diagnostics (appendix), and holdout design (withheld tasks per respondent). -->
+<!-- TODO: report MCMC settings (iterations, burn-in, thinning), convergence diagnostics (appendix), and holdout design (withheld tasks per consumer). -->
 
 ### Results {#sec-empirical-results}
 
 <!-- TODO: results, mirroring the simulation-study structure so the reader can map findings across sections:
-(1) Model comparison: LMD for all specifications — headline question: which link (A vs. B) fits real respondents better, and how much does the ordinal model improve on the dichotomized binary model?
+(1) Model comparison: LMD for all specifications — headline question: which link (our model's cloglog vs. the resolved comparison's logit) fits real consumers better, and how much does the ordinal model improve on the dichotomized binary model?
 (2) Parameter estimates: part-worths across specifications (expect: attribute part-worths broadly stable, in line with Brazell_2006 and Hung_2025_dual; differences concentrated in the outside-good/cut-point structure); estimated cut points with interpretation — what purchase probability does each scale label correspond to (our model's alphas are directly interpretable here and are a selling point of the framework).
 (3) Predictive validity: holdout hit rates and predicted vs. actual ordinal response distributions.
 (4) Managerial quantities: purchase-incidence/share predictions across methods — show how much the dichotomization choice (top-box vs. top-two-box) moves the answer vs. the model-based estimate.
@@ -27,4 +27,4 @@ We estimate four specifications on the same data: our model (@sec-model) in aggr
 
 ### Scale-Usage Heterogeneity {#sec-empirical-hetcut}
 
-<!-- TODO: estimate the heterogeneous-cut-point extension (@sec-hetcut) on the empirical data; report the estimated dispersion of theta_i (how differently do real respondents use the scale?), the correlation between scale usage and preferences, and the effect on managerial quantities of accounting for it. -->
+<!-- TODO: estimate the heterogeneous-cut-point extension (@sec-hetcut) on the empirical data; report the estimated dispersion of theta_i (how differently do real consumers use the scale?), the correlation between scale usage and preferences, and the effect on managerial quantities of accounting for it. -->
