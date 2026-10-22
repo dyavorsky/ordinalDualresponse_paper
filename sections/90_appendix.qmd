@@ -171,3 +171,37 @@ knitr::kable(
 Point estimates agree to `r sprintf("%.0e", max(ap$res$max_d_beta, ap$res$max_d_cut))` or better, standard errors to `r sprintf("%.0e", max(ap$res$max_d_se_beta, ap$res$max_d_se_cut))`, and the maximized log-likelihood to `r sprintf("%.0e", max(ap$res$max_d_ll))`, which is convergence tolerance rather than disagreement. The two implementations share no code: Apollo computes the ordinal probabilities for our model from the direct expression $e^{-e^{-(c_w - \overline{\mu})}} - e^{-e^{-(c_{w-1} - \overline{\mu})}}$, while ours uses the tail-stable rearrangement of Appendix B, and the cut points enter Apollo's likelihood as free parameters rather than through the monotone increment parameterization. The binary row is the incumbent dual-response model of @Diener_2006 and @Hung_2025_dual, recovered as the two-point special case of @sec-nesting.
 
 **Why the hierarchical model is not estimated in Apollo.** Apollo reaches Bayesian estimation by wrapping `RSGHB`, which requires each random parameter to be assigned one of a fixed menu of marginal distributions: normal, log-normal, censored normal, or Johnson SB. None of them can express an ordered vector. The heterogeneous-cut-point extension of @sec-hetcut gives each consumer her own thresholds $\bftheta_i$, which must stay ordered for the likelihood to be defined, and we impose that through a transformation to an unconstrained scale inside a random-walk block. A purpose-written sampler can express that; the `RSGHB` menu cannot. The restriction is specific to the Bayesian path: `apollo_ol` accepts thresholds that vary across observations, so classical mixed-threshold specifications are available. The hierarchical results in @sec-simstudy therefore come from the sampler of Appendix B rather than from Apollo.
+
+
+## Appendix F: The Model in Miniature {#sec-toy .unnumbered}
+
+The smallest interesting instance of the model makes the machinery concrete: two consumers with identical preferences, one attribute, one task each, and a three-point scale.
+
+Let both consumers share the scalar taste parameter $\beta = 1$, which we treat as known for the arithmetic. Each faces one task with two inside goods described by a single attribute $x$, answers the forced choice, and then reports on the three-point scale $\mathcal{W} = \lbrace \text{"unlikely"}, \text{"unsure"}, \text{"likely"} \rbrace$ with utility-scale cut points $\mathbf{c} = (c_1, c_2) = (0, 2)$. (In our model these correspond to probability-scale cut points $\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)$: the consumer answers "unsure" when her purchase probability lies between 37% and 87%.) The two tasks, one for each consumer, differ in the level of the attribute but not in its spread: consumer 1 faces an attractive pair, $x = (2, 1)$, and consumer 2 an unattractive pair, $x = (-1, -2)$.
+
+Consider the model's account of their behavior, giving both consumers the same realized components $\eta = (0.30, -0.86)$ on their two inside goods. Consumer 1's utilities are $u = (2.30, 0.14)$: she picks her first good and knows her best utility, $u^* = 2.30$. She cannot resolve the outside-good shock $\eta_0$, so she reports the bin containing her purchase probability $p = F(2.30) = 0.90$, namely "likely." Consumer 2's utilities are $u = (-0.70, -2.86)$: she also picks her first good, but her best utility is $u^* = -0.70$, her purchase probability is $F(-0.70) = 0.13$, and she reports "unlikely." The two consumers made identical first-response choices from identical realizations, yet gave opposite second responses.
+
+The walkthrough fixed one set of draws. Averaging over all of them, as the researcher must, shows that the pattern does not depend on that draw (@tbl-toy). The forced-choice probabilities are the same function of the data for both consumers: the MNL depends only on the within-task difference $x_1 - x_2 = 1$, so $\Pr(\text{choose better good}) = \Lambda(\beta) = 0.73$ in both tasks. The forced choice reveals how much she prefers one option to the other, but nothing about how much she wants either. The tasks separate only through the inclusive value ($S_1 = e^2 + e^1 = 10.11$ versus $S_2 = e^{-1} + e^{-2} = 0.50$, i.e., $\overline{\mu}_1 = 2.31$ versus $\overline{\mu}_2 = -0.69$), which the cumulative-link stage compares against the cut points. (With $c_1 = 0$, consumer 2's probability of "unlikely" is $\Lambda(-\overline{\mu}_2) = 1/(1+S_2) = 0.67$, the familiar no-choice probability of the single-stage MNL, which previews the nesting results below.)
+
+|  | Consumer 1 (attractive task) | Consumer 2 (unattractive task) |
+|---|:---:|:---:|
+| Attribute values $x$ | $(2,\ 1)$ | $(-1,\ -2)$ |
+| $\Pr(\text{choose better good})$ | $0.73$ | $0.73$ |
+| $S = \sum_j e^{V_j}$, $\ \overline{\mu} = \ln S$ | $10.11$, $\ 2.31$ | $0.50$, $\ -0.69$ |
+| $\Pr(y = w)$ | $(0.00,\ 0.25,\ 0.75)$ | $(0.60,\ 0.33,\ 0.07)$ |
+| $\E \left[ p \mid y = \text{"unsure"} \right]$ | $0.80$ | $0.60$ |
+
+: Two tasks that are indistinguishable in the forced choice and nearly opposite in the ordinal report ($\beta = 1$, $\mathbf{c} = (0,2)$, $W = 3$). {#tbl-toy}
+
+The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{"likely"}$, $y_2 = \text{"unlikely"}$, follows from @eq-joint:
+$$
+L \left( \beta, \alpha_1, \alpha_2 \right)
+= \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
+\times
+\underbrace{\Lambda(\beta) \, \alpha_1^{\,S_2(\beta)}}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
+$$ {#eq-toylik}
+with $S_1(\beta) = e^{\beta} \left( 1 + e^{\beta} \right)$ and $S_2(\beta) = e^{-2\beta} \left( 1 + e^{\beta} \right)$. Two general points follow from the example.
+
+First, the two responses divide the labor of identification, a division that @prp-ident formalizes. The forced-choice factors involve only utility differences, and they identify $\beta$, as in any multinomial logit, because the two goods in a task differ in $x$. The ordinal factors involve utility levels, and they identify the cut points by locating each task's $\overline{\mu}(\beta)$ against them.
+
+Second, the meaning of a scale label is set-dependent. The label "unsure" is fixed for the consumer, since by construction it means $p \in [0.37, 0.87)$, but what the researcher should infer from it depends on the task: the expected purchase probability of a consumer who answers "unsure" is $0.80$ in the attractive task and $0.60$ in the unattractive one (@tbl-toy, last row), which is @eq-condexp evaluated at the two tasks.
