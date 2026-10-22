@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{lemma}{Lemma}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -224,7 +224,7 @@ outside good}},
 \makeatother
 \subtitle{Ordinal Dual Response in Choice-Based Conjoint Analysis}
 \author{Dan Yavorsky \and Geoffery Zheng}
-\date{2026-10-13}
+\date{2026-10-22}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -264,23 +264,20 @@ the dual-response format (Brazell et al. 2006). In each task, the
 consumer first makes a forced choice among the displayed product
 profiles and then answers a follow-up question about whether she would
 actually purchase her selection. The format was introduced to fix a
-practical problem with the traditional no-choice option: when ``none of
-these'' appears alongside the profiles, each time a consumer chooses it
-the task contributes nothing to estimating attribute preferences. The
-dual-response format recovers that lost information because the forced
-choice always reveals preference among profiles, while still measuring
-demand for the category through the follow-up question, without
-systematically biasing the preference estimates (Brazell et al. 2006;
-Dhar and Simonson 2003). Following its implementation in Sawtooth
-Software's widely used choice-based conjoint (CBC) system (Diener et al.
-2006; Sawtooth Software 2017), the dual-response format became common
-practice in commercial conjoint research. The format was not, however,
-derived from a behavioral model of the consumer, and any such model has
-to take a stand on what she is uncertain about when the follow-up
-question arrives. This paper supplies such a model for an ordinal
+practical problem with the traditional no-choice option: tasks in which
+``none of these'' is chosen carry no information about attribute
+preferences. The dual-response format recovers that lost information
+because the forced choice always reveals preference among profiles,
+while still measuring demand for the category through the follow-up
+question, and it does so without systematically biasing the preference
+estimates (Brazell et al. 2006; Dhar and Simonson 2003). Following its
+implementation in Sawtooth Software's widely used choice-based conjoint
+(CBC) system (Diener et al. 2006; Sawtooth Software 2017), the
+dual-response format became common practice in commercial conjoint
+research. The format was not, however, derived from a behavioral model
+of the consumer. This paper supplies such a model for an ordinal
 follow-up. It rationalizes the dual-response format, determines the link
-function rather than assuming one, and extends the purchase question
-from binary to ordinal.
+function, and extends the purchase question from binary to ordinal.
 
 We start from the behavioral premise that a consumer facing a
 dual-response conjoint task can indicate her most-preferred product
@@ -393,7 +390,8 @@ application, and Section~\ref{sec-discussion} the implications for
 practice, including scale design; Section~\ref{sec-conclusion}
 concludes. The appendices give the proofs (A), the sampler and
 marginal-likelihood details (B and C), the extension to correlated
-alternatives (D), and the implementation in Apollo (E).
+alternatives (D), the implementation in Apollo (E), and a worked example
+of the model at its smallest (F).
 
 \section{Model}\label{sec-model}
 
@@ -423,10 +421,9 @@ that \(V_{it0}=0\); this is the standard normalization that anchors the
 location of utility (Haaijer et al. 2001). Second, and this is the
 paper's central behavioral assumption, the consumer observes
 \(\eta_{itj}\) for all inside goods but does not observe \(\eta_{it0}\).
-She is comparing goods that are in front of her now; the outside good
-stands in for a purchase occasion that has not yet arrived, and her
-evaluation of it is uncertain.\footnote{This can be motivated by a
-  framework in which \(u_{it0} = 0\) and
+The outside good stands in for a purchase occasion that has not yet
+arrived, and her evaluation of it is uncertain.\footnote{This can be
+  motivated by a framework in which \(u_{it0} = 0\) and
   \(u_{itj} = {\x_{tj}}'\bfbeta_i + \eta_{itj} - \eta_{it0}\) for
   \(j \in \mathcal{J}^{+}\), where \(\eta_{it0}\) captures the
   consumer's uncertainty about her future tastes or circumstances at the
@@ -526,20 +523,11 @@ likely are you to purchase the option you selected?'': she has not
 resolved \(\eta_{it0}\), so what she has to report is a probability.
 That premise delivers a likelihood of \emph{cumulative-link} form,
 depending on the choice set only through the inclusive value
-\(\overline{\mu}_{it}\), and it determines the link. We derive that
-model first. We then ask what follows if she instead resolves the shock
-before answering, as Hung, Liu, et al. (2025) assume. For a binary
-follow-up that assumption gives their Unified Model. Carried into an
-ordinal follow-up it is harder to interpret, for reasons we take up
-below.
+\(\overline{\mu}_{it}\), and it determines the link.
 
-\subsubsection{Reporting a Purchase Probability}\label{sec-modelA}
-
-The consumer carries her uncertainty about the outside good into her
-answer and reports a probability. She knows \(u^*_{it}\) (she just
-identified \(j^*_{it}\)) but does not know \(\eta_{it0}\), so from her
-perspective the probability that she would follow through and purchase
-\(j^*_{it}\) is
+She knows \(u^*_{it}\) (she just identified \(j^*_{it}\)) but does not
+know \(\eta_{it0}\), so from her perspective the probability that she
+would follow through and purchase \(j^*_{it}\) is
 \begin{equation}\protect\phantomsection\label{eq-purchprob}{
 p_{it} = \Pr \left( \eta_{it0} < u^*_{it} \mid u^*_{it} \right) = F\left( u^*_{it} \right),
 }\end{equation} where \(F(z) = \exp(-e^{-z})\) is the standard Gumbel
@@ -583,10 +571,47 @@ probability mass shifts toward high scale points.\footnote{Equivalently,
   \(\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}\),
   which is the \(\text{Beta}(S,1)\) distribution function on \([0,1]\).}
 
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/derivation.pdf}
+
+}
+
+\caption{\label{fig-derivation}The two steps behind
+Equation~\ref{eq-modelA}. \emph{Left:} the consumer's rule. She knows
+\(u^*_{it}\) but not \(\eta_{it0}\), so her purchase probability is
+\(p_{it} = F(u^*_{it})\), and she reports the scale point whose bin
+contains it. Reading the cut points \(\alpha_w\) across to the curve and
+down restates the same rule as an interval on the utility scale,
+\(\left[ F^{-1}(\alpha_{w-1}), F^{-1}(\alpha_w) \right)\). \emph{Right:}
+the researcher's evaluation. From the researcher's perspective
+\(u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)\), written
+\(\overline{F}\), so evaluating those same thresholds gives
+\(\overline{F}(F^{-1}(\alpha_w)) = \alpha_w^{S_{it}}\), and the
+second-response probabilities are differences of these. Drawn for
+\(W=4\) with \((\alpha_1, \alpha_2, \alpha_3) = (0.19, 0.67, 0.90)\),
+\(u^*_{it} = 0.30\) and \(S_{it} = 2\).}
+
+\end{figure}%
+
+The second-response probabilities are differences of powers of the cut
+points, with the exponent \(S_{it} = e^{\overline{\mu}_{it}}\)
+summarizing the attractiveness of the task's inside goods: the more
+attractive the set, the more probability mass shifts toward high scale
+points.\footnote{Equivalently, from the researcher's perspective the
+  consumer's purchase probability is Beta distributed,
+  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\). By the same power
+  property,
+  \(\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}\),
+  which is the \(\text{Beta}(S,1)\) distribution function on \([0,1]\).}
+
 The distribution's mean is
 \(\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)\):
 averaged over everything the researcher cannot see, the probability of
-purchase is the logistic of the inclusive value. Conditioning on what
+purchase is the logistic of the inclusive value,
+\(\Lambda(z) = 1 \big/ \left( 1 + e^{-z} \right)\). Conditioning on what
 she reported rescales it. A consumer who answers \(w\) has
 \begin{equation}\protect\phantomsection\label{eq-condexp}{
 \E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
@@ -595,92 +620,19 @@ Because \(S_{it}\) appears here as well as in the bin boundaries, the
 same scale point implies different purchase probabilities in different
 tasks: what a label is worth depends on what was on the screen.
 
-\subsubsection{The Resolved Comparison, and the Binary
-Incumbent}\label{sec-modelB}
-
-Suppose instead that the consumer resolves the outside-good shock before
-answering and evaluates the realized utility difference \[
-d_{it} = u^*_{it} - \eta_{it0}.
-\] The binary question asks only for the sign of \(d_{it}\), which a
-consumer in this position can supply. Suppose she were also asked to
-grade its magnitude on a \(W\)-point scale. We know of no natural
-wording for that request: having resolved the comparison she has no
-likelihood left to report, and any graded answer would have to be read
-as an intensity rather than a probability. We carry the construction
-regardless, because at \(W=2\) it reduces to the incumbent binary model.
-Formally, fix utility-scale cut points
-\(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and suppose
-\begin{equation}\protect\phantomsection\label{eq-reportruleB}{
-y_{it} = w
-\quad \Longleftrightarrow \quad
-d_{it} \in \left[ c_{w-1}, c_w \right).
-}\end{equation} From the researcher's perspective,
-\(u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)\) and
-\(\eta_{it0} \sim \text{Gumbel}(0,1)\) are independent, so their
-difference is logistic:
-\(d_{it} \sim \text{Logistic}\left( \overline{\mu}_{it}, 1 \right)\).
-Hence \begin{equation}\protect\phantomsection\label{eq-modelB}{
-\Pr \left( y_{it} = w \right)
-= \Lambda \left( c_w - \overline{\mu}_{it} \right) - \Lambda \left( c_{w-1} - \overline{\mu}_{it} \right),
-\qquad
-\Lambda(z) = \frac{1}{1+e^{-z}}.
-}\end{equation} This is an ordered logit (Greene and Hensher 2010) with
-the inclusive value \(\overline{\mu}_{it}\) as the (negatively signed)
-linear predictor. The assumption that she resolves the shock before
-answering is what underlies the binary dual-response models. Hung, Liu,
-et al. (2025) state it explicitly, specifying that consumers bring the
-same private information to both responses, and derive the binary case
-from it; Diener et al. (2006) reach the same functional form by a
-different route. It is not our model, but it is the specification the
-existing binary literature uses, and Section~\ref{sec-nesting} shows why
-that use is well founded at \(W=2\).
-
-\subsubsection{A Common Form, and the Two
-Scales}\label{a-common-form-and-the-two-scales}
-
-Two reporting rules produce a second response of the same form: she
-reports the probability she still holds (Equation~\ref{eq-reportruleA}),
-or she resolves the outside good and grades the comparison that results
-(Equation~\ref{eq-reportruleB}). The two differ in the link function and
-in the scale on which the thresholds are naturally written.
-Figure~\ref{fig-timing} sets the two side by side: they share the forced
-choice and differ only in whether \(\eta_{it0}\) is resolved before or
-after the report. The first places them on the probability scale, where
-\(\alpha_w\) says directly what a scale label means; the second places
-them on the utility scale, alongside \(\overline{\mu}_{it}\). The two
-scales are related by \(c_w = F^{-1}(\alpha_w)\), and written on the
-utility scale both rules give a cumulative link in the inclusive value,
+It will be convenient to carry these thresholds on two scales. On the
+probability scale they are directly interpretable: \(\alpha_w\) is the
+purchase probability at which the consumer moves from label \(w\) to
+label \(w+1\). On the utility scale, written \(c_w = F^{-1}(\alpha_w)\),
+they sit alongside \(\overline{\mu}_{it}\) and cast
+Equation~\ref{eq-modelA} as a cumulative link in the inclusive value,
 \begin{equation}\protect\phantomsection\label{eq-cumlink}{
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right).
-}\end{equation} Ours is the complementary log-log link. Replacing \(F\)
-with the logistic \(\Lambda\) gives Equation~\ref{eq-modelB}, which we
-invoke only at \(W=2\), where it is the incumbent binary model
-(Section~\ref{sec-nesting}).
-
-\begin{figure}
-
-\centering{
-
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/timing.pdf}
-
-}
-
-\caption{\label{fig-timing}Timing within a task under the two reporting
-rules. Both share the forced choice. In our model the consumer reports
-while the outside-good shock \(\eta_{it0}\) is still unresolved, which
-gives the complementary log-log link; under the resolved comparison she
-resolves \(\eta_{it0}\) first and grades the realized difference, which
-gives the logit link.}
-
-\end{figure}%
-
-Both scales are used below, and for a reason. We state the model in
-\(\boldsymbol{\alpha}\) to capture the value of the scale labels, which
-is what an application reports. We work in \(\mathbf{c}\) wherever the
-argument concerns the location of \(\overline{\mu}_{it}\):
-identification, the specification tests, the information results and
-estimation all sit on the utility scale, because a common shift in
-utilities is additive in \(\mathbf{c}\) and a power in
+}\end{equation} Ours is the complementary log-log link, inherited from
+the Gumbel kernel. We state the model in \(\boldsymbol{\alpha}\), which
+is what an application reports, and work in \(\mathbf{c}\) wherever the
+argument concerns the location of \(\overline{\mu}_{it}\), because a
+common shift in utilities is additive in \(\mathbf{c}\) and a power in
 \(\boldsymbol{\alpha}\).
 
 \subsection{Joint Likelihood}\label{joint-likelihood}
@@ -709,132 +661,69 @@ The per-task log-likelihood is
 \(\ell = \sum_i \sum_t \ell_{it}\). The forced choice contributes the
 chosen good's utility measured against the inclusive value, so a task
 adds more to the log-likelihood the more the chosen good stands out from
-the set. The ordinal report contributes the log of the
-\(\text{Beta}(S_{it},1)\) mass falling in the chosen bin, so it adds
-most when the attractiveness of the set sits in that bin: a report near
-the top of the scale pulls \(\overline{\mu}_{it}\) up, and a report near
-the bottom pulls it down. The first term captures only how the goods
-compare with one another; the second depends only on where they sit as a
-group.
-
-\subsection{The Model in Miniature}\label{sec-toy}
-
-Before turning to special cases, we work through the smallest
-interesting instance of the model: two consumers with identical
-preferences, one attribute, one task each, and a three-point scale.
-
-Let both consumers share the scalar taste parameter \(\beta = 1\), which
-we treat as known for the arithmetic. Each faces one task with two
-inside goods described by a single attribute \(x\), answers the forced
-choice, and then reports on the three-point scale
-\(\mathcal{W} = \lbrace \text{"unlikely"}, \text{"unsure"}, \text{"likely"} \rbrace\)
-with utility-scale cut points \(\mathbf{c} = (c_1, c_2) = (0, 2)\). (In
-our model these correspond to probability-scale cut points
-\(\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)\):
-the consumer answers ``unsure'' when her purchase probability lies
-between 37\% and 87\%.) The two tasks, one for each consumer, differ in
-the level of the attribute but not in its spread: consumer 1 faces an
-attractive pair, \(x = (2, 1)\), and consumer 2 an unattractive pair,
-\(x = (-1, -2)\).
-
-Consider the model's account of their behavior, giving both consumers
-the same realized components \(\eta = (0.30, -0.86)\) on their two
-inside goods. Consumer 1's utilities are \(u = (2.30, 0.14)\): she picks
-her first good and knows her best utility, \(u^* = 2.30\). She cannot
-resolve the outside-good shock \(\eta_0\), so she reports the bin
-containing her purchase probability \(p = F(2.30) = 0.90\), namely
-``likely.'' Consumer 2's utilities are \(u = (-0.70, -2.86)\): she also
-picks her first good, but her best utility is \(u^* = -0.70\), her
-purchase probability is \(F(-0.70) = 0.13\), and she reports
-``unlikely.'' The two consumers made identical first-response choices
-from identical realizations, yet gave opposite second responses.
-
-The walkthrough fixed one set of draws. Averaging over all of them, as
-the researcher must, shows that the pattern does not depend on that draw
-(Table~\ref{tbl-toy}). The forced-choice probabilities are the same
-function of the data for both consumers: the MNL depends only on the
-within-task difference \(x_1 - x_2 = 1\), so
-\(\Pr(\text{choose better good}) = \Lambda(\beta) = 0.73\) in both
-tasks. The forced choice reveals how much she prefers one option to the
-other, but nothing about how much she wants either. The tasks separate
-only through the inclusive value (\(S_1 = e^2 + e^1 = 10.11\) versus
-\(S_2 = e^{-1} + e^{-2} = 0.50\), i.e., \(\overline{\mu}_1 = 2.31\)
-versus \(\overline{\mu}_2 = -0.69\)), which the cumulative-link stage
-compares against the cut points. (With \(c_1 = 0\), consumer 2's
-probability of ``unlikely'' is
-\(\Lambda(-\overline{\mu}_2) = 1/(1+S_2) = 0.67\), the familiar
-no-choice probability of the single-stage MNL, which previews the
-nesting results below.)
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2308}}
-  >{\centering\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3846}}
-  >{\centering\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3846}}@{}}
-\caption{Two tasks that are indistinguishable in the forced choice and
-nearly opposite in the ordinal report (\(\beta = 1\),
-\(\mathbf{c} = (0,2)\), \(W = 3\)).}\label{tbl-toy}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
-Consumer 1 (attractive task)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
-Consumer 2 (unattractive task)
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
-Consumer 1 (attractive task)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
-Consumer 2 (unattractive task)
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Attribute values \(x\) & \((2,\ 1)\) & \((-1,\ -2)\) \\
-\(\Pr(\text{choose better good})\) & \(0.73\) & \(0.73\) \\
-\(S = \sum_j e^{V_j}\), \(\ \overline{\mu} = \ln S\) & \(10.11\),
-\(\ 2.31\) & \(0.50\), \(\ -0.69\) \\
-\(\Pr(y = w)\) & \((0.00,\ 0.25,\ 0.75)\) & \((0.60,\ 0.33,\ 0.07)\) \\
-\(\E \left[ p \mid y = \text{"unsure"} \right]\) & \(0.80\) &
-\(0.60\) \\
-\end{longtable}
-
-The joint likelihood of the observed data, in which each consumer chose
-her better good and \(y_1 = \text{"likely"}\),
-\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint}:
-\begin{equation}\protect\phantomsection\label{eq-toylik}{
-L \left( \beta, \alpha_1, \alpha_2 \right)
-= \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
-\times
-\underbrace{\Lambda(\beta) \, \alpha_1^{\,S_2(\beta)}}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
-}\end{equation} with
-\(S_1(\beta) = e^{\beta} \left( 1 + e^{\beta} \right)\) and
-\(S_2(\beta) = e^{-2\beta} \left( 1 + e^{\beta} \right)\). Two general
-points follow from the example.
-
-First, the two responses divide the labor of identification, a division
-that Proposition~\ref{prp-ident} formalizes. The forced-choice factors
-involve only utility differences, and they identify \(\beta\), as in any
-multinomial logit, because the two goods in a task differ in \(x\). The
-ordinal factors involve utility levels, and they identify the cut points
-by locating each task's \(\overline{\mu}(\beta)\) against them.
-
-Second, the meaning of a scale label is set-dependent. The label
-``unsure'' is fixed for the consumer, since by construction it means
-\(p \in [0.37, 0.87)\), but what the researcher should infer from it
-depends on the task: the expected purchase probability of a consumer who
-answers ``unsure'' is \(0.80\) in the attractive task and \(0.60\) in
-the unattractive one (Table~\ref{tbl-toy}, last row), which is
-Equation~\ref{eq-condexp} evaluated at the two tasks.
+the set. The ordinal report contributes the log of the mass
+Equation~\ref{eq-modelA} puts in the reported bin, so it adds most when
+the attractiveness of the set sits in that bin: a report near the top of
+the scale pulls \(\overline{\mu}_{it}\) up, and a report near the bottom
+pulls it down.\footnote{Equivalently, in the Beta reading above, the
+  second term is
+  \(\ln \Pr \left( p_{it} \in \left[ \alpha_{y_{it}-1}, \alpha_{y_{it}} \right) \right)\)
+  with \(p_{it} \sim \text{Beta}\left( S_{it}, 1 \right)\).} The first
+term captures only how the goods compare with one another; the second
+depends only on where they sit as a group.
 
 \subsection{Special Cases and Relation to Existing
 Models}\label{sec-nesting}
 
-\textbf{Binary dual response, logistic link.} Set \(W=2\) with the
-single cut point \(c_1 = \gamma\). From Equation~\ref{eq-modelB},
+\textbf{The resolved comparison.} The binary dual-response models rest
+on a different premise: that the consumer resolves the outside-good
+shock before answering, and so evaluates the realized difference
+\(d_{it} = u^*_{it} - \eta_{it0}\). Hung, Liu, et al. (2025) state the
+premise explicitly, specifying that consumers bring the same private
+information to both responses, and derive the binary case from it;
+Diener et al. (2006) reach the same functional form by a different
+route. A consumer in this position can supply the sign of \(d_{it}\),
+which is all a binary follow-up asks of her. Carried to a \(W\)-point
+scale the construction is harder to read, since having resolved the
+comparison she has no likelihood left to report and a graded answer
+would be an intensity rather than a probability; but it remains well
+defined, and we use it both for the \(W=2\) result below and as the
+misspecified link in Section~\ref{sec-sim-robust}. Fix utility-scale cut
+points \(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and
+suppose \(y_{it} = w\) exactly when
+\(d_{it} \in \left[ c_{w-1}, c_w \right)\). From the researcher's
+perspective \(u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)\) and
+\(\eta_{it0} \sim \text{Gumbel}(0,1)\) are independent, so their
+difference is logistic,
+\(d_{it} \sim \text{Logistic}\left( \overline{\mu}_{it}, 1 \right)\),
+and \begin{equation}\protect\phantomsection\label{eq-modelB}{
+\Pr \left( y_{it} = w \right)
+= \Lambda \left( c_w - \overline{\mu}_{it} \right) - \Lambda \left( c_{w-1} - \overline{\mu}_{it} \right).
+}\end{equation} This is an ordered logit (Greene and Hensher 2010) in
+the inclusive value: Equation~\ref{eq-cumlink} with the logistic in
+place of our \(F\). Figure~\ref{fig-timing} sets the two rules side by
+side; they share the forced choice and differ only in whether
+\(\eta_{it0}\) is resolved before or after the report.
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/timing.pdf}
+
+}
+
+\caption{\label{fig-timing}Timing within a task under the two reporting
+rules. Both share the forced choice. In our model the consumer reports
+while the outside-good shock \(\eta_{it0}\) is still unresolved, which
+gives the complementary log-log link; under the resolved comparison she
+resolves \(\eta_{it0}\) first and grades the realized difference, which
+gives the logit link.}
+
+\end{figure}%
+
+\textbf{Binary dual response, logistic link.} Set \(W=2\), writing the
+single cut point as \(c_1 = \gamma\). Then
 \(\Pr(\text{would buy}) = \Lambda\left( \overline{\mu}_{it} - \gamma \right) = S_{it} \big/ \left( e^{\gamma} + S_{it} \right)\),
 and the joint probabilities from Equation~\ref{eq-joint} reduce to:
 \begin{equation}\protect\phantomsection\label{eq-collapseB}{
@@ -847,10 +736,9 @@ probabilities of the ``Unified Model'' of Hung, Liu, et al. (2025)
 ``DR-AnyMax'' model of Diener et al. (2006); and
 Equation~\ref{eq-collapseB} with free \(\gamma\) is the standard
 single-stage MNL with a no-choice alternative-specific constant (Haaijer
-et al. 2001). The cumulative-link framework of Equation~\ref{eq-cumlink}
-thus contains the leading binary dual-response model as its two-point
-case under the logistic link, and for \(W>2\) the additional cut points
-are the only new parameters.
+et al. 2001). The incumbent binary model is therefore the two-point,
+logistic case of Equation~\ref{eq-cumlink}; for \(W>2\) the additional
+cut points are the only new parameters.
 
 \textbf{Binary dual response, our model.} Set \(W=2\) in
 Equation~\ref{eq-modelA}:
@@ -884,12 +772,8 @@ in our simulation study (Section~\ref{sec-simstudy}). Both are nested
 within, or dominated by, Equation~\ref{eq-joint}: dichotomization is
 Equation~\ref{eq-collapseB} applied to a coarsened \(y_{it}\), and
 constant-probability weighting fixes the value of a scale point, which
-by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\).
-Section~\ref{sec-toy} demonstrates the latter: the two consumers in the
-simple example are indistinguishable in the forced choice and both
-answer ``unsure,'' yet their expected purchase probabilities are
-\(0.80\) in one task and \(0.60\) in the other, so no single value
-assigned to ``unsure'' fits both.
+by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\): no
+single value assigned to a scale point is right for every task.
 
 \subsection{Identification}\label{sec-identification}
 
@@ -954,10 +838,10 @@ unchanged, so \(\theta' \ne \theta\) is observationally equivalent to
 \end{proof}
 
 \textbf{The condition in miniature.} Return to the two consumers of
-Section~\ref{sec-toy}, with \(\beta = 1\) and \(\mathbf{c} = (0,2)\), so
-that \(\overline{\mu}_1 = 2.31\) and \(\overline{\mu}_2 = -0.69\).
-Suppose the design had carried a constant: one extra attribute, equal to
-one for every good, with part-worth \(\beta_{\text{const}}\). Setting
+Appendix F, with \(\beta = 1\) and \(\mathbf{c} = (0,2)\), so that
+\(\overline{\mu}_1 = 2.31\) and \(\overline{\mu}_2 = -0.69\). Suppose
+the design had carried a constant: one extra attribute, equal to one for
+every good, with part-worth \(\beta_{\text{const}}\). Setting
 \(\beta_{\text{const}} = 1\) raises every \(V_{tj}\) by one and
 therefore raises both inclusive values by exactly one, to \(3.31\) and
 \(0.31\). Raise both cut points by one as well, to
@@ -1084,10 +968,12 @@ the chosen alternative's utility. The enlargement
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \left[ \overline{\mu}_{it} + \delta \left( V_{itj^*} - \overline{\mu}_{it} \right) \right] \right)
 }\end{equation} spans the two: \(\delta = 0\) is our model and
 \(\delta = 1\) puts the full weight on the chosen option's deterministic
-utility, the DR-2Max predictor. Both points are testable against the
-estimated \(\delta\), so the long-standing 2Max-versus-AnyMax question
-(Diener et al. 2006; Hung, Liu, et al. 2025) becomes a parameter
-estimate rather than a model-selection exercise.
+utility, the DR-2Max predictor. The bracket is
+\((1-\delta) \overline{\mu}_{it} + \delta V_{itj^*}\), so \(\delta\) is
+that weight. Both points are testable against the estimated \(\delta\),
+so the long-standing 2Max-versus-AnyMax question (Diener et al. 2006;
+Hung, Liu, et al. 2025) becomes a parameter estimate rather than a
+model-selection exercise.
 
 We apply both tests to the empirical data in Section~\ref{sec-analysis}.
 The simulation study documents their finite-sample size and power,
@@ -1118,9 +1004,10 @@ gradient of \(\overline{\mu}_{it}\) with respect to \(\bfbeta\)). Two
 properties follow. First, the increment is positive semi-definite: the
 second response never destroys information, as in the binary result of
 Hung, Liu, et al. (2025). Second, \(\omega\) is non-decreasing under
-refinement of the scale partition, since coarsening an ordinal response
-is a garbling in the sense of sufficiency. The binary response (\(W=2\))
-is therefore the least informative member of the family, and information
+refinement of the scale partition: merging two adjacent categories pools
+their scores, and by Cauchy--Schwarz the pooled cell contributes no more
+than the two it replaces (Appendix A). The binary response (\(W=2\)) is
+therefore the least informative member of the family, and information
 rises toward the continuous-report limit as \(W \to \infty\).
 Section~\ref{sec-simstudy} quantifies the practical magnitudes: how much
 of the binary-to-continuous gap a five- or seven-point scale captures,
@@ -1515,7 +1402,7 @@ fielded purchase-intent scales cost 29\% relative to optimal.
 
 \centering{
 
-\pandocbounded{\includegraphics[keepaspectratio]{R/output/figs/info_by_W.png}}
+\includegraphics[width=4.67in,height=\textheight,keepaspectratio]{R/output/figs/info_by_W.png}
 
 }
 
@@ -2253,6 +2140,120 @@ accepts thresholds that vary across observations, so classical
 mixed-threshold specifications are available. The hierarchical results
 in Section~\ref{sec-simstudy} therefore come from the sampler of
 Appendix B rather than from Apollo.
+
+\section*{Appendix F: The Model in Miniature}\label{sec-toy}
+\addcontentsline{toc}{section}{Appendix F: The Model in Miniature}
+
+The smallest interesting instance of the model makes the machinery
+concrete: two consumers with identical preferences, one attribute, one
+task each, and a three-point scale.
+
+Let both consumers share the scalar taste parameter \(\beta = 1\), which
+we treat as known for the arithmetic. Each faces one task with two
+inside goods described by a single attribute \(x\), answers the forced
+choice, and then reports on the three-point scale
+\(\mathcal{W} = \lbrace \text{"unlikely"}, \text{"unsure"}, \text{"likely"} \rbrace\)
+with utility-scale cut points \(\mathbf{c} = (c_1, c_2) = (0, 2)\). (In
+our model these correspond to probability-scale cut points
+\(\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)\):
+the consumer answers ``unsure'' when her purchase probability lies
+between 37\% and 87\%.) The two tasks, one for each consumer, differ in
+the level of the attribute but not in its spread: consumer 1 faces an
+attractive pair, \(x = (2, 1)\), and consumer 2 an unattractive pair,
+\(x = (-1, -2)\).
+
+Consider the model's account of their behavior, giving both consumers
+the same realized components \(\eta = (0.30, -0.86)\) on their two
+inside goods. Consumer 1's utilities are \(u = (2.30, 0.14)\): she picks
+her first good and knows her best utility, \(u^* = 2.30\). She cannot
+resolve the outside-good shock \(\eta_0\), so she reports the bin
+containing her purchase probability \(p = F(2.30) = 0.90\), namely
+``likely.'' Consumer 2's utilities are \(u = (-0.70, -2.86)\): she also
+picks her first good, but her best utility is \(u^* = -0.70\), her
+purchase probability is \(F(-0.70) = 0.13\), and she reports
+``unlikely.'' The two consumers made identical first-response choices
+from identical realizations, yet gave opposite second responses.
+
+The walkthrough fixed one set of draws. Averaging over all of them, as
+the researcher must, shows that the pattern does not depend on that draw
+(Table~\ref{tbl-toy}). The forced-choice probabilities are the same
+function of the data for both consumers: the MNL depends only on the
+within-task difference \(x_1 - x_2 = 1\), so
+\(\Pr(\text{choose better good}) = \Lambda(\beta) = 0.73\) in both
+tasks. The forced choice reveals how much she prefers one option to the
+other, but nothing about how much she wants either. The tasks separate
+only through the inclusive value (\(S_1 = e^2 + e^1 = 10.11\) versus
+\(S_2 = e^{-1} + e^{-2} = 0.50\), i.e., \(\overline{\mu}_1 = 2.31\)
+versus \(\overline{\mu}_2 = -0.69\)), which the cumulative-link stage
+compares against the cut points. (With \(c_1 = 0\), consumer 2's
+probability of ``unlikely'' is
+\(\Lambda(-\overline{\mu}_2) = 1/(1+S_2) = 0.67\), the familiar
+no-choice probability of the single-stage MNL, which previews the
+nesting results below.)
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2308}}
+  >{\centering\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3846}}
+  >{\centering\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3846}}@{}}
+\caption{Two tasks that are indistinguishable in the forced choice and
+nearly opposite in the ordinal report (\(\beta = 1\),
+\(\mathbf{c} = (0,2)\), \(W = 3\)).}\label{tbl-toy}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Consumer 1 (attractive task)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Consumer 2 (unattractive task)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Consumer 1 (attractive task)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Consumer 2 (unattractive task)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Attribute values \(x\) & \((2,\ 1)\) & \((-1,\ -2)\) \\
+\(\Pr(\text{choose better good})\) & \(0.73\) & \(0.73\) \\
+\(S = \sum_j e^{V_j}\), \(\ \overline{\mu} = \ln S\) & \(10.11\),
+\(\ 2.31\) & \(0.50\), \(\ -0.69\) \\
+\(\Pr(y = w)\) & \((0.00,\ 0.25,\ 0.75)\) & \((0.60,\ 0.33,\ 0.07)\) \\
+\(\E \left[ p \mid y = \text{"unsure"} \right]\) & \(0.80\) &
+\(0.60\) \\
+\end{longtable}
+
+The joint likelihood of the observed data, in which each consumer chose
+her better good and \(y_1 = \text{"likely"}\),
+\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint}:
+\begin{equation}\protect\phantomsection\label{eq-toylik}{
+L \left( \beta, \alpha_1, \alpha_2 \right)
+= \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
+\times
+\underbrace{\Lambda(\beta) \, \alpha_1^{\,S_2(\beta)}}_{\text{consumer 2:} \ \ 0.73 \times 0.60},
+}\end{equation} with
+\(S_1(\beta) = e^{\beta} \left( 1 + e^{\beta} \right)\) and
+\(S_2(\beta) = e^{-2\beta} \left( 1 + e^{\beta} \right)\). Two general
+points follow from the example.
+
+First, the two responses divide the labor of identification, a division
+that Proposition~\ref{prp-ident} formalizes. The forced-choice factors
+involve only utility differences, and they identify \(\beta\), as in any
+multinomial logit, because the two goods in a task differ in \(x\). The
+ordinal factors involve utility levels, and they identify the cut points
+by locating each task's \(\overline{\mu}(\beta)\) against them.
+
+Second, the meaning of a scale label is set-dependent. The label
+``unsure'' is fixed for the consumer, since by construction it means
+\(p \in [0.37, 0.87)\), but what the researcher should infer from it
+depends on the task: the expected purchase probability of a consumer who
+answers ``unsure'' is \(0.80\) in the attractive task and \(0.60\) in
+the unattractive one (Table~\ref{tbl-toy}, last row), which is
+Equation~\ref{eq-condexp} evaluated at the two tasks.
 
 \section*{Declaration of generative AI and AI-assisted technologies in
 the manuscript preparation
