@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{lemma}{Lemma}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{lemma}{Lemma}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -334,9 +334,9 @@ provide estimation routines: maximum likelihood for the aggregate model
 and a custom Markov chain Monte Carlo sampler for the hierarchical
 Bayesian model with heterogeneous preferences, including an extension
 with consumer-specific cut points that accommodates individual
-differences in scale usage (Greene and Hensher 2010; Falco et al. 2015).
-We also express the model in Apollo (Hess and Palma 2019) both as a
-check on our implementation and as a route for readers already working
+differences in scale usage (Greene and Hensher 2010b; Falco et al.
+2015). We also express the model in Apollo (Hess and Palma 2019) both as
+a check on our implementation and as a route for readers already working
 in that framework. Fourth, we supply evidence: simulation studies that
 demonstrate parameter recovery and quantify the losses from
 dichotomization and constant-probability weighting, and an empirical
@@ -371,7 +371,7 @@ response uses that device on survey data. Our statistical tools come
 from work on ordered and mixed response formats, from frameworks that
 handle ratings, rankings, and choices together (Marshall and Bradlow
 2002) to ordered-choice models that let different people use the same
-scale differently (Greene and Hensher 2010; Falco et al. 2015). A
+scale differently (Greene and Hensher 2010b; Falco et al. 2015). A
 further literature explains why the follow-up should ask for a
 probability. A yes/no question forces the consumer to round to zero or
 one, and Manski (2004) argues that economists should elicit the
@@ -675,35 +675,36 @@ depends only on where they sit as a group.
 \subsection{Special Cases and Relation to Existing
 Models}\label{sec-nesting}
 
-\textbf{The resolved comparison.} The binary dual-response models rest
-on a different premise: that the consumer resolves the outside-good
-shock before answering, and so evaluates the realized difference
-\(d_{it} = u^*_{it} - \eta_{it0}\). Hung, Liu, et al. (2025) state the
-premise explicitly, specifying that consumers bring the same private
-information to both responses, and derive the binary case from it;
-Diener et al. (2006) reach the same functional form by a different
+\textbf{The resolved comparison.} The existing binary dual-response
+models rest on a different premise: that the consumer resolves the
+outside-good shock before answering, and so evaluates the realized
+difference \(d_{it} = u^*_{it} - \eta_{it0}\). Hung, Liu, et al. (2025)
+state the premise explicitly, specifying that consumers bring the same
+private information to both responses, and derive the binary case from
+it; Diener et al. (2006) reach the same functional form by a different
 route. A consumer in this position can supply the sign of \(d_{it}\),
 which is all a binary follow-up asks of her. Carried to a \(W\)-point
 scale the construction is harder to read, since having resolved the
 comparison she has no likelihood left to report and a graded answer
-would be an intensity rather than a probability; but it remains well
-defined, and we use it both for the \(W=2\) result below and as the
-misspecified link in Section~\ref{sec-sim-robust}. Fix utility-scale cut
-points \(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and
-suppose \(y_{it} = w\) exactly when
-\(d_{it} \in \left[ c_{w-1}, c_w \right)\). From the researcher's
-perspective \(u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)\) and
+would be something like an intensity rather than a probability; but it
+remains mathematically well defined, and we use it both for the \(W=2\)
+result below and as the misspecified link in
+Section~\ref{sec-sim-robust}. Fix utility-scale cut points
+\(-\infty = c_0 < c_1 < \cdots < c_{W-1} < c_W = \infty\) and suppose
+\(y_{it} = w\) exactly when \(d_{it} \in \left[ c_{w-1}, c_w \right)\).
+From the researcher's perspective
+\(u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)\) and
 \(\eta_{it0} \sim \text{Gumbel}(0,1)\) are independent, so their
 difference is logistic,
 \(d_{it} \sim \text{Logistic}\left( \overline{\mu}_{it}, 1 \right)\),
 and \begin{equation}\protect\phantomsection\label{eq-modelB}{
 \Pr \left( y_{it} = w \right)
 = \Lambda \left( c_w - \overline{\mu}_{it} \right) - \Lambda \left( c_{w-1} - \overline{\mu}_{it} \right).
-}\end{equation} This is an ordered logit (Greene and Hensher 2010) in
-the inclusive value: Equation~\ref{eq-cumlink} with the logistic in
-place of our \(F\). Figure~\ref{fig-timing} sets the two rules side by
-side; they share the forced choice and differ only in whether
-\(\eta_{it0}\) is resolved before or after the report.
+}\end{equation} This is an ordered logit (Greene and Hensher 2010a) in
+the inclusive value: Equation~\ref{eq-cumlink} with the logistic CDF
+\(\Lambda\) in place of our \(F\). Figure~\ref{fig-timing} sets the two
+rules side by side; they share the forced choice and differ only in
+whether \(\eta_{it0}\) is resolved before or after the report.
 
 \begin{figure}
 
@@ -745,15 +746,15 @@ Equation~\ref{eq-modelA}:
 \(\Pr(\text{not buy}) = \alpha_1^{S_{it}} = F\left( c_1 - \overline{\mu}_{it}\right)\),
 a complementary log-log rather than logistic binary response. Our model
 therefore implies that when consumers face outside-good uncertainty at
-the moment they answer, even the familiar binary dual response is
-misspecified, if only mildly, since the two links are close.
+the moment they answer, the familiar (logistic) binary dual response
+model is misspecified, if only mildly, since the two links are close.
 
 \textbf{DR-2Max.} The other binary model in the literature, ``DR-2Max''
 (Diener et al. 2006), as implemented in Sawtooth Software's CBC/HB
 (Sawtooth Software 2017), models the second response as a binary logit
 on the \emph{chosen good's} deterministic utility:
 \(\Pr(\text{buy} \mid j^*) = e^{V_{itj^*}} \big/ \left( e^{V_{itj^*}} + e^{\gamma} \right)\).
-This requires drawing a fresh error for the chosen good in the second
+This implies drawing a fresh error for the chosen good in the second
 stage, so that the consumer who just declared \(j^*\) best re-evaluates
 it from scratch. Under our framework such conditioning is unnecessary:
 by Lemma~\ref{lem-gumbel}(ii) the distribution of the best utility does
@@ -772,8 +773,9 @@ in our simulation study (Section~\ref{sec-simstudy}). Both are nested
 within, or dominated by, Equation~\ref{eq-joint}: dichotomization is
 Equation~\ref{eq-collapseB} applied to a coarsened \(y_{it}\), and
 constant-probability weighting fixes the value of a scale point, which
-by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\): no
-single value assigned to a scale point is right for every task.
+by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\)
+(i.e., constant-probability weighting is inappropriate since no single
+value assigned to a scale point is right for every task).
 
 \subsection{Identification}\label{sec-identification}
 
@@ -894,18 +896,23 @@ therefore an overidentification test of the behavioral model
 the forced choice alone whenever \(X\)'s within-task differences have
 full rank), the cut points are exactly identified even \emph{without}
 variation in task attractiveness:
-\(c_w = \overline{\mu} + G^{-1} \left( \Pr(y \le w) \right)\) pointwise.
-Variation in \(\overline{\mu}_{it}\) across tasks therefore
-overidentifies \(\mathbf{c}\), and it is what identifies the link: at a
-single value of \(\overline{\mu}\), any two strictly increasing links
-fit the \(W\) category frequencies perfectly by relabeling cut points,
-so the shape of the link is identified only through how the ordinal
-distribution shifts as \(S_{it}\) varies. Designs that hold task
-attractiveness fixed cannot speak to it at all.
+\(c_w = \overline{\mu} + F^{-1} \left( \Pr(y \le w) \right)\) pointwise.
+Because \(\bfbeta\) fixes each task's inclusive value, we can read a cut
+point straight off the frequency of the categories it bounds: if 30\% of
+reports in a task fall at or below \(w\), then \(c_w\) is the threshold
+satisfying \(F \left( c_w - \overline{\mu} \right) = 0.30\). One task
+supplies \(W-1\) independent cumulative frequencies for the \(W-1\) free
+cut points, so the count is exact. Variation in \(\overline{\mu}_{it}\)
+across tasks therefore overidentifies \(\mathbf{c}\), and it is what
+identifies the link: at a single value of \(\overline{\mu}\), any two
+strictly increasing links fit the \(W\) category frequencies perfectly
+by relabeling cut points, so the shape of the link is identified only
+through how the ordinal distribution shifts as \(S_{it}\) varies.
+Designs that hold task attractiveness fixed cannot speak to it at all.
 
 \textbf{Population versus sample.} Under Proposition~\ref{prp-ident}
 every scale category has strictly positive probability in every task
-(\(G\) is strictly increasing on \(\mathbb{R}\) and the cut points are
+(\(F\) is strictly increasing on \(\mathbb{R}\) and the cut points are
 finite), so no support condition is needed for point identification. In
 finite samples, however, rarely used categories leave their adjacent cut
 points weakly identified, and near-violations of the rank condition
@@ -915,13 +922,15 @@ visible in the smallest eigenvalues of the observed information, a
 diagnostic we report alongside the simulation results in
 Section~\ref{sec-simstudy}.
 
-\textbf{Numerical verification.} We verify Proposition~\ref{prp-ident}
-computationally (replication code accompanies the paper). Data simulated
-from the raw behavioral process (Gumbel utility draws, argmax, and the
-two reporting rules, not the derived likelihood) at three distinct
-parameter configurations for each model, on designs satisfying the rank
-condition, are recovered by maximum likelihood: across all
-configurations the true parameter vector lies inside the 95\%
+\textbf{Numerical demonstration.} The proof settles
+Proposition~\ref{prp-ident}; simulation instead checks that our
+likelihood and estimation code behave as it describes, and makes the
+predicted failure concrete (replication code accompanies the paper).
+Data simulated from the raw behavioral process (Gumbel utility draws,
+argmax, and the two reporting rules, not the derived likelihood) at
+three distinct parameter configurations for each model, on designs
+satisfying the rank condition, are recovered by maximum likelihood:
+across all configurations the true parameter vector lies inside the 95\%
 likelihood-ratio confidence region, the observed information is
 well-conditioned, repeated-sampling bias is statistically
 indistinguishable from zero, and model-based standard errors match the
@@ -1028,7 +1037,7 @@ same thing to everyone, while preferences vary.
 \subsubsection{Heterogeneous Cut Points}\label{sec-hetcut}
 
 The assumption of a shared reporting scale is convenient but
-contestable: Greene and Hensher (2010) and Falco et al. (2015) document
+contestable: Greene and Hensher (2010a) and Falco et al. (2015) document
 individual differences in the use of ordinal response scales. We
 therefore develop an extension with consumer-specific cut points.
 Parameterize
@@ -2321,8 +2330,12 @@ Occupational Allocation in {Africa}.''} \emph{Journal of Economic
 Behavior \& Organization} 111: 137--53.
 \url{https://doi.org/10.1016/j.jebo.2014.12.022}.
 
+\bibitem[\citeproctext]{ref-Greene_2010_book}
+Greene, William H., and David A. Hensher. 2010a. \emph{Modeling Ordered
+Choices: A Primer}. Cambridge University Press.
+
 \bibitem[\citeproctext]{ref-Greene_2010}
-Greene, William H., and David A. Hensher. 2010. {``Ordered Choices and
+Greene, William H., and David A. Hensher. 2010b. {``Ordered Choices and
 Heterogeneity in Attribute Processing.''} \emph{Journal of Transport
 Economics and Policy} 44 (3): 331--64.
 
