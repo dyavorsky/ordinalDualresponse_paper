@@ -1,10 +1,10 @@
 # bayes_agg.R -- Bayesian estimation and marginal-likelihood estimators for
-# the AGGREGATE model. Requires R/lib/likelihood.R and R/lib/compare.R.
+# the AGGREGATE link. Requires R/lib/likelihood.R and R/lib/compare.R.
 
 
-# --- aggregate-model posterior + bridge sampling -----------------------------
+# --- aggregate-link posterior + bridge sampling -----------------------------
 
-# RW-MH sampler for the aggregate model's posterior. Prior: N(0, tau2 * I) on
+# RW-MH sampler for the aggregate link's posterior. Prior: N(0, tau2 * I) on
 # the working parameters (beta, c1, log-diffs). Proposal covariance is the
 # MLE's inverse Hessian, scaled by 2.4^2/d (adaptive during burn-in).
 fit_dual_bayes_agg <- function(dat, iter = 20000, burn = 5000, thin = 5,

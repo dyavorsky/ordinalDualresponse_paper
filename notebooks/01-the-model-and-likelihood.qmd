@@ -24,21 +24,12 @@ and follows it the whole way: draw a design, simulate the behavioral process,
 write out the joint likelihood, maximize it, and check what comes back.
 
 Everything is self-contained, and the code is deliberately the simplest that will
-work. It handles one link only and one configuration only, so nothing is
-generalized before it has been shown once. Notebook 02 takes the same machinery,
+work. Nothing is generalized yet. Notebook 02 takes the same machinery,
 generalizes it to both links, and runs it across configurations and repeated
 samples.
 
-The functions are copies of `R/lib/dgp.R` and `R/lib/likelihood.R`, unrolled and
-commented so the mechanics are visible without opening the archive.
-
-A word on why the data are simulated behaviorally rather than from the closed
-form. If we drew responses from `alpha_w^S - alpha_{w-1}^S` and then fit
-`alpha_w^S - alpha_{w-1}^S`, recovery would confirm only that `optim` works. By
-drawing utilities, taking an argmax, and applying the reporting rule, recovery
-tests the derivation itself: the claim that the maximum of Gumbel utilities is
-Gumbel with location equal to the log-sum inclusive value, and that it is
-independent of which alternative attained it.
+The functions are copies of `R/lib/dgp.R` and `R/lib/likelihood.R`, 
+commented so the mechanics are visible and documented.
 
 This notebook writes no results files. Nothing in the article depends on it, so
 it can be edited freely.
@@ -55,9 +46,9 @@ $$
 $j^* = \arg\max_j u_j$. This is the usual multinomial logit.
 
 **Second response.** She is asked how likely she is to buy it. She knows
-everything about the profiles on screen, but not her valuation of the outside
-good $\eta_0 \sim \text{Gumbel}(0,1)$. So what she holds is not a decision but a
-probability,
+everything about the profiles on screen, but her purchase uncertainty is 
+represented by her unknown valuation of the outside
+good $\eta_0 \sim \text{Gumbel}(0,1)$. She holds the purchase probability,
 
 $$
 p = \Pr(\eta_0 < u^* \mid u^*) = F(u^*), \qquad u^* = \max_j u_j,
@@ -76,7 +67,7 @@ $$
 From the researcher's seat $u^*$ is random. The key lemma is that
 $u^* \sim \text{Gumbel}(\overline{\mu}, 1)$ with $\overline{\mu} = \ln S$ and
 $S = \sum_j e^{V_j}$, and that $u^*$ is independent of $j^*$. Evaluating that
-CDF at $F^{-1}(\alpha)$ collapses to a power, which gives the whole second-stage
+CDF at $F^{-1}(\alpha)$ collapses to a power, which gives the second-stage
 likelihood:
 
 $$
@@ -95,7 +86,10 @@ continuous (e.g., price) attribute.
 ```{r}
 #| label: design
 
-make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+# Attribute levels are drawn at random rather than from an efficiency-optimized
+# catalogue of the kind commercial practice uses (one-way and two-way level
+# balance, D-efficiency, utility balance). 
+make_design <- function(n_tasks, J, seed) {
   set.seed(seed)
   n_rows <- n_tasks * J
   a     <- sample(1:3, n_rows, replace = TRUE)
@@ -108,8 +102,18 @@ make_design <- function(n_tasks, J, seed, intercept = FALSE) {
     b3    = as.numeric(b == 3),
     price = price
   )
-  if (intercept) X <- cbind(X, const = 1)
-  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X),
+       task_id = rep(seq_len(n_tasks), each = J),   # task of each X row
+       alt_id  = rep(seq_len(J), times = n_tasks))  # alternative within task
+}
+
+# Human-readable view that pulls the id's for respondent, task, and 
+# alt into the data.frame
+design_frame <- function(des) {
+  out <- data.frame(task_id = des$task_id, alt_id = des$alt_id)
+  if (!is.null(des$respondent_id))
+    out <- cbind(respondent_id = des$respondent_id, out)
+  cbind(out, as.data.frame(des$X))
 }
 
 N_TASKS <- 20*1000 # 20,000 tasks
@@ -117,11 +121,13 @@ J       <- 4       # 4 alternatives per task
 W       <- 5       # a five-point purchase-likelihood scale
 
 design <- make_design(N_TASKS, J, seed = 101)
-head(design$X, 8)
+head(design_frame(design), 8) |> print(digits=2)
 ```
 
 One task is a set of rows: rows 1 to 4 are the four profiles of task 1, rows
-5 to 8 are task 2, and so on.
+5 to 8 are task 2, and so on. The `task` and `alt` labels are carried
+alongside the design matrix rather than inside it, so `ncol(X)` stays equal
+to the number of parameters and nothing downstream has to skip label columns.
 
 ## 3. True parameters
 
@@ -136,8 +142,7 @@ beta_true  <- c(a2 = 0.8, a3 = -0.5, b2 = 0.4, b3 = 1.0, price = -0.9)
 alpha_true <- c(0.10, 0.30, 0.60, 0.85)
 
 # Cut points live on the utility scale internally, so we move between the two
-# scales with the standard Gumbel CDF and its inverse. These are exact
-# inverses of each other and are used in both directions throughout.
+# scales with the standard Gumbel CDF and its inverse. 
 alpha_to_cut <- function(a) -log(-log(a))   # probability -> utility,  F^{-1}
 cut_to_alpha <- function(c) exp(-exp(-c))   # utility -> probability,  F
 cut_true <- alpha_to_cut(alpha_true)
@@ -155,7 +160,7 @@ consumer's purchase probability, and bin it.
 
 rgumbel <- function(n) -log(-log(runif(n)))
 
-simulate_modelA <- function(design, beta, cut, seed) {
+simulate_dual_ordinal <- function(design, beta, cut, seed) {
   set.seed(seed)
   n <- design$n_tasks
   J <- design$J
@@ -174,15 +179,15 @@ simulate_modelA <- function(design, beta, cut, seed) {
   # (code operates as a matrix subset with a two-col matrix of positions)
   ustar <- u[cbind(seq_len(n), jstar)]
 
-  # She reports the interval holding p = F(ustar). Binning p against
-  # alpha is the same as binning ustar against cut, since F is increasing.
+  # Report the interval holding p = F(ustar). Binning p against alpha
+  # is the same as binning ustar against cut, since F is increasing.
   y <- findInterval(ustar, cut) + 1L
 
   list(design = design, jstar = jstar, y = y, W = length(cut) + 1L,
        ustar = ustar, V = V)
 }
 
-dat <- simulate_modelA(design, beta_true, cut_true, seed = 501)
+dat <- simulate_dual_ordinal(design, beta_true, cut_true, seed = 501)
 ```
 
 ### What the two responses look like
@@ -193,7 +198,7 @@ across positions.
 ```{r}
 #| label: responses_jstar
 
-round(tabulate(dat$jstar, J) / N_TASKS, 4)   # chosen profile
+(tabulate(dat$jstar, J) / N_TASKS) |> round(4)   # chosen profile
 ```
 
 The second response is not, and its shape is what the cut points control.
@@ -201,7 +206,7 @@ The second response is not, and its shape is what the cut points control.
 ```{r}
 #| label: responses_y
 
-round(tabulate(dat$y,     W) / N_TASKS, 4)   # scale point
+(tabulate(dat$y, W) / N_TASKS) |> round(4)   # scale point
 ```
 
 ### The lemma is visible in the simulated data
@@ -226,7 +231,7 @@ cat("KS test vs standard Gumbel, p =",
 
 # (ii) ustar is independent of jstar: the distribution of the standardized
 # maximum should not depend on which profile won.
-round(tapply(z, dat$jstar, mean), 4)
+tapply(z, dat$jstar, mean) |> round(4)
 
 # Test it rather than eyeball it. Under independence the four groups share a
 # distribution, so a Kruskal-Wallis test should not reject.
@@ -291,7 +296,10 @@ par_to_cut <- function(par, P, W) {
   if (W == 2) return(par[P + 1])
   par[P + 1] + c(0, cumsum(exp(par[(P + 2):(P + W - 1)])))
 }
+
 cut_to_par <- function(cut) c(cut[1], log(diff(cut)))
+
+row_max <- function(M) do.call(pmax, as.data.frame(M))
 
 negloglik <- function(par, dat) {
   design <- dat$design
@@ -303,17 +311,17 @@ negloglik <- function(par, dat) {
   beta <- par[1:P]
   cut  <- par_to_cut(par, P, W)
 
-  V     <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
-  m     <- do.call(pmax, as.data.frame(V))     # row maxima
-  logS  <- m + log(rowSums(exp(V - m)))        # log inclusive value
+  V    <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
+  m    <- row_max(V)                          # row maxima
+  mubar <- m + log(rowSums(exp(V - m)))        # log inclusive value
 
   # First response: multinomial logit log-probability of the chosen profile.
-  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - logS
+  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - mubar
 
   # Second response: difference of Gumbel CDFs at the standardized cut points.
   caug <- c(-Inf, cut, Inf)
-  lo <- caug[dat$y]      - logS
-  hi <- caug[dat$y + 1L] - logS
+  lo <- caug[dat$y]      - mubar
+  hi <- caug[dat$y + 1L] - mubar
   p_ord <- exp(-exp(-hi)) - exp(-exp(-lo))
 
   -(sum(ll_choice) + sum(log(pmax(p_ord, 1e-312))))
@@ -334,7 +342,7 @@ frequencies through the link.
 ```{r}
 #| label: fit
 
-fit_modelA <- function(dat) {
+fit_dual_ordinal <- function(dat) {
   P <- dat$design$P
   W <- dat$W
 
@@ -367,7 +375,7 @@ fit_modelA <- function(dat) {
        par = opt$par)
 }
 
-fit <- fit_modelA(dat)
+fit <- fit_dual_ordinal(dat)
 cat("converged:", fit$convergence == 0, "\n")
 ```
 
@@ -388,6 +396,54 @@ knitr::kable(recovery, digits = 4)
 
 Every $z$ statistic is small. With nine parameters we would expect roughly one
 value above two in absolute terms about forty percent of the time.
+
+```{r}
+#| label: fig-recovery
+#| fig-cap: "Recovery of all nine parameters. Dots and bars are the estimate and its 95% confidence interval; red crosses mark the truth. The right panel repeats the intervals centred on the truth, since at 20,000 tasks they are only two to four percent of the left panel's range and would otherwise be hidden behind the markers."
+#| fig-width: 7.2
+#| fig-height: 3.8
+
+suppressMessages(library(ggplot2))
+
+base <- transform(
+  recovery,
+  parameter = factor(recovery$parameter, levels = rev(recovery$parameter)),
+  kind = factor(rep(c("part-worth", "cut point"), c(length(beta_true), W - 1)),
+                levels = c("part-worth", "cut point"))
+)
+
+# Two views of the same fit: the natural scale, and the deviation scale where
+# the intervals are wide enough to read.
+long <- rbind(
+  transform(base, panel = "estimate and 95% interval",
+            x  = estimate,
+            lo = estimate - 1.96 * std_error,
+            hi = estimate + 1.96 * std_error,
+            ref = truth),
+  transform(base, panel = "deviation from truth",
+            x  = estimate - truth,
+            lo = estimate - truth - 1.96 * std_error,
+            hi = estimate - truth + 1.96 * std_error,
+            ref = 0)
+)
+long$panel <- factor(long$panel,
+                     levels = c("estimate and 95% interval", "deviation from truth"))
+
+ggplot(long, aes(y = parameter)) +
+  geom_vline(xintercept = 0, linewidth = 0.3, colour = "grey78") +
+  geom_pointrange(aes(x = x, xmin = lo, xmax = hi), size = 0.3, linewidth = 0.5) +
+  geom_point(aes(x = ref), shape = 4, size = 2.3, stroke = 1.1, colour = "firebrick") +
+  facet_grid(kind ~ panel, scales = "free", space = "free_y", switch = "y") +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(),
+        strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 90, colour = "grey30"),
+        strip.text.x = element_text(colour = "grey30"))
+```
+
+Every interval in the right panel covers zero, so no parameter is distinguishable
+from its true value at conventional levels.
 
 ### The cut points on the probability scale
 
@@ -441,10 +497,4 @@ cat("smallest eigenvalue:", format(min(fit$eigen), digits = 4), "\n")
 cat("condition number:   ", format(max(fit$eigen) / min(fit$eigen), digits = 4), "\n")
 ```
 
-## Where this goes next
 
-| notebook | what it adds |
-|---|---|
-| 02 | the same model generalized to both links, run across three configurations and forty independent datasets |
-| 03 | the hierarchical sampler, its calibration, and a cross-check against an independent implementation |
-| Appendix E | the same aggregate model estimated in Apollo, as a third independent check |

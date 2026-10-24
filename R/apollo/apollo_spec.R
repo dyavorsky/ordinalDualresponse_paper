@@ -7,17 +7,19 @@
 #
 # The two models sit differently with respect to Apollo's built-in components:
 #
-#   Model B  ordered logit on the inclusive value. Native: apollo_mnl for the
+#   "logit"  ordered logit on the inclusive value (the resolved comparison).
+#        Native: apollo_mnl for the
 #            forced choice, apollo_ol for the follow-up, joined by
 #            apollo_combineModels. No custom code.
 #
-#   Model A  ordered complementary-log-log on the inclusive value. Apollo ships
+#   "cloglog"  ordered complementary-log-log on the inclusive value (our model).
+#              Apollo ships
 #            apollo_ol (logistic) and apollo_op (normal) and nothing else, so
 #            there is no native component. Supplied through apollo_ownModel,
 #            which accepts a user-written likelihood and then hands it the full
 #            Apollo machinery (estimation, s.e.'s, LR tests, prediction).
 #
-# The Model A probability below is deliberately written in its direct form,
+# The cloglog probability below is deliberately written in its direct form,
 #   Pr(y = w) = exp(-exp(-(c_w - mubar))) - exp(-exp(-(c_{w-1} - mubar))),
 # rather than by reusing ord_prob_z() from R/lib/likelihood.R. Reusing our own
 # code would make the comparison circular; the point is to check our
@@ -64,7 +66,7 @@ apollo_start <- function(dat) {
   attrs <- colnames(design$X)
   freq <- tabulate(dat$y, nbins = W)
   cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-  ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+  ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
   cut0 <- log(design$J) + ginv(cumq)
   if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
   c(setNames(rep(0, length(attrs)), paste0("b_", attrs)),
@@ -79,7 +81,7 @@ make_apollo_probabilities <- function(dat) {
   J <- dat$design$J
   W <- dat$W
   attrs <- colnames(dat$design$X)
-  model <- dat$model
+  link <- dat$link
 
   function(apollo_beta, apollo_inputs, functionality = "estimate") {
     apollo_attach(apollo_beta, apollo_inputs)
@@ -108,7 +110,7 @@ make_apollo_probabilities <- function(dat) {
     mubar <- log(Reduce(`+`, lapply(V, exp)))
     tau <- lapply(paste0("tau_", seq_len(W - 1)), function(z) get(z))
 
-    if (model == "B") {
+    if (link == "logit") {
       P[["ord"]] <- apollo_ol(list(
         outcomeOrdered = y,
         utility        = mubar,
@@ -148,7 +150,7 @@ fit_apollo <- function(dat, silent = TRUE) {
   apollo_initialise()
 
   apollo_control <<- list(
-    modelName  = paste0("odr_model", dat$model),
+    modelName  = paste0("odr_model", dat$link),
     modelDescr = "Ordinal dual response",
     indivID    = "ID",
     outputDirectory = tempdir(),

@@ -55,15 +55,25 @@ options(digits = 5)
 #| code-fold: true
 #| code-summary: "Design, simulator, likelihood, and the information weight omega"
 rgumbel <- function(n) -log(-log(runif(n)))
-make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+# Attribute levels are drawn at random rather than from an efficiency-optimized
+# catalogue of the kind commercial practice uses (one-way and two-way level
+# balance, D-efficiency, utility balance). Nothing here needs one. The headline
+# comparisons are paired -- competing specifications are fit to the same
+# simulated data on the same design -- so design efficiency cancels from them,
+# and recovery needs only the rank condition, which id_rank_check() verifies.
+# Optimizing for the forced choice alone would not obviously serve the second
+# response in any case: it is identified by variation in task attractiveness
+# across tasks, which within-task utility balance does nothing to produce.
+make_design <- function(n_tasks, J, seed) {
   set.seed(seed)
   n_rows <- n_tasks * J
   a <- sample(1:3, n_rows, replace = TRUE); b <- sample(1:3, n_rows, replace = TRUE)
   price <- runif(n_rows, 0.5, 2.5)
   X <- cbind(a2 = as.numeric(a == 2), a3 = as.numeric(a == 3),
              b2 = as.numeric(b == 2), b3 = as.numeric(b == 3), price = price)
-  if (intercept) X <- cbind(X, const = 1)
-  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X),
+       task_id = rep(seq_len(n_tasks), each = J),   # task of each X row
+       alt_id  = rep(seq_len(J), times = n_tasks))  # alternative within task
 }
 par_to_cut <- function(par, P, W) {
   if (W == 2) return(par[P + 1])
@@ -71,31 +81,31 @@ par_to_cut <- function(par, P, W) {
 }
 cut_to_par <- function(cut) if (length(cut) == 1) cut else c(cut[1], log(diff(cut)))
 row_max <- function(M) do.call(pmax, as.data.frame(M))
-link_cdf <- function(z, model) if (model == "B") plogis(z) else exp(-exp(-z))
-link_pdf <- function(z, model) if (model == "B") dlogis(z) else exp(-(z + exp(-z)))
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
+link_cdf <- function(z, link) if (link == "logit") plogis(z) else exp(-exp(-z))
+link_pdf <- function(z, link) if (link == "logit") dlogis(z) else exp(-(z + exp(-z)))
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   else { ea <- exp(-lo); eb <- exp(-hi)
          p <- exp(-eb) * (-expm1(-(ea - eb))); p[!is.finite(eb)] <- 0; p }
 }
-ord_prob <- function(mubar, cut, y, model) {
-  caug <- c(-Inf, cut, Inf); ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, model)
+ord_prob <- function(mubar, cut, y, link) {
+  caug <- c(-Inf, cut, Inf); ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, link)
 }
 negloglik <- function(par, dat) {
   design <- dat$design; P <- design$P; W <- dat$W
   n <- design$n_tasks; J <- design$J
   beta <- par[1:P]; cut <- par_to_cut(par, P, W)
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  -(sum(V[cbind(seq_len(n), dat$jstar)] - logS) +
-    sum(log(pmax(ord_prob(logS, cut, dat$y, dat$model), 1e-312))))
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  -(sum(V[cbind(seq_len(n), dat$jstar)] - mubar) +
+    sum(log(pmax(ord_prob(mubar, cut, dat$y, dat$link), 1e-312))))
 }
 fit_dual_mle <- function(dat, start = NULL) {
   design <- dat$design; P <- design$P; W <- dat$W
   if (is.null(start)) {
     freq <- tabulate(dat$y, nbins = W)
     cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-    ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+    ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
     cut0 <- log(design$J) + ginv(cumq)
     if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
     start <- c(rep(0, P), cut_to_par(cut0))
@@ -106,21 +116,21 @@ fit_dual_mle <- function(dat, start = NULL) {
   list(beta = opt$par[1:P], cut = par_to_cut(opt$par, P, W), nll = opt$value,
        par = opt$par, eigen = eigen(H, symmetric = TRUE, only.values = TRUE)$values)
 }
-simulate_dual <- function(design, beta, cut, model = c("A","B"), seed) {
-  model <- match.arg(model); set.seed(seed)
+simulate_dual <- function(design, beta, cut, link = c("cloglog","logit"), seed) {
+  link <- match.arg(link); set.seed(seed)
   n <- design$n_tasks; J <- design$J
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
   list(design = design, jstar = jstar, y = findInterval(latent, cut) + 1L,
-       W = length(cut) + 1L, model = model)
+       W = length(cut) + 1L, link = link)
 }
 # The second-stage information weight from the paper's decomposition.
-omega_weight <- function(mubar, cut, model) {
+omega_weight <- function(mubar, cut, link) {
   z <- outer(mubar, cut, function(m, c) c - m)
-  Gz <- cbind(0, link_cdf(z, model), 1); gz <- cbind(0, link_pdf(z, model), 0)
+  Gz <- cbind(0, link_cdf(z, link), 1); gz <- cbind(0, link_pdf(z, link), 0)
   W <- length(cut) + 1L
   om <- 0
   for (w in seq_len(W)) om <- om + (gz[, w + 1] - gz[, w])^2 / (Gz[, w + 1] - Gz[, w])
@@ -149,17 +159,17 @@ partition can only add information.
 
 ```{r}
 #| label: info-by-w
-I_LATENT <- c(A = 1, B = 1/3)
+I_LATENT <- c(cloglog = 1, logit = 1/3)
 
-mean_omega <- function(cut, model, m0, s, ngrid = 81) {
+mean_omega <- function(cut, link, m0, s, ngrid = 81) {
   z <- seq(-4, 4, length.out = ngrid); w <- dnorm(z); w <- w / sum(w)
-  sum(w * omega_weight(m0 + s * z, cut, model))
+  sum(w * omega_weight(m0 + s * z, cut, link))
 }
 
 # Cut points giving every category the same expected share.
-equal_share_cuts <- function(W, model, m0, s) {
+equal_share_cuts <- function(W, link, m0, s) {
   qs <- seq_len(W - 1) / W
-  G <- if (model == "B") function(c, m) plogis(c - m) else
+  G <- if (link == "logit") function(c, m) plogis(c - m) else
                           function(c, m) exp(-exp(-(c - m)))
   f <- function(c) integrate(function(m) G(c, m) * dnorm(m, m0, s),
                              m0 - 6*s - 10, m0 + 6*s + 10)$value
@@ -173,19 +183,19 @@ WGRID   <- c(2, 3, 5, 7, 9, 11)
 
 tab_w <- do.call(rbind, lapply(names(REGIMES), function(rg) {
   m0 <- REGIMES[[rg]]
-  do.call(rbind, lapply(c("A","B"), function(model) {
+  do.call(rbind, lapply(c("cloglog","logit"), function(link) {
     do.call(rbind, lapply(WGRID, function(Wk) {
-      cuts <- equal_share_cuts(Wk, model, m0, SPREAD)
-      om <- mean_omega(cuts, model, m0, SPREAD)
-      data.frame(regime = rg, model = model, W = Wk, omega = om,
-                 frac = om / I_LATENT[model])
+      cuts <- equal_share_cuts(Wk, link, m0, SPREAD)
+      om <- mean_omega(cuts, link, m0, SPREAD)
+      data.frame(regime = rg, link = link, W = Wk, omega = om,
+                 frac = om / I_LATENT[link])
     }))
   }))
 }))
 
 knitr::kable(
-  reshape(tab_w[, c("regime","model","W","frac")], direction = "wide",
-          idvar = c("model","W"), timevar = "regime"),
+  reshape(tab_w[, c("regime","link","W","frac")], direction = "wide",
+          idvar = c("link","W"), timevar = "regime"),
   row.names = FALSE, digits = 3)
 ```
 
@@ -194,7 +204,7 @@ knitr::kable(
 #| fig-cap: "Share of the continuous-report information captured by a W-point second response, cut points at equal expected shares."
 suppressMessages(library(ggplot2))
 tab_w$regime <- factor(tab_w$regime, levels = names(REGIMES))
-g1 <- ggplot(subset(tab_w, model == "A"), aes(W, frac, colour = regime)) +
+g1 <- ggplot(subset(tab_w, link == "cloglog"), aes(W, frac, colour = regime)) +
   geom_line() + geom_point(size = 1.8) +
   scale_x_continuous(breaks = WGRID) +
   labs(x = "scale points W", y = "share of continuous-report information",
@@ -220,39 +230,39 @@ scales actually produce.
 
 ```{r}
 #| label: placement
-optimal_cuts <- function(W, model, m0, s) {
-  start <- equal_share_cuts(W, model, m0, s)
+optimal_cuts <- function(W, link, m0, s) {
+  start <- equal_share_cuts(W, link, m0, s)
   if (W == 2) {
-    opt <- optimize(function(c) -mean_omega(c, model, m0, s),
+    opt <- optimize(function(c) -mean_omega(c, link, m0, s),
                     interval = c(m0 - 8, m0 + 8))
     return(list(cut = opt$minimum, omega = -opt$objective))
   }
-  fn <- function(p) -mean_omega(p[1] + c(0, cumsum(exp(p[-1]))), model, m0, s)
+  fn <- function(p) -mean_omega(p[1] + c(0, cumsum(exp(p[-1]))), link, m0, s)
   opt <- optim(c(start[1], log(diff(start))), fn, method = "BFGS",
                control = list(maxit = 500))
   list(cut = opt$par[1] + c(0, cumsum(exp(opt$par[-1]))), omega = -opt$value)
 }
 
 placements <- list()
-for (model in c("A","B")) {
+for (link in c("cloglog","logit")) {
   m0 <- REGIMES$typical
-  eq <- equal_share_cuts(5, model, m0, SPREAD)
-  op <- optimal_cuts(5, model, m0, SPREAD)
-  G <- if (model == "B") function(c, m) plogis(c - m) else
+  eq <- equal_share_cuts(5, link, m0, SPREAD)
+  op <- optimal_cuts(5, link, m0, SPREAD)
+  G <- if (link == "logit") function(c, m) plogis(c - m) else
                           function(c, m) exp(-exp(-(c - m)))
   conv_shares <- cumsum(c(0.35, 0.23, 0.23, 0.12))
   conv <- vapply(conv_shares, function(q) uniroot(function(c)
     integrate(function(m) G(c, m) * dnorm(m, m0, SPREAD),
               m0 - 13, m0 + 13)$value - q, c(m0 - 20, m0 + 20))$root, numeric(1))
   om <- c(optimal = op$omega,
-          equal_share = mean_omega(eq, model, m0, SPREAD),
-          conventional = mean_omega(conv, model, m0, SPREAD),
-          binary_opt = optimal_cuts(2, model, m0, SPREAD)$omega)
-  placements[[model]] <- list(optimal = op$cut, equal = eq,
+          equal_share = mean_omega(eq, link, m0, SPREAD),
+          conventional = mean_omega(conv, link, m0, SPREAD),
+          binary_opt = optimal_cuts(2, link, m0, SPREAD)$omega)
+  placements[[link]] <- list(optimal = op$cut, equal = eq,
                               conventional = conv, omega = om)
 }
 
-knitr::kable(do.call(rbind, lapply(c("A","B"), function(mm) {
+knitr::kable(do.call(rbind, lapply(c("cloglog","logit"), function(mm) {
   om <- placements[[mm]]$omega
   data.frame(link = mm, optimal = round(om[1], 4),
              `equal share` = sprintf("%.4f (%.0f%%)", om[2], 100*om[2]/om[1]),
@@ -275,11 +285,11 @@ that is too coarse.
 #| label: fig-placement
 #| fig-cap: "Cut placement and the cost of conventional labels at W = 5."
 om_tab <- do.call(rbind, lapply(names(placements), function(mm)
-  data.frame(model = mm, placement = names(placements[[mm]]$omega),
+  data.frame(link = mm, placement = names(placements[[mm]]$omega),
              omega = as.numeric(placements[[mm]]$omega))))
 om_tab$placement <- factor(om_tab$placement,
   levels = c("optimal","equal_share","conventional","binary_opt"))
-ggplot(om_tab, aes(placement, omega, fill = model)) +
+ggplot(om_tab, aes(placement, omega, fill = link)) +
   geom_col(position = "dodge") +
   labs(x = NULL, y = expression(mean~omega),
        title = "Cut placement and the cost of labels (W = 5, typical tasks)") +
@@ -322,7 +332,7 @@ laplace_lmd <- function(fit) {
 
 run_cell <- function(sigma_task, n_tasks, reps, seed0) {
   correct_lmd <- correct_hll <- matrix(NA, reps, 2,
-                                       dimnames = list(NULL, c("A","B")))
+                                       dimnames = list(NULL, c("cloglog","logit")))
   musd <- numeric(reps)
   for (r in seq_len(reps)) {
     des <- make_spread_design(n_tasks, seed = seed0 + 11*r, sigma_task)
@@ -331,18 +341,18 @@ run_cell <- function(sigma_task, n_tasks, reps, seed0) {
     subdes <- function(kv) { d2 <- des; d2$X <- des$X[rep(kv, each = J), , drop = FALSE]
                              d2$n_tasks <- sum(kv); d2 }
     des_est <- subdes(keep); des_hold <- subdes(!keep)
-    for (truth in c("A","B")) {
-      cut_true <- if (truth == "A") cutA else cutB
-      dat_full <- simulate_dual(des, as.numeric(beta), cut_true, model = truth,
+    for (truth in c("cloglog","logit")) {
+      cut_true <- if (truth == "cloglog") cutA else cutB
+      dat_full <- simulate_dual(des, as.numeric(beta), cut_true, link = truth,
                                 seed = seed0 + 11*r + 1)
       musd[r] <- sd(log(rowSums(exp(matrix(des$X %*% beta, ncol = J, byrow = TRUE)))))
       dat_est  <- list(design = des_est,  jstar = dat_full$jstar[keep],
-                       y = dat_full$y[keep], W = W, model = "A")
+                       y = dat_full$y[keep], W = W, link = "cloglog")
       dat_hold <- list(design = des_hold, jstar = dat_full$jstar[!keep],
-                       y = dat_full$y[!keep], W = W, model = "A")
-      lmd <- hll <- c(A = NA_real_, B = NA_real_)
-      for (fl in c("A","B")) {
-        dat_est$model <- fl; dat_hold$model <- fl
+                       y = dat_full$y[!keep], W = W, link = "cloglog")
+      lmd <- hll <- c(cloglog = NA_real_, logit = NA_real_)
+      for (fl in c("cloglog","logit")) {
+        dat_est$link <- fl; dat_hold$link <- fl
         f <- fit_dual_mle(dat_est)
         lmd[fl] <- laplace_lmd(f)
         hll[fl] <- -negloglik(f$par, dat_hold)
@@ -367,10 +377,10 @@ for (sig in c(0, 0.75, 1.5)) for (n in c(1800, 3600, 7200)) {
 knitr::kable(do.call(rbind, lapply(ld_cells, function(cl) data.frame(
   `sigma task` = cl$sigma_task, n = cl$n,
   `mubar sd` = round(cl$mubar_sd, 2),
-  `P(correct | A)` = round(cl$lmd["A"], 2),
-  `P(correct | B)` = round(cl$lmd["B"], 2),
-  `holdout: A` = round(cl$hll["A"], 2),
-  `holdout: B` = round(cl$hll["B"], 2),
+  `P(correct | A)` = round(cl$lmd["cloglog"], 2),
+  `P(correct | B)` = round(cl$lmd["logit"], 2),
+  `holdout: A` = round(cl$hll["cloglog"], 2),
+  `holdout: B` = round(cl$hll["logit"], 2),
   check.names = FALSE))), row.names = FALSE)
 ```
 
@@ -397,18 +407,18 @@ squash_design <- function(n_tasks, seed, target_mu = 0.6) {
 }
 
 run_squashed <- function(n_tasks, reps, seed0) {
-  correct <- matrix(NA, reps, 2, dimnames = list(NULL, c("A","B")))
+  correct <- matrix(NA, reps, 2, dimnames = list(NULL, c("cloglog","logit")))
   musd <- numeric(reps)
   for (r in seq_len(reps)) {
     des <- squash_design(n_tasks, seed = seed0 + 11*r)
     V <- matrix(des$X %*% beta, ncol = J, byrow = TRUE); m <- row_max(V)
     musd[r] <- sd(m + log(rowSums(exp(V - m))))
-    for (truth in c("A","B")) {
-      cut_true <- if (truth == "A") cutA else cutB
-      dat <- simulate_dual(des, as.numeric(beta), cut_true, model = truth,
+    for (truth in c("cloglog","logit")) {
+      cut_true <- if (truth == "cloglog") cutA else cutB
+      dat <- simulate_dual(des, as.numeric(beta), cut_true, link = truth,
                            seed = seed0 + 11*r + 1)
-      lmd <- c(A = NA_real_, B = NA_real_)
-      for (fl in c("A","B")) { dat$model <- fl; lmd[fl] <- laplace_lmd(fit_dual_mle(dat)) }
+      lmd <- c(cloglog = NA_real_, logit = NA_real_)
+      for (fl in c("cloglog","logit")) { dat$link <- fl; lmd[fl] <- laplace_lmd(fit_dual_mle(dat)) }
       correct[r, truth] <- names(which.max(lmd)) == truth
     }
   }
@@ -420,8 +430,8 @@ for (n in c(3600, 7200)) sq_cells[[paste0("n", n)]] <- run_squashed(n, R_REPS, 2
 
 knitr::kable(do.call(rbind, lapply(sq_cells, function(cl) data.frame(
   n = cl$n, `mubar sd` = signif(cl$mubar_sd, 3),
-  `P(correct | A true)` = round(cl$correct["A"], 2),
-  `P(correct | B true)` = round(cl$correct["B"], 2),
+  `P(correct | A true)` = round(cl$correct["cloglog"], 2),
+  `P(correct | B true)` = round(cl$correct["logit"], 2),
   check.names = FALSE))), row.names = FALSE)
 ```
 

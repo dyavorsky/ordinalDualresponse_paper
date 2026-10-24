@@ -1,4 +1,4 @@
-# fisher.R -- exact Fisher information for the ordinal dual-response model,
+# fisher.R -- exact Fisher information for the ordinal dual-response link,
 # implementing (and generalizing to the full (beta, cut) block) the paper's
 # information decomposition: per task,
 #   I = [ MNL block ] + [ ordinal-stage block ],
@@ -7,13 +7,13 @@
 #
 # Parameter order: (beta[1..P], c_1, ..., c_{W-1}).
 
-link_cdf <- function(z, model) if (model == "B") plogis(z) else exp(-exp(-z))
-link_pdf <- function(z, model) {
-  if (model == "B") dlogis(z) else exp(-(z + exp(-z)))
+link_cdf <- function(z, link) if (link == "logit") plogis(z) else exp(-exp(-z))
+link_pdf <- function(z, link) {
+  if (link == "logit") dlogis(z) else exp(-(z + exp(-z)))
 }
 
 # Information contribution of one task with design rows Xt (J x P).
-fisher_task <- function(Xt, beta, cut, model) {
+fisher_task <- function(Xt, beta, cut, link) {
   P <- ncol(Xt)
   W <- length(cut) + 1L
   K <- P + W - 1L
@@ -28,8 +28,8 @@ fisher_task <- function(Xt, beta, cut, model) {
 
   # Ordinal-stage block over the full (beta, cut) vector
   z <- cut - mubar
-  Gz <- c(0, link_cdf(z, model), 1)
-  gz <- c(0, link_pdf(z, model), 0)
+  Gz <- c(0, link_cdf(z, link), 1)
+  gz <- c(0, link_pdf(z, link), 0)
   pi_w <- diff(Gz)
   xbar <- as.numeric(t(p) %*% Xt)
   for (w in seq_len(W)) {
@@ -43,14 +43,14 @@ fisher_task <- function(Xt, beta, cut, model) {
 }
 
 # Total information over a design (rows task-major, J per task).
-fisher_total <- function(design, beta, cut, model) {
+fisher_total <- function(design, beta, cut, link) {
   n <- design$n_tasks
   J <- design$J
   K <- design$P + length(cut)
   I <- matrix(0, K, K)
   for (t in seq_len(n)) {
     rows <- ((t - 1) * J + 1):(t * J)
-    I <- I + fisher_task(design$X[rows, , drop = FALSE], beta, cut, model)
+    I <- I + fisher_task(design$X[rows, , drop = FALSE], beta, cut, link)
   }
   I
 }
@@ -58,10 +58,10 @@ fisher_total <- function(design, beta, cut, model) {
 # Second-stage-only information weight omega(mubar; cut) per task (the scalar
 # in eq-fisher). Useful for quantifying how much of the second response's
 # information dichotomization discards, independent of the design.
-omega_weight <- function(mubar, cut, model) {
+omega_weight <- function(mubar, cut, link) {
   z <- outer(mubar, cut, function(m, c) c - m)
-  Gz <- cbind(0, link_cdf(z, model), 1)
-  gz <- cbind(0, link_pdf(z, model), 0)
+  Gz <- cbind(0, link_cdf(z, link), 1)
+  gz <- cbind(0, link_pdf(z, link), 0)
   W <- length(cut) + 1L
   om <- 0
   for (w in seq_len(W)) {
@@ -74,13 +74,13 @@ omega_weight <- function(mubar, cut, model) {
 # h = P(y >= k | task) = 1 - G(c_{k-1} - mubar) for a single evaluation task,
 # given a parameter covariance Vcov whose cut block corresponds to `cut`
 # (positions cut_pos, a vector of the indices of c_1.. within the parameter).
-pred_var_exceed <- function(Xt, beta, cut, k, model, Vcov, P) {
+pred_var_exceed <- function(Xt, beta, cut, k, link, Vcov, P) {
   V <- as.numeric(Xt %*% beta)
   m <- max(V)
   mubar <- m + log(sum(exp(V - m)))
   p <- exp(V - mubar)
   xbar <- as.numeric(t(p) %*% Xt)
-  g <- link_pdf(cut[k - 1] - mubar, model)
+  g <- link_pdf(cut[k - 1] - mubar, link)
   grad <- numeric(nrow(Vcov))
   grad[1:P] <- g * xbar
   grad[P + k - 1] <- -g
@@ -88,9 +88,9 @@ pred_var_exceed <- function(Xt, beta, cut, k, model, Vcov, P) {
 }
 
 # True exceedance probability for a task.
-true_exceed <- function(Xt, beta, cut, k, model) {
+true_exceed <- function(Xt, beta, cut, k, link) {
   V <- as.numeric(Xt %*% beta)
   m <- max(V)
   mubar <- m + log(sum(exp(V - m)))
-  1 - link_cdf(cut[k - 1] - mubar, model)
+  1 - link_cdf(cut[k - 1] - mubar, link)
 }

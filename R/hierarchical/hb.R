@@ -1,4 +1,4 @@
-# hb.R -- hierarchical Bayesian estimation of the ordinal dual-response model
+# hb.R -- hierarchical Bayesian estimation of the ordinal dual-response link
 # by random-walk Metropolis within Gibbs (Rossi, Allenby & McCulloch style).
 #
 # Model (common cut points, het_cut = FALSE):
@@ -37,16 +37,16 @@ resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE) {
   des <- dat$design
   n <- des$n_tasks
   J <- des$J
-  Bx <- Bmat[dat$resp_row, , drop = FALSE]
+  Bx <- Bmat[dat$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(des$X * Bx), nrow = n, ncol = J, byrow = TRUE)
   m <- row_max(V)
-  logS <- m + log(rowSums(exp(V - m)))
-  ll <- V[cbind(seq_len(n), dat$jstar)] - logS
+  mubar <- m + log(rowSums(exp(V - m)))
+  ll <- V[cbind(seq_len(n), dat$jstar)] - mubar
   if (!choice_only) {
     cut_aug <- cbind(-Inf, cutmat, Inf)
-    lo <- cut_aug[cbind(dat$resp, dat$y)] - logS
-    hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - logS
-    ll <- ll + log(pmax(ord_prob_z(lo, hi, dat$model), 1e-312))
+    lo <- cut_aug[cbind(dat$resp, dat$y)] - mubar
+    hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - mubar
+    ll <- ll + log(pmax(ord_prob_z(lo, hi, dat$link), 1e-312))
   }
   as.numeric(rowsum(ll, dat$resp, reorder = TRUE))
 }
@@ -108,7 +108,7 @@ fit_dual_hb <- function(dat,
   Phi <- matrix(0, N, dim_phi)
   freq <- tabulate(dat$y, nbins = W)
   cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-  ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+  ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
   cut0 <- log(des$J) + ginv(cumq)
   if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
   zeta <- cut_to_par(cut0)                     # common-cut block (transformed)
@@ -217,7 +217,7 @@ fit_dual_hb <- function(dat,
     accept = list(phi = mean(acc_phi / post_iters),
                   zeta = if (het_cut || choice_only) NA else acc_zeta / post_iters),
     settings = list(mcmc = mcmc, het_cut = het_cut, choice_only = choice_only,
-                    P = P, W = W, N = N, model = dat$model, priors = priors),
+                    P = P, W = W, N = N, link = dat$link, priors = priors),
     runtime_min = as.numeric(difftime(Sys.time(), t0, units = "mins"))
   ), class = "dr_hb_fit")
 }

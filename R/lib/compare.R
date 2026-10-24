@@ -1,4 +1,4 @@
-# compare.R -- model-comparison primitives shared by the aggregate and
+# compare.R -- link-comparison primitives shared by the aggregate and
 # hierarchical estimators.
 
 logmeanexp <- function(x) {

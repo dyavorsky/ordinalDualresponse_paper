@@ -109,3 +109,6 @@ empirical_application/
 # Literature PDFs. Publisher copyright: fine to hold locally for research,
 # not to redistribute from a public repo. Kept on disk, out of git.
 lit/
+
+# Quarto manuscript build artifact (one per notebook; not source)
+**/*.embed.ipynb

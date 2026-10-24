@@ -7,9 +7,9 @@
 #     shifts as task attractiveness varies. Test: H0 lambda = 1.
 #
 #   delta (conditioning): second-stage predictor mubar + delta*(V_{j*} - mubar).
-#     delta = 0 is our inclusive-value model; delta = 1 is the DR-2Max
+#     delta = 0 is our inclusive-value link; delta = 1 is the DR-2Max
 #     conditioning (second stage reads the chosen option's utility).
-#     Tests: H0 delta = 0 (our model) and H0 delta = 1 (DR-2Max).
+#     Tests: H0 delta = 0 (our link) and H0 delta = 1 (DR-2Max).
 #
 # Both are Wald + LR tests from the aggregate MLE, with the extended fits
 # warm-started at the restricted solution.
@@ -38,16 +38,16 @@ negloglik_ext <- function(par, dat, ext = c("lambda", "delta"), fix = NULL) {
 
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   m <- row_max(V)
-  logS <- m + log(rowSums(exp(V - m)))
+  mubar <- m + log(rowSums(exp(V - m)))
   Vstar <- V[cbind(seq_len(n), dat$jstar)]
-  ll_choice <- Vstar - logS
+  ll_choice <- Vstar - mubar
 
-  pred <- if (ext == "lambda") theta * logS else logS + theta * (Vstar - logS)
-  p_ord <- ord_prob(pred, cut, dat$y, dat$model)
+  pred <- if (ext == "lambda") theta * mubar else mubar + theta * (Vstar - mubar)
+  p_ord <- ord_prob(pred, cut, dat$y, dat$link)
   -(sum(ll_choice) + sum(log(pmax(p_ord, 1e-312))))
 }
 
-# Fit the extended model, warm-started at the restricted MLE.
+# Fit the extended link, warm-started at the restricted MLE.
 fit_dual_mle_ext <- function(dat, ext, start_core, theta0) {
   fn <- function(p) negloglik_ext(p, dat, ext = ext)
   opt <- optim(c(start_core, theta0), fn, method = "BFGS",

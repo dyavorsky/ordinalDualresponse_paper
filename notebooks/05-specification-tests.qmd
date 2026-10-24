@@ -76,15 +76,25 @@ options(digits = 5)
 #| code-summary: "Design, simulator (including both alternatives), and likelihood"
 rgumbel <- function(n) -log(-log(runif(n)))
 
-make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+# Attribute levels are drawn at random rather than from an efficiency-optimized
+# catalogue of the kind commercial practice uses (one-way and two-way level
+# balance, D-efficiency, utility balance). Nothing here needs one. The headline
+# comparisons are paired -- competing specifications are fit to the same
+# simulated data on the same design -- so design efficiency cancels from them,
+# and recovery needs only the rank condition, which id_rank_check() verifies.
+# Optimizing for the forced choice alone would not obviously serve the second
+# response in any case: it is identified by variation in task attractiveness
+# across tasks, which within-task utility balance does nothing to produce.
+make_design <- function(n_tasks, J, seed) {
   set.seed(seed)
   n_rows <- n_tasks * J
   a <- sample(1:3, n_rows, replace = TRUE); b <- sample(1:3, n_rows, replace = TRUE)
   price <- runif(n_rows, 0.5, 2.5)
   X <- cbind(a2 = as.numeric(a == 2), a3 = as.numeric(a == 3),
              b2 = as.numeric(b == 2), b3 = as.numeric(b == 3), price = price)
-  if (intercept) X <- cbind(X, const = 1)
-  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X),
+       task_id = rep(seq_len(n_tasks), each = J),   # task of each X row
+       alt_id  = rep(seq_len(J), times = n_tasks))  # alternative within task
 }
 par_to_cut <- function(par, P, W) {
   if (W == 2) return(par[P + 1])
@@ -92,29 +102,29 @@ par_to_cut <- function(par, P, W) {
 }
 cut_to_par <- function(cut) if (length(cut) == 1) cut else c(cut[1], log(diff(cut)))
 row_max <- function(M) do.call(pmax, as.data.frame(M))
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   else { ea <- exp(-lo); eb <- exp(-hi)
          p <- exp(-eb) * (-expm1(-(ea - eb))); p[!is.finite(eb)] <- 0; p }
 }
-ord_prob <- function(mubar, cut, y, model) {
-  caug <- c(-Inf, cut, Inf); ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, model)
+ord_prob <- function(mubar, cut, y, link) {
+  caug <- c(-Inf, cut, Inf); ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, link)
 }
 negloglik <- function(par, dat) {
   design <- dat$design; P <- design$P; W <- dat$W
   n <- design$n_tasks; J <- design$J
   beta <- par[1:P]; cut <- par_to_cut(par, P, W)
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  -(sum(V[cbind(seq_len(n), dat$jstar)] - logS) +
-    sum(log(pmax(ord_prob(logS, cut, dat$y, dat$model), 1e-312))))
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  -(sum(V[cbind(seq_len(n), dat$jstar)] - mubar) +
+    sum(log(pmax(ord_prob(mubar, cut, dat$y, dat$link), 1e-312))))
 }
 fit_dual_mle <- function(dat, start = NULL) {
   design <- dat$design; P <- design$P; W <- dat$W
   if (is.null(start)) {
     freq <- tabulate(dat$y, nbins = W)
     cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-    ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+    ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
     cut0 <- log(design$J) + ginv(cumq)
     if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
     start <- c(rep(0, P), cut_to_par(cut0))
@@ -128,23 +138,23 @@ fit_dual_mle <- function(dat, start = NULL) {
 # Simulator carrying both alternatives:
 #   model2 = "2max"  -> second stage reads the CHOSEN good's utility (DR-2Max)
 #   lambda != 1      -> second-stage latent centred on lambda * log S
-simulate_dual <- function(design, beta, cut, model = c("A", "B"), seed,
+simulate_dual <- function(design, beta, cut, link = c("cloglog", "logit"), seed,
                           model2 = c("inclusive", "2max"), lambda = 1) {
-  model <- match.arg(model); model2 <- match.arg(model2)
+  link <- match.arg(link); model2 <- match.arg(model2)
   set.seed(seed)
   n <- design$n_tasks; J <- design$J
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
   latent <- if (model2 == "2max") {
     V[cbind(seq_len(n), jstar)] + rlogis(n)
   } else if (lambda != 1) {
-    rlogis(n, location = lambda * logS)
-  } else if (model == "A") ustar else ustar - rgumbel(n)
+    rlogis(n, location = lambda * mubar)
+  } else if (link == "cloglog") ustar else ustar - rgumbel(n)
   list(design = design, jstar = jstar, y = findInterval(latent, cut) + 1L,
-       W = length(cut) + 1L, model = model, beta_true = beta, cut_true = cut,
+       W = length(cut) + 1L, link = link, beta_true = beta, cut_true = cut,
        model2 = model2, lambda = lambda)
 }
 ```
@@ -156,8 +166,8 @@ what enters the ordinal stage as the predictor.
 
 ```{r}
 #| label: ext-likelihood
-# ext = "lambda": predictor is theta * logS
-# ext = "delta" : predictor is logS + theta * (V_{j*} - logS)
+# ext = "lambda": predictor is theta * mubar
+# ext = "delta" : predictor is mubar + theta * (V_{j*} - mubar)
 # If `fix` is supplied the extension parameter is held there instead of estimated.
 negloglik_ext <- function(par, dat, ext = c("lambda", "delta"), fix = NULL) {
   ext <- match.arg(ext)
@@ -168,11 +178,11 @@ negloglik_ext <- function(par, dat, ext = c("lambda", "delta"), fix = NULL) {
   beta <- par_core[1:P]; cut <- par_to_cut(par_core, P, W)
 
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
   Vstar <- V[cbind(seq_len(n), dat$jstar)]
 
-  pred <- if (ext == "lambda") theta * logS else logS + theta * (Vstar - logS)
-  -(sum(Vstar - logS) + sum(log(pmax(ord_prob(pred, cut, dat$y, dat$model), 1e-312))))
+  pred <- if (ext == "lambda") theta * mubar else mubar + theta * (Vstar - mubar)
+  -(sum(Vstar - mubar) + sum(log(pmax(ord_prob(pred, cut, dat$y, dat$link), 1e-312))))
 }
 
 fit_dual_mle_ext <- function(dat, ext, start_core, theta0) {
@@ -231,9 +241,9 @@ J <- 4; W <- 5
 beta     <- c(a2 = 0.8, a3 = -0.5, b2 = 0.4, b3 = 1.0, price = -0.9)
 cut_true <- c(-1.0, 0.2, 1.2, 2.2)
 
-gen <- function(n_tasks, seed, model = "B", model2 = "inclusive", lambda = 1) {
+gen <- function(n_tasks, seed, link = "logit", model2 = "inclusive", lambda = 1) {
   des <- make_design(n_tasks, J, seed = seed)
-  simulate_dual(des, beta, cut_true, model = model, seed = seed + 1,
+  simulate_dual(des, beta, cut_true, link = link, seed = seed + 1,
                 model2 = model2, lambda = lambda)
 }
 ```
@@ -270,14 +280,14 @@ reject about 5% of the time.
 R_SIZE <- 300
 R_POW  <- 150
 
-run_cell <- function(label, n_tasks, reps, seed0, model = "B",
+run_cell <- function(label, n_tasks, reps, seed0, link = "logit",
                      model2 = "inclusive", lambda = 1) {
   rej <- matrix(0, reps, 3,
                 dimnames = list(NULL, c("lambda=1", "delta=0", "delta=1")))
   est <- matrix(NA_real_, reps, 2,
                 dimnames = list(NULL, c("lambda_hat", "delta_hat")))
   for (r in seq_len(reps)) {
-    dat <- gen(n_tasks, seed = seed0 + 7 * r, model = model,
+    dat <- gen(n_tasks, seed = seed0 + 7 * r, link = link,
                model2 = model2, lambda = lambda)
     tb <- spec_test_battery(dat)
     rej[r, ] <- tb$p_lr < 0.05
@@ -290,7 +300,7 @@ run_cell <- function(label, n_tasks, reps, seed0, model = "B",
 cells <- list()
 cells$size_B_1200 <- run_cell("size B", 1200, R_SIZE, 10000)
 cells$size_B_3600 <- run_cell("size B", 3600, R_SIZE, 20000)
-cells$size_A_3600 <- run_cell("size A", 3600, R_SIZE, 30000, model = "A")
+cells$size_A_3600 <- run_cell("size A", 3600, R_SIZE, 30000, link = "cloglog")
 ```
 
 ```{r}

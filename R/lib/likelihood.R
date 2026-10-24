@@ -1,11 +1,11 @@
-# likelihood.R -- joint log-likelihood of the ordinal dual-response model and
+# likelihood.R -- joint log-likelihood of the ordinal dual-response link and
 # an MLE fitter with identification diagnostics.
 #
 # Joint per-task likelihood (paper eq-joint):
 #   [ exp(V_j*) / S ] * [ G(c_y - mubar) - G(c_{y-1} - mubar) ]
 # with S = sum_j exp(V_j), mubar = log S, and link G:
-#   Model A: standard Gumbel CDF  G(z) = exp(-exp(-z))   (probability report)
-#   Model B: standard logistic    G(z) = plogis(z)       (graded comparison)
+#   "cloglog": standard Gumbel CDF G(z) = exp(-exp(-z))  -- our model
+#   "logit":   standard logistic   G(z) = plogis(z)      -- the resolved comparison
 #
 # Parameterization for unconstrained optimization:
 #   par = ( beta[1..P], c_1, log(c_2 - c_1), ..., log(c_{W-1} - c_{W-2}) )
@@ -24,8 +24,8 @@ row_max <- function(M) do.call(pmax, as.data.frame(M))
 
 # Interval probability G(hi) - G(lo) with tail-stable formulas, from the
 # standardized bounds directly (lo = c_{w-1} - mubar, hi = c_w - mubar).
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") {
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") {
     # plogis(hi) - plogis(lo) = plogis(hi) * plogis(-lo) * (1 - exp(lo - hi))
     plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   } else {
@@ -40,9 +40,9 @@ ord_prob_z <- function(lo, hi, model) {
 }
 
 # P( y = w | mubar ) with common cut points; c_0 = -Inf, c_W = +Inf.
-ord_prob <- function(mubar, cut, y, model) {
+ord_prob <- function(mubar, cut, y, link) {
   caug <- c(-Inf, cut, Inf)
-  ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, model)
+  ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, link)
 }
 
 negloglik <- function(par, dat) {
@@ -56,10 +56,10 @@ negloglik <- function(par, dat) {
 
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   m <- row_max(V)
-  logS <- m + log(rowSums(exp(V - m)))
+  mubar <- m + log(rowSums(exp(V - m)))
 
-  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - logS
-  p_ord <- ord_prob(logS, cut, dat$y, dat$model)
+  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - mubar
+  p_ord <- ord_prob(mubar, cut, dat$y, dat$link)
   ll_ord <- log(pmax(p_ord, 1e-312))
 
   -(sum(ll_choice) + sum(ll_ord))
@@ -85,7 +85,7 @@ fit_dual_mle <- function(dat, start = NULL) {
   if (is.null(start)) {
     freq <- tabulate(dat$y, nbins = W)
     cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-    ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+    ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
     cut0 <- log(design$J) + ginv(cumq)
     if (W > 2) {
       for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
@@ -120,7 +120,7 @@ fit_dual_mle <- function(dat, start = NULL) {
     min_eig = min(ev), cond = max(ev) / max(min(ev), .Machine$double.eps),
     par = opt$par, counts = opt$counts
   )
-  if (dat$model == "A") {
+  if (dat$link == "cloglog") {
     alpha_hat <- exp(-exp(-cut_hat))
     # d alpha / d c = alpha * (-log alpha)
     out$alpha <- alpha_hat

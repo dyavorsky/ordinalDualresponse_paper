@@ -50,6 +50,37 @@ $$
 $$
 so each merge weakly decreases $\omega$, and so does any coarsening, which is a finite sequence of adjacent merges. The binary response is the coarsest member of the family and hence the least informative; conversely, as the mesh of the partition goes to zero the interval score converges to the exact-observation score and $\omega \to \int \left( g' \right)^2 / g \, dz$, the Fisher information of the latent variable's location (equal to $1$ for the standard Gumbel and $1/3$ for the standard logistic). $\square$
 
+### A.4 The purchase probability is $\text{Beta}(S,1)$ {#sec-appendix-beta .unnumbered}
+
+From the researcher's perspective the consumer's purchase probability $p_{it} = F \left( u^*_{it} \right)$ is a random variable, and its distribution is Beta with the inclusive value as its only shape parameter. The ingredients are classical: the max-stability of the Gumbel family [@Mcfadden_1981] and the probability integral transform.
+
+Drop subscripts and write $F(z) = \exp \left( -e^{-z} \right)$ for the standard Gumbel CDF and $F_{\overline{\mu}}$ for the $\text{Gumbel}(\overline{\mu},1)$ CDF. Max-stability is the statement that shifting the location is the same as raising the CDF to a power:
+$$
+F_{\overline{\mu}}(z)
+= \exp \left( -e^{-(z - \overline{\mu})} \right)
+= \exp \left( -e^{-z} e^{\overline{\mu}} \right)
+= \left[ \exp \left( -e^{-z} \right) \right]^{S}
+= F(z)^{S},
+\qquad S = e^{\overline{\mu}}.
+$$
+By @lem-gumbel(i), $u^* \sim \text{Gumbel}(\overline{\mu},1)$, and $F$ is strictly increasing, so for $a \in (0,1)$
+$$
+\Pr \left( p \le a \right)
+= \Pr \left( F(u^*) \le a \right)
+= \Pr \left( u^* \le F^{-1}(a) \right)
+= F_{\overline{\mu}} \left( F^{-1}(a) \right)
+= F \left( F^{-1}(a) \right)^{S}
+= a^{S}.
+$$
+The explicit form of $F^{-1}$ is never needed; the last step is $F(F^{-1}(a)) = a$. Differentiating gives the density $S a^{S-1}$ on $[0,1]$. The $\text{Beta}(\alpha, \beta)$ density is $a^{\alpha-1} (1-a)^{\beta-1} / B(\alpha,\beta)$, and at $(\alpha,\beta) = (S,1)$ the factor $(1-a)^{\beta-1}$ is one while $B(S,1) = \Gamma(S)\Gamma(1) / \Gamma(S+1) = 1/S$, so the two densities coincide: $p \sim \text{Beta}(S,1)$. The mean follows as $\E[p] = S / (S+1) = \Lambda(\overline{\mu})$. $\square$
+
+**Reading $S$ as a count.** For integer $S$, max-stability says that $\text{Gumbel}(\ln S, 1)$ is the distribution of the maximum of $S$ iid standard Gumbel draws, and the probability integral transform makes each $F(\eta_k)$ a standard uniform. Since $F$ is increasing it passes through the maximum, so
+$$
+p = F \left( \max_{k \le S} \eta_k \right) = \max_{k \le S} F \left( \eta_k \right) = \max_{k \le S} U_k,
+\qquad U_k \iid \text{Uniform}(0,1),
+$$
+and the maximum of $S$ iid uniforms is $\text{Beta}(S,1)$ by the usual order-statistic calculation. The consumer's purchase probability therefore behaves like the best of $S$ independent uniform draws, which is the sense in which $S_{it} = e^{\overline{\mu}_{it}}$ measures how many chances the choice set gets. The reading is heuristic, since $S_{it} = \sum_j e^{V_{itj}}$ is not generally an integer, but the distribution above holds for every real $S > 0$.
+
 ## Appendix B: Estimation Details {#sec-appendix-estimation .unnumbered}
 
 **Aggregate model.** We maximize the likelihood over the working parameters $\left( \bfbeta, c_1, \ln(c_2 - c_1), \ldots, \ln(c_{W-1} - c_{W-2}) \right)$, which enforce cut-point monotonicity without constraints; standard errors for the cut points follow by the delta method. We compute interval probabilities with tail-stable expressions ($\Lambda(h)\Lambda(-l)(1 - e^{l-h})$ for the logistic link and $e^{-e^{-h}}\left(1 - e^{-(e^{-l} - e^{-h})}\right)$ for the Gumbel link) so that extreme cut points do not lose precision to cancellation.
@@ -126,7 +157,7 @@ $$
 for every $j$ and every $u$, which is the claimed independence. Letting $u \to \infty$ recovers the GEV choice probability. $\square$
 :::
 
-Everything in @sec-model follows with $S_{it}$ replaced by $S^{G}_{it}$. The first response becomes the GEV choice probability rather than the multinomial logit; the second response is unchanged in form, since @eq-modelA, @eq-modelB, and the cumulative-link representation @eq-cumlink depend on the choice set only through $\overline{\mu}_{it}$; and the factorization @eq-joint holds for the same reason as before. The location invariance behind @prp-ident also survives: shifting every $V_{itj}$ by $\delta$ multiplies $S^{G}_{it}$ by $e^{\delta}$ and so shifts $\overline{\mu}_{it}$ by exactly $\delta$, which the cut points absorb. The rank condition must then be read against the design as it enters $G$ rather than a simple sum, and the nesting result of @sec-nesting becomes $\Pr(\text{buy}) = S^{G}_{it} / \left( e^{\gamma} + S^{G}_{it} \right)$.
+Everything in @sec-model follows with $S_{it}$ replaced by $S^{G}_{it}$. The first response becomes the GEV choice probability rather than the multinomial logit; the second response is unchanged in form, since @eq-ordprob, @eq-orderedlogit, and the cumulative-link representation @eq-cumlink depend on the choice set only through $\overline{\mu}_{it}$; and the factorization @eq-joint holds for the same reason as before. The location invariance behind @prp-ident also survives: shifting every $V_{itj}$ by $\delta$ multiplies $S^{G}_{it}$ by $e^{\delta}$ and so shifts $\overline{\mu}_{it}$ by exactly $\delta$, which the cut points absorb. The rank condition must then be read against the design as it enters $G$ rather than a simple sum, and the nesting result of @sec-nesting becomes $\Pr(\text{buy}) = S^{G}_{it} / \left( e^{\gamma} + S^{G}_{it} \right)$.
 
 The leading application is nested logit, $G(y) = \sum_{n} \left( \sum_{j \in n} y_j^{1/\lambda_n} \right)^{\lambda_n}$, in which alternatives within a nest are correlated whenever $\lambda_n < 1$. We confirm @lem-gev numerically for a five-alternative, two-nest design with $\lambda = (0.5, 0.8)$ using the positive-stable mixture representation of the nested logit (`R/homogeneous/gev_check.R`). Across two million draws the simulated distribution of $u^*$ matches $\text{Gumbel}(\ln S^{G}, 1)$ (location $1.845$ against $1.846$ analytically; Kolmogorov–Smirnov $p = 0.17$), the simulated choice shares match $y_j G_j / S^{G}$ to four decimal places, and the conditional distribution of $u^*$ given $j^*$ is indistinguishable from its unconditional counterpart at every quartile (chi-square test of independence, $p = 0.70$).
 
@@ -145,7 +176,7 @@ The replication archive implements the model twice: once directly, in the routin
 
 **The model as a two-component structure.** Apollo builds a likelihood by multiplying components. Our joint likelihood @eq-joint has that form, so the forced choice is an `apollo_mnl` component and the ordinal follow-up is a second component over the same tasks. Hybrid choice models, a common use of the package, share this architecture: they combine a multinomial logit for the choice with ordered-response components for attitudinal indicators [@Daly_2012]. The difference between the two is the content of @sec-model. In a hybrid choice model the ordinal component is driven by a latent attitude that is exogenous to the choice, and it is connected to the choice utilities through freely estimated loading parameters. Here the ordinal component is driven by the inclusive value of the same choice set, and its loading is fixed at one rather than estimated. Our model is the restricted case, and @lem-gumbel justifies the restriction.
 
-**The logistic specification is native; ours is not.** With the second stage a cumulative logit in $\overline{\mu}_{it}$, the logistic specification is assembled from stock parts: `apollo_mnl` for the choice, `apollo_ol` for the follow-up with the task's inclusive value passed as its single explanatory variable and the cut points as its thresholds, and `apollo_combineModels` to join them. Our model has no stock part. Apollo supplies ordered components for the logistic and normal links and no others, so the complementary-log-log form @eq-modelA must be written out and passed through `apollo_ownModel`, the hook for user-defined likelihoods. The function is short, and once supplied it inherits the rest of the package. The asymmetry also shows that the standard toolkit anticipates the behavior in which the consumer resolves her uncertainty before answering, and not the behavior in which she reports the probability she still holds.
+**The logistic specification is native; ours is not.** With the second stage a cumulative logit in $\overline{\mu}_{it}$, the logistic specification is assembled from stock parts: `apollo_mnl` for the choice, `apollo_ol` for the follow-up with the task's inclusive value passed as its single explanatory variable and the cut points as its thresholds, and `apollo_combineModels` to join them. Our model has no stock part. Apollo supplies ordered components for the logistic and normal links and no others, so the complementary-log-log form @eq-ordprob must be written out and passed through `apollo_ownModel`, the hook for user-defined likelihoods. The function is short, and once supplied it inherits the rest of the package. The asymmetry also shows that the standard toolkit anticipates the behavior in which the consumer resolves her uncertainty before answering, and not the behavior in which she reports the probability she still holds.
 
 **Agreement.** @tbl-apollo reports the largest discrepancy between the two implementations over `r ap$settings$R_REPS` independent datasets of `r format(ap$settings$N_TASKS, big.mark = ",")` tasks in each of two configurations, with both implementations started from the same values.
 

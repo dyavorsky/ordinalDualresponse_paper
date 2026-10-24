@@ -1,4 +1,4 @@
-# compare_hb.R -- model comparison for the hierarchical model: WAIC from
+# compare_hb.R -- link comparison for the hierarchical link: WAIC from
 # per-respondent pointwise log-likelihood draws, and the log posterior-
 # predictive density of held-out tasks. Requires R/lib/compare.R and
 # R/hierarchical/hb.R.
