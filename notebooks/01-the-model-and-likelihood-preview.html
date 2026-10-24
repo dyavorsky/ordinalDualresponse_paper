@@ -7,7 +7,7 @@
 
     <meta name="author" content="Dan Yavorsky">
     <meta name="author" content="Geoffery Zheng">
-    <meta name="dcterms.date" content="2026-10-22">
+    <meta name="dcterms.date" content="2026-10-24">
 
     <title>The Model and the Likelihood</title>
     <style>
@@ -175,6 +175,9 @@
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-f44c0d78caa26e0bce7f17b0d1e01f4e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
       <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script> 
       </head>
 
@@ -211,7 +214,7 @@
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">October 22, 2026</p>
+              <p class="date">October 24, 2026</p>
             </div>
           </div>
           
@@ -248,7 +251,6 @@
   <li><a href="#the-cut-points-on-the-probability-scale" id="toc-the-cut-points-on-the-probability-scale" class="nav-link" data-scroll-target="#the-cut-points-on-the-probability-scale">The cut points on the probability scale</a></li>
   </ul></li>
   <li><a href="#diagnostics" id="toc-diagnostics" class="nav-link" data-scroll-target="#diagnostics">8. Diagnostics</a></li>
-  <li><a href="#where-this-goes-next" id="toc-where-this-goes-next" class="nav-link" data-scroll-target="#where-this-goes-next">Where this goes next</a></li>
   </ul>
 </nav>
 </div>
@@ -268,9 +270,8 @@
 <section id="what-this-notebook-does" class="level2">
 <h2 class="anchored" data-anchor-id="what-this-notebook-does">What this notebook does</h2>
 <p>This notebook is the walkthrough. It takes one parameter configuration of the model and follows it the whole way: draw a design, simulate the behavioral process, write out the joint likelihood, maximize it, and check what comes back.</p>
-<p>Everything is self-contained, and the code is deliberately the simplest that will work. It handles one link only and one configuration only, so nothing is generalized before it has been shown once. Notebook 02 takes the same machinery, generalizes it to both links, and runs it across configurations and repeated samples.</p>
-<p>The functions are copies of <code>R/lib/dgp.R</code> and <code>R/lib/likelihood.R</code>, unrolled and commented so the mechanics are visible without opening the archive.</p>
-<p>A word on why the data are simulated behaviorally rather than from the closed form. If we drew responses from <code>alpha_w^S - alpha_{w-1}^S</code> and then fit <code>alpha_w^S - alpha_{w-1}^S</code>, recovery would confirm only that <code>optim</code> works. By drawing utilities, taking an argmax, and applying the reporting rule, recovery tests the derivation itself: the claim that the maximum of Gumbel utilities is Gumbel with location equal to the log-sum inclusive value, and that it is independent of which alternative attained it.</p>
+<p>Everything is self-contained, and the code is deliberately the simplest that will work. Nothing is generalized yet. Notebook 02 takes the same machinery, generalizes it to both links, and runs it across configurations and repeated samples.</p>
+<p>The functions are copies of <code>R/lib/dgp.R</code> and <code>R/lib/likelihood.R</code>, commented so the mechanics are visible and documented.</p>
 <p>This notebook writes no results files. Nothing in the article depends on it, so it can be edited freely.</p>
 </section>
 <section id="the-model-in-one-screen" class="level2">
@@ -280,7 +281,7 @@
 u_j = x_j'\beta + \varepsilon_j, \qquad \varepsilon_j \sim \text{Gumbel}(0, 1) \text{ iid}.
 \]</span></p>
 <p><strong>First response.</strong> She is asked which she prefers and picks the best one, <span class="math inline">\(j^* = \arg\max_j u_j\)</span>. This is the usual multinomial logit.</p>
-<p><strong>Second response.</strong> She is asked how likely she is to buy it. She knows everything about the profiles on screen, but not her valuation of the outside good <span class="math inline">\(\eta_0 \sim \text{Gumbel}(0,1)\)</span>. So what she holds is not a decision but a probability,</p>
+<p><strong>Second response.</strong> She is asked how likely she is to buy it. She knows everything about the profiles on screen, but her purchase uncertainty is represented by her unknown valuation of the outside good <span class="math inline">\(\eta_0 \sim \text{Gumbel}(0,1)\)</span>. She holds the purchase probability,</p>
 <p><span class="math display">\[
 p = \Pr(\eta_0 &lt; u^* \mid u^*) = F(u^*), \qquad u^* = \max_j u_j,
 \]</span></p>
@@ -289,7 +290,7 @@ p = \Pr(\eta_0 &lt; u^* \mid u^*) = F(u^*), \qquad u^* = \max_j u_j,
 <p><span class="math display">\[
 y = w \iff p \in [\alpha_{w-1}, \alpha_w).
 \]</span></p>
-<p>From the researcher’s seat <span class="math inline">\(u^*\)</span> is random. The key lemma is that <span class="math inline">\(u^* \sim \text{Gumbel}(\overline{\mu}, 1)\)</span> with <span class="math inline">\(\overline{\mu} = \ln S\)</span> and <span class="math inline">\(S = \sum_j e^{V_j}\)</span>, and that <span class="math inline">\(u^*\)</span> is independent of <span class="math inline">\(j^*\)</span>. Evaluating that CDF at <span class="math inline">\(F^{-1}(\alpha)\)</span> collapses to a power, which gives the whole second-stage likelihood:</p>
+<p>From the researcher’s seat <span class="math inline">\(u^*\)</span> is random. The key lemma is that <span class="math inline">\(u^* \sim \text{Gumbel}(\overline{\mu}, 1)\)</span> with <span class="math inline">\(\overline{\mu} = \ln S\)</span> and <span class="math inline">\(S = \sum_j e^{V_j}\)</span>, and that <span class="math inline">\(u^*\)</span> is independent of <span class="math inline">\(j^*\)</span>. Evaluating that CDF at <span class="math inline">\(F^{-1}(\alpha)\)</span> collapses to a power, which gives the second-stage likelihood:</p>
 <p><span class="math display">\[
 \Pr(y = w) = \alpha_w^{\,S} - \alpha_{w-1}^{\,S}.
 \]</span></p>
@@ -300,42 +301,55 @@ y = w \iff p \in [\alpha_{w-1}, \alpha_w).
 <p>We simulate two three-level attributes, dummy coded against a reference level, plus a continuous (e.g., price) attribute.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>make_design <span class="ot">&lt;-</span> <span class="cf">function</span>(n_tasks, J, seed, <span class="at">intercept =</span> <span class="cn">FALSE</span>) {</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  n_rows <span class="ot">&lt;-</span> n_tasks <span class="sc">*</span> J</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  a     <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, n_rows, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  b     <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, n_rows, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  price <span class="ot">&lt;-</span> <span class="fu">runif</span>(n_rows, <span class="fl">0.5</span>, <span class="fl">2.5</span>)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">a2    =</span> <span class="fu">as.numeric</span>(a <span class="sc">==</span> <span class="dv">2</span>),</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">a3    =</span> <span class="fu">as.numeric</span>(a <span class="sc">==</span> <span class="dv">3</span>),</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">b2    =</span> <span class="fu">as.numeric</span>(b <span class="sc">==</span> <span class="dv">2</span>),</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">b3    =</span> <span class="fu">as.numeric</span>(b <span class="sc">==</span> <span class="dv">3</span>),</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">price =</span> price</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (intercept) X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(X, <span class="at">const =</span> <span class="dv">1</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">X =</span> X, <span class="at">n_tasks =</span> n_tasks, <span class="at">J =</span> J, <span class="at">P =</span> <span class="fu">ncol</span>(X))</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>N_TASKS <span class="ot">&lt;-</span> <span class="dv">20</span><span class="sc">*</span><span class="dv">1000</span> <span class="co"># 20,000 tasks</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>J       <span class="ot">&lt;-</span> <span class="dv">4</span>       <span class="co"># 4 alternatives per task</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>W       <span class="ot">&lt;-</span> <span class="dv">5</span>       <span class="co"># a five-point purchase-likelihood scale</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Attribute levels are drawn at random rather than from an efficiency-optimized</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># catalogue of the kind commercial practice uses (one-way and two-way level</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># balance, D-efficiency, utility balance). </span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>make_design <span class="ot">&lt;-</span> <span class="cf">function</span>(n_tasks, J, seed) {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  n_rows <span class="ot">&lt;-</span> n_tasks <span class="sc">*</span> J</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  a     <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, n_rows, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  b     <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, n_rows, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  price <span class="ot">&lt;-</span> <span class="fu">runif</span>(n_rows, <span class="fl">0.5</span>, <span class="fl">2.5</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">cbind</span>(</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">a2    =</span> <span class="fu">as.numeric</span>(a <span class="sc">==</span> <span class="dv">2</span>),</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">a3    =</span> <span class="fu">as.numeric</span>(a <span class="sc">==</span> <span class="dv">3</span>),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">b2    =</span> <span class="fu">as.numeric</span>(b <span class="sc">==</span> <span class="dv">2</span>),</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">b3    =</span> <span class="fu">as.numeric</span>(b <span class="sc">==</span> <span class="dv">3</span>),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">price =</span> price</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">X =</span> X, <span class="at">n_tasks =</span> n_tasks, <span class="at">J =</span> J, <span class="at">P =</span> <span class="fu">ncol</span>(X),</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">task_id =</span> <span class="fu">rep</span>(<span class="fu">seq_len</span>(n_tasks), <span class="at">each =</span> J),   <span class="co"># task of each X row</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">alt_id  =</span> <span class="fu">rep</span>(<span class="fu">seq_len</span>(J), <span class="at">times =</span> n_tasks))  <span class="co"># alternative within task</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>design <span class="ot">&lt;-</span> <span class="fu">make_design</span>(N_TASKS, J, <span class="at">seed =</span> <span class="dv">101</span>)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(design<span class="sc">$</span>X, <span class="dv">8</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Human-readable view that pulls the id's for respondent, task, and </span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># alt into the data.frame</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>design_frame <span class="ot">&lt;-</span> <span class="cf">function</span>(des) {</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">task_id =</span> des<span class="sc">$</span>task_id, <span class="at">alt_id =</span> des<span class="sc">$</span>alt_id)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(des<span class="sc">$</span>respondent_id))</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">respondent_id =</span> des<span class="sc">$</span>respondent_id, out)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cbind</span>(out, <span class="fu">as.data.frame</span>(des<span class="sc">$</span>X))</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>N_TASKS <span class="ot">&lt;-</span> <span class="dv">20</span><span class="sc">*</span><span class="dv">1000</span> <span class="co"># 20,000 tasks</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>J       <span class="ot">&lt;-</span> <span class="dv">4</span>       <span class="co"># 4 alternatives per task</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>W       <span class="ot">&lt;-</span> <span class="dv">5</span>       <span class="co"># a five-point purchase-likelihood scale</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>design <span class="ot">&lt;-</span> <span class="fu">make_design</span>(N_TASKS, J, <span class="at">seed =</span> <span class="dv">101</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">design_frame</span>(design), <span class="dv">8</span>) <span class="sc">|&gt;</span> <span class="fu">print</span>(<span class="at">digits=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>     a2 a3 b2 b3     price
-[1,]  0  0  0  1 0.6593832
-[2,]  0  0  0  1 2.1495860
-[3,]  1  0  0  1 1.7999991
-[4,]  0  1  1  0 2.4604207
-[5,]  0  1  0  1 1.1379471
-[6,]  0  0  0  1 2.1380531
-[7,]  1  0  0  1 1.0162167
-[8,]  0  1  0  0 0.5251169</code></pre>
+<pre><code>  task_id alt_id a2 a3 b2 b3 price
+1       1      1  0  0  0  1  0.66
+2       1      2  0  0  0  1  2.15
+3       1      3  1  0  0  1  1.80
+4       1      4  0  1  1  0  2.46
+5       2      1  0  1  0  1  1.14
+6       2      2  0  0  0  1  2.14
+7       2      3  1  0  0  1  1.02
+8       2      4  0  1  0  0  0.53</code></pre>
 </div>
 </div></div>
-<p>One task is a set of rows: rows 1 to 4 are the four profiles of task 1, rows 5 to 8 are task 2, and so on.</p>
+<p>One task is a set of rows: rows 1 to 4 are the four profiles of task 1, rows 5 to 8 are task 2, and so on. The <code>task</code> and <code>alt</code> labels are carried alongside the design matrix rather than inside it, so <code>ncol(X)</code> stays equal to the number of parameters and nothing downstream has to skip label columns.</p>
 </section>
 <section id="true-parameters" class="level2">
 <h2 class="anchored" data-anchor-id="true-parameters">3. True parameters</h2>
@@ -346,13 +360,12 @@ y = w \iff p \in [\alpha_{w-1}, \alpha_w).
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>alpha_true <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.10</span>, <span class="fl">0.30</span>, <span class="fl">0.60</span>, <span class="fl">0.85</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut points live on the utility scale internally, so we move between the two</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># scales with the standard Gumbel CDF and its inverse. These are exact</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># inverses of each other and are used in both directions throughout.</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>alpha_to_cut <span class="ot">&lt;-</span> <span class="cf">function</span>(a) <span class="sc">-</span><span class="fu">log</span>(<span class="sc">-</span><span class="fu">log</span>(a))   <span class="co"># probability -&gt; utility,  F^{-1}</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>cut_to_alpha <span class="ot">&lt;-</span> <span class="cf">function</span>(c) <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">exp</span>(<span class="sc">-</span>c))   <span class="co"># utility -&gt; probability,  F</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>cut_true <span class="ot">&lt;-</span> <span class="fu">alpha_to_cut</span>(alpha_true)</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">alpha =</span> alpha_true, <span class="at">cut =</span> cut_true)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># scales with the standard Gumbel CDF and its inverse. </span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>alpha_to_cut <span class="ot">&lt;-</span> <span class="cf">function</span>(a) <span class="sc">-</span><span class="fu">log</span>(<span class="sc">-</span><span class="fu">log</span>(a))   <span class="co"># probability -&gt; utility,  F^{-1}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>cut_to_alpha <span class="ot">&lt;-</span> <span class="cf">function</span>(c) <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">exp</span>(<span class="sc">-</span>c))   <span class="co"># utility -&gt; probability,  F</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>cut_true <span class="ot">&lt;-</span> <span class="fu">alpha_to_cut</span>(alpha_true)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">alpha =</span> alpha_true, <span class="at">cut =</span> cut_true)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>            [,1]       [,2]     [,3]     [,4]
 alpha  0.1000000  0.3000000 0.600000 0.850000
@@ -367,7 +380,7 @@ cut   -0.8340324 -0.1856268 0.671727 1.816961</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>rgumbel <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="sc">-</span><span class="fu">log</span>(<span class="sc">-</span><span class="fu">log</span>(<span class="fu">runif</span>(n)))</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>simulate_modelA <span class="ot">&lt;-</span> <span class="cf">function</span>(design, beta, cut, seed) {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>simulate_dual_ordinal <span class="ot">&lt;-</span> <span class="cf">function</span>(design, beta, cut, seed) {</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> design<span class="sc">$</span>n_tasks</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  J <span class="ot">&lt;-</span> design<span class="sc">$</span>J</span>
@@ -386,22 +399,22 @@ cut   -0.8340324 -0.1856268 0.671727 1.816961</code></pre>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (code operates as a matrix subset with a two-col matrix of positions)</span></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  ustar <span class="ot">&lt;-</span> u[<span class="fu">cbind</span>(<span class="fu">seq_len</span>(n), jstar)]</span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># She reports the interval holding p = F(ustar). Binning p against</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># alpha is the same as binning ustar against cut, since F is increasing.</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Report the interval holding p = F(ustar). Binning p against alpha</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># is the same as binning ustar against cut, since F is increasing.</span></span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">findInterval</span>(ustar, cut) <span class="sc">+</span> <span class="dv">1</span>L</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">design =</span> design, <span class="at">jstar =</span> jstar, <span class="at">y =</span> y, <span class="at">W =</span> <span class="fu">length</span>(cut) <span class="sc">+</span> <span class="dv">1</span>L,</span>
 <span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>       <span class="at">ustar =</span> ustar, <span class="at">V =</span> V)</span>
 <span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">simulate_modelA</span>(design, beta_true, cut_true, <span class="at">seed =</span> <span class="dv">501</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">simulate_dual_ordinal</span>(design, beta_true, cut_true, <span class="at">seed =</span> <span class="dv">501</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div></div>
 <section id="what-the-two-responses-look-like" class="level3">
 <h3 class="anchored" data-anchor-id="what-the-two-responses-look-like">What the two responses look like</h3>
 <p>The first response is roughly uniform because the design randomizes attributes across positions.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">tabulate</span>(dat<span class="sc">$</span>jstar, J) <span class="sc">/</span> N_TASKS, <span class="dv">4</span>)   <span class="co"># chosen profile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>(<span class="fu">tabulate</span>(dat<span class="sc">$</span>jstar, J) <span class="sc">/</span> N_TASKS) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">4</span>)   <span class="co"># chosen profile</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.2518 0.2520 0.2516 0.2445</code></pre>
 </div>
@@ -409,7 +422,7 @@ cut   -0.8340324 -0.1856268 0.671727 1.816961</code></pre>
 <p>The second response is not, and its shape is what the cut points control.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">tabulate</span>(dat<span class="sc">$</span>y,     W) <span class="sc">/</span> N_TASKS, <span class="dv">4</span>)   <span class="co"># scale point</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>(<span class="fu">tabulate</span>(dat<span class="sc">$</span>y, W) <span class="sc">/</span> N_TASKS) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">4</span>)   <span class="co"># scale point</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.0190 0.0707 0.2170 0.3572 0.3361</code></pre>
 </div>
@@ -445,7 +458,7 @@ cut   -0.8340324 -0.1856268 0.671727 1.816961</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># (ii) ustar is independent of jstar: the distribution of the standardized</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># maximum should not depend on which profile won.</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">tapply</span>(z, dat<span class="sc">$</span>jstar, mean), <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tapply</span>(z, dat<span class="sc">$</span>jstar, mean) <span class="sc">|&gt;</span> <span class="fu">round</span>(<span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     1      2      3      4 
 0.5912 0.5669 0.5773 0.6078 </code></pre>
@@ -501,33 +514,36 @@ e^{\theta_m} &amp; 2 \le m \le w, \\
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (W <span class="sc">==</span> <span class="dv">2</span>) <span class="fu">return</span>(par[P <span class="sc">+</span> <span class="dv">1</span>])</span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  par[P <span class="sc">+</span> <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">cumsum</span>(<span class="fu">exp</span>(par[(P <span class="sc">+</span> <span class="dv">2</span>)<span class="sc">:</span>(P <span class="sc">+</span> W <span class="sc">-</span> <span class="dv">1</span>)])))</span>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>cut_to_par <span class="ot">&lt;-</span> <span class="cf">function</span>(cut) <span class="fu">c</span>(cut[<span class="dv">1</span>], <span class="fu">log</span>(<span class="fu">diff</span>(cut)))</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>negloglik <span class="ot">&lt;-</span> <span class="cf">function</span>(par, dat) {</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  design <span class="ot">&lt;-</span> dat<span class="sc">$</span>design</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  P <span class="ot">&lt;-</span> design<span class="sc">$</span>P</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> dat<span class="sc">$</span>W</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> design<span class="sc">$</span>n_tasks</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  J <span class="ot">&lt;-</span> design<span class="sc">$</span>J</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> par[<span class="dv">1</span><span class="sc">:</span>P]</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  cut  <span class="ot">&lt;-</span> <span class="fu">par_to_cut</span>(par, P, W)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>cut_to_par <span class="ot">&lt;-</span> <span class="cf">function</span>(cut) <span class="fu">c</span>(cut[<span class="dv">1</span>], <span class="fu">log</span>(<span class="fu">diff</span>(cut)))</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>row_max <span class="ot">&lt;-</span> <span class="cf">function</span>(M) <span class="fu">do.call</span>(pmax, <span class="fu">as.data.frame</span>(M))</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>negloglik <span class="ot">&lt;-</span> <span class="cf">function</span>(par, dat) {</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  design <span class="ot">&lt;-</span> dat<span class="sc">$</span>design</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  P <span class="ot">&lt;-</span> design<span class="sc">$</span>P</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> dat<span class="sc">$</span>W</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  n <span class="ot">&lt;-</span> design<span class="sc">$</span>n_tasks</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  J <span class="ot">&lt;-</span> design<span class="sc">$</span>J</span>
 <span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  V     <span class="ot">&lt;-</span> <span class="fu">matrix</span>(design<span class="sc">$</span>X <span class="sc">%*%</span> beta, <span class="at">nrow =</span> n, <span class="at">ncol =</span> J, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  m     <span class="ot">&lt;-</span> <span class="fu">do.call</span>(pmax, <span class="fu">as.data.frame</span>(V))     <span class="co"># row maxima</span></span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  logS  <span class="ot">&lt;-</span> m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(V <span class="sc">-</span> m)))        <span class="co"># log inclusive value</span></span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># First response: multinomial logit log-probability of the chosen profile.</span></span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  ll_choice <span class="ot">&lt;-</span> V[<span class="fu">cbind</span>(<span class="fu">seq_len</span>(n), dat<span class="sc">$</span>jstar)] <span class="sc">-</span> logS</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> par[<span class="dv">1</span><span class="sc">:</span>P]</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  cut  <span class="ot">&lt;-</span> <span class="fu">par_to_cut</span>(par, P, W)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  V    <span class="ot">&lt;-</span> <span class="fu">matrix</span>(design<span class="sc">$</span>X <span class="sc">%*%</span> beta, <span class="at">nrow =</span> n, <span class="at">ncol =</span> J, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  m    <span class="ot">&lt;-</span> <span class="fu">row_max</span>(V)                          <span class="co"># row maxima</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  mubar <span class="ot">&lt;-</span> m <span class="sc">+</span> <span class="fu">log</span>(<span class="fu">rowSums</span>(<span class="fu">exp</span>(V <span class="sc">-</span> m)))        <span class="co"># log inclusive value</span></span>
 <span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Second response: difference of Gumbel CDFs at the standardized cut points.</span></span>
-<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>  caug <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, cut, <span class="cn">Inf</span>)</span>
-<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>  lo <span class="ot">&lt;-</span> caug[dat<span class="sc">$</span>y]      <span class="sc">-</span> logS</span>
-<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  hi <span class="ot">&lt;-</span> caug[dat<span class="sc">$</span>y <span class="sc">+</span> <span class="dv">1</span>L] <span class="sc">-</span> logS</span>
-<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  p_ord <span class="ot">&lt;-</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">exp</span>(<span class="sc">-</span>hi)) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">exp</span>(<span class="sc">-</span>lo))</span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span>(<span class="fu">sum</span>(ll_choice) <span class="sc">+</span> <span class="fu">sum</span>(<span class="fu">log</span>(<span class="fu">pmax</span>(p_ord, <span class="fl">1e-312</span>))))</span>
-<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># First response: multinomial logit log-probability of the chosen profile.</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>  ll_choice <span class="ot">&lt;-</span> V[<span class="fu">cbind</span>(<span class="fu">seq_len</span>(n), dat<span class="sc">$</span>jstar)] <span class="sc">-</span> mubar</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Second response: difference of Gumbel CDFs at the standardized cut points.</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  caug <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, cut, <span class="cn">Inf</span>)</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>  lo <span class="ot">&lt;-</span> caug[dat<span class="sc">$</span>y]      <span class="sc">-</span> mubar</span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>  hi <span class="ot">&lt;-</span> caug[dat<span class="sc">$</span>y <span class="sc">+</span> <span class="dv">1</span>L] <span class="sc">-</span> mubar</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>  p_ord <span class="ot">&lt;-</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">exp</span>(<span class="sc">-</span>hi)) <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fu">exp</span>(<span class="sc">-</span>lo))</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span>(<span class="fu">sum</span>(ll_choice) <span class="sc">+</span> <span class="fu">sum</span>(<span class="fu">log</span>(<span class="fu">pmax</span>(p_ord, <span class="fl">1e-312</span>))))</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div></div>
 <p>A note on that second-response line (defining <code>p_ord</code>). Writing it as a plain difference of two <code>exp(-exp(-z))</code> terms is clear but loses precision when both cut points sit far into a tail and the two CDFs nearly cancel. The production code uses the algebraically equivalent but numerically stable rearrangement <span class="math inline">\(e^{-e^{-h}}\left(1 - e^{-(e^{-l} - e^{-h})}\right)\)</span>.</p>
 </section>
@@ -536,7 +552,7 @@ e^{\theta_m} &amp; 2 \le m \le w, \\
 <p>Starting values: <span class="math inline">\(\beta = 0\)</span>, and cut points backed out of the observed category frequencies through the link.</p>
 <div class="cell-container"><div class="cell-decorator"><pre>In [8]:</pre></div><div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>fit_modelA <span class="ot">&lt;-</span> <span class="cf">function</span>(dat) {</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>fit_dual_ordinal <span class="ot">&lt;-</span> <span class="cf">function</span>(dat) {</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  P <span class="ot">&lt;-</span> dat<span class="sc">$</span>design<span class="sc">$</span>P</span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> dat<span class="sc">$</span>W</span>
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
@@ -569,7 +585,7 @@ e^{\theta_m} &amp; 2 \le m \le w, \\
 <span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>       <span class="at">par =</span> opt<span class="sc">$</span>par)</span>
 <span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">fit_modelA</span>(dat)</span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">fit_dual_ordinal</span>(dat)</span>
 <span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"converged:"</span>, fit<span class="sc">$</span>convergence <span class="sc">==</span> <span class="dv">0</span>, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>converged: TRUE </code></pre>
@@ -668,22 +684,75 @@ e^{\theta_m} &amp; 2 \le m \le w, \\
 </div>
 </div></div>
 <p>Every <span class="math inline">\(z\)</span> statistic is small. With nine parameters we would expect roughly one value above two in absolute terms about forty percent of the time.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [10]:</pre></div><div id="cell-fig-recovery" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">library</span>(ggplot2))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>base <span class="ot">&lt;-</span> <span class="fu">transform</span>(</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  recovery,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">parameter =</span> <span class="fu">factor</span>(recovery<span class="sc">$</span>parameter, <span class="at">levels =</span> <span class="fu">rev</span>(recovery<span class="sc">$</span>parameter)),</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">kind =</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">"part-worth"</span>, <span class="st">"cut point"</span>), <span class="fu">c</span>(<span class="fu">length</span>(beta_true), W <span class="sc">-</span> <span class="dv">1</span>)),</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"part-worth"</span>, <span class="st">"cut point"</span>))</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Two views of the same fit: the natural scale, and the deviation scale where</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the intervals are wide enough to read.</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>long <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transform</span>(base, <span class="at">panel =</span> <span class="st">"estimate and 95% interval"</span>,</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">x  =</span> estimate,</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">lo =</span> estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> std_error,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">hi =</span> estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> std_error,</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>            <span class="at">ref =</span> truth),</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transform</span>(base, <span class="at">panel =</span> <span class="st">"deviation from truth"</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>            <span class="at">x  =</span> estimate <span class="sc">-</span> truth,</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">lo =</span> estimate <span class="sc">-</span> truth <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> std_error,</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">hi =</span> estimate <span class="sc">-</span> truth <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> std_error,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">ref =</span> <span class="dv">0</span>)</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>long<span class="sc">$</span>panel <span class="ot">&lt;-</span> <span class="fu">factor</span>(long<span class="sc">$</span>panel,</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>                     <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"estimate and 95% interval"</span>, <span class="st">"deviation from truth"</span>))</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(long, <span class="fu">aes</span>(<span class="at">y =</span> parameter)) <span class="sc">+</span></span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linewidth =</span> <span class="fl">0.3</span>, <span class="at">colour =</span> <span class="st">"grey78"</span>) <span class="sc">+</span></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">xmin =</span> lo, <span class="at">xmax =</span> hi), <span class="at">size =</span> <span class="fl">0.3</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> ref), <span class="at">shape =</span> <span class="dv">4</span>, <span class="at">size =</span> <span class="fl">2.3</span>, <span class="at">stroke =</span> <span class="fl">1.1</span>, <span class="at">colour =</span> <span class="st">"firebrick"</span>) <span class="sc">+</span></span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(kind <span class="sc">~</span> panel, <span class="at">scales =</span> <span class="st">"free"</span>, <span class="at">space =</span> <span class="st">"free_y"</span>, <span class="at">switch =</span> <span class="st">"y"</span>) <span class="sc">+</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">strip.placement =</span> <span class="st">"outside"</span>,</span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">strip.text.y.left =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">colour =</span> <span class="st">"grey30"</span>),</span>
+<span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">strip.text.x =</span> <span class="fu">element_text</span>(<span class="at">colour =</span> <span class="st">"grey30"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="fig-recovery" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-recovery-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca" class="">
+<a href="01-the-model-and-likelihood_files/figure-html/fig-recovery-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Recovery of all nine parameters. Dots and bars are the estimate and its 95% confidence interval; red crosses mark the truth. The right panel repeats the intervals centred on the truth, since at 20,000 tasks they are only two to four percent of the left panel’s range and would otherwise be hidden behind the markers."><img src="01-the-model-and-likelihood_files/figure-html/fig-recovery-1.png" class="img-fluid figure-img" width="691"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-recovery-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Recovery of all nine parameters. Dots and bars are the estimate and its 95% confidence interval; red crosses mark the truth. The right panel repeats the intervals centred on the truth, since at 20,000 tasks they are only two to four percent of the left panel’s range and would otherwise be hidden behind the markers.
+</figcaption>
+</figure>
+</div>
+</div>
+</div></div>
+<p>Every interval in the right panel covers zero, so no parameter is distinguishable from its true value at conventional levels.</p>
 <section id="the-cut-points-on-the-probability-scale" class="level3">
 <h3 class="anchored" data-anchor-id="the-cut-points-on-the-probability-scale">The cut points on the probability scale</h3>
 <p>Pushing the estimated cut points back through the link turns scale labels into purchase probabilities, with standard errors.</p>
-<div class="cell-container"><div class="cell-decorator"><pre>In [10]:</pre></div><div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>alpha_hat <span class="ot">&lt;-</span> <span class="fu">cut_to_alpha</span>(fit<span class="sc">$</span>cut)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># delta method: d(alpha)/dc = alpha * exp(-c), and exp(-c) = -log(alpha)</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>se_alpha  <span class="ot">&lt;-</span> fit<span class="sc">$</span>se_cut <span class="sc">*</span> alpha_hat <span class="sc">*</span> (<span class="sc">-</span><span class="fu">log</span>(alpha_hat))</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">label      =</span> <span class="fu">paste</span>(<span class="st">"answer"</span>, <span class="dv">1</span><span class="sc">:</span>(W <span class="sc">-</span> <span class="dv">1</span>), <span class="st">"or below"</span>),</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha_true =</span> alpha_true,</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha_hat  =</span> alpha_hat,</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error  =</span> se_alpha</span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [11]:</pre></div><div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>alpha_hat <span class="ot">&lt;-</span> <span class="fu">cut_to_alpha</span>(fit<span class="sc">$</span>cut)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># delta method: d(alpha)/dc = alpha * exp(-c), and exp(-c) = -log(alpha)</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>se_alpha  <span class="ot">&lt;-</span> fit<span class="sc">$</span>se_cut <span class="sc">*</span> alpha_hat <span class="sc">*</span> (<span class="sc">-</span><span class="fu">log</span>(alpha_hat))</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">label      =</span> <span class="fu">paste</span>(<span class="st">"answer"</span>, <span class="dv">1</span><span class="sc">:</span>(W <span class="sc">-</span> <span class="dv">1</span>), <span class="st">"or below"</span>),</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha_true =</span> alpha_true,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha_hat  =</span> alpha_hat,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error  =</span> se_alpha</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <thead>
@@ -729,60 +798,31 @@ e^{\theta_m} &amp; 2 \le m \le w, \\
 <section id="diagnostics" class="level2">
 <h2 class="anchored" data-anchor-id="diagnostics">8. Diagnostics</h2>
 <p><strong>Is the truth inside the confidence region?</strong> Compare twice the log-likelihood gap between the truth and the MLE against a <span class="math inline">\(\chi^2_9\)</span> critical value.</p>
-<div class="cell-container"><div class="cell-decorator"><pre>In [11]:</pre></div><div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>nll_truth <span class="ot">&lt;-</span> <span class="fu">negloglik</span>(<span class="fu">c</span>(beta_true, <span class="fu">cut_to_par</span>(cut_true)), dat)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>lr   <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> (nll_truth <span class="sc">-</span> fit<span class="sc">$</span>nll)</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>npar <span class="ot">&lt;-</span> <span class="fu">length</span>(fit<span class="sc">$</span>par)</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"LR statistic %.2f vs chi-square(%d) 95%% critical value %.2f -&gt; %s</span><span class="sc">\n</span><span class="st">"</span>,</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>            lr, npar, <span class="fu">qchisq</span>(<span class="fl">0.95</span>, npar),</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>            <span class="fu">ifelse</span>(lr <span class="sc">&lt;</span> <span class="fu">qchisq</span>(<span class="fl">0.95</span>, npar), <span class="st">"inside the region"</span>, <span class="st">"OUTSIDE"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [12]:</pre></div><div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>nll_truth <span class="ot">&lt;-</span> <span class="fu">negloglik</span>(<span class="fu">c</span>(beta_true, <span class="fu">cut_to_par</span>(cut_true)), dat)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>lr   <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> (nll_truth <span class="sc">-</span> fit<span class="sc">$</span>nll)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>npar <span class="ot">&lt;-</span> <span class="fu">length</span>(fit<span class="sc">$</span>par)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"LR statistic %.2f vs chi-square(%d) 95%% critical value %.2f -&gt; %s</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>            lr, npar, <span class="fu">qchisq</span>(<span class="fl">0.95</span>, npar),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>            <span class="fu">ifelse</span>(lr <span class="sc">&lt;</span> <span class="fu">qchisq</span>(<span class="fl">0.95</span>, npar), <span class="st">"inside the region"</span>, <span class="st">"OUTSIDE"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>LR statistic 3.44 vs chi-square(9) 95% critical value 16.92 -&gt; inside the region</code></pre>
 </div>
 </div></div>
 <p><strong>Is the information matrix well conditioned?</strong> Identification is established analytically in the paper; what this checks is that the implementation inherits it. All eigenvalues positive means the negative-likelihood curves upward in every direction, and the smallest one bounds the precision of the worst-determined parameter combination.</p>
-<div class="cell-container"><div class="cell-decorator"><pre>In [12]:</pre></div><div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"smallest eigenvalue:"</span>, <span class="fu">format</span>(<span class="fu">min</span>(fit<span class="sc">$</span>eigen), <span class="at">digits =</span> <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"smallest eigenvalue:"</span>, <span class="fu">format</span>(<span class="fu">min</span>(fit<span class="sc">$</span>eigen), <span class="at">digits =</span> <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>smallest eigenvalue: 816.5 </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"condition number:   "</span>, <span class="fu">format</span>(<span class="fu">max</span>(fit<span class="sc">$</span>eigen) <span class="sc">/</span> <span class="fu">min</span>(fit<span class="sc">$</span>eigen), <span class="at">digits =</span> <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"condition number:   "</span>, <span class="fu">format</span>(<span class="fu">max</span>(fit<span class="sc">$</span>eigen) <span class="sc">/</span> <span class="fu">min</span>(fit<span class="sc">$</span>eigen), <span class="at">digits =</span> <span class="dv">4</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>condition number:    90.02 </code></pre>
 </div>
 </div></div>
-</section>
-<section id="where-this-goes-next" class="level2">
-<h2 class="anchored" data-anchor-id="where-this-goes-next">Where this goes next</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>notebook</th>
-<th>what it adds</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>02</td>
-<td>the same model generalized to both links, run across three configurations and forty independent datasets</td>
-</tr>
-<tr class="even">
-<td>03</td>
-<td>the hierarchical sampler, its calibration, and a cross-check against an independent implementation</td>
-</tr>
-<tr class="odd">
-<td>Appendix E</td>
-<td>the same aggregate model estimated in Apollo, as a third independent check</td>
-</tr>
-</tbody>
-</table>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
@@ -1187,6 +1227,37 @@ e^{\theta_m} &amp; 2 \le m \le w, \\
   </script>
   <script type="application/javascript">
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
-  </script>  </div> <!-- /content --> 
+  </script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script> 
   
 </body></html>

@@ -99,7 +99,16 @@ uninteresting: the sampler is the object under test.
 # ---- designs and errors (R/lib/dgp.R) --------------------------------------
 rgumbel <- function(n) -log(-log(runif(n)))
 
-make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+# Attribute levels are drawn at random rather than from an efficiency-optimized
+# catalogue of the kind commercial practice uses (one-way and two-way level
+# balance, D-efficiency, utility balance). Nothing here needs one. The headline
+# comparisons are paired -- competing specifications are fit to the same
+# simulated data on the same design -- so design efficiency cancels from them,
+# and recovery needs only the rank condition, which id_rank_check() verifies.
+# Optimizing for the forced choice alone would not obviously serve the second
+# response in any case: it is identified by variation in task attractiveness
+# across tasks, which within-task utility balance does nothing to produce.
+make_design <- function(n_tasks, J, seed) {
   set.seed(seed)
   n_rows <- n_tasks * J
   a <- sample(1:3, n_rows, replace = TRUE)
@@ -107,16 +116,17 @@ make_design <- function(n_tasks, J, seed, intercept = FALSE) {
   price <- runif(n_rows, 0.5, 2.5)
   X <- cbind(a2 = as.numeric(a == 2), a3 = as.numeric(a == 3),
              b2 = as.numeric(b == 2), b3 = as.numeric(b == 3), price = price)
-  if (intercept) X <- cbind(X, const = 1)
-  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X),
+       task_id = rep(seq_len(n_tasks), each = J),   # task of each X row
+       alt_id  = rep(seq_len(J), times = n_tasks))  # alternative within task
 }
 
-make_panel_design <- function(N, T_tasks, J, seed, intercept = FALSE) {
-  des <- make_design(N * T_tasks, J, seed = seed, intercept = intercept)
+make_panel_design <- function(N, T_tasks, J, seed) {
+  des <- make_design(N * T_tasks, J, seed = seed)
   des$N <- N
   des$T_tasks <- T_tasks
   des$resp <- rep(seq_len(N), each = T_tasks)
-  des$resp_row <- rep(des$resp, each = J)
+  des$respondent_id <- rep(des$resp, each = J)
   des
 }
 
@@ -128,8 +138,8 @@ par_to_cut <- function(par, P, W) {
 cut_to_par <- function(cut) if (length(cut) == 1) cut else c(cut[1], log(diff(cut)))
 row_max <- function(M) do.call(pmax, as.data.frame(M))
 
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") {
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") {
     plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   } else {
     ea <- exp(-lo); eb <- exp(-hi)
@@ -138,9 +148,9 @@ ord_prob_z <- function(lo, hi, model) {
     p
   }
 }
-ord_prob <- function(mubar, cut, y, model) {
+ord_prob <- function(mubar, cut, y, link) {
   caug <- c(-Inf, cut, Inf)
-  ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, model)
+  ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, link)
 }
 
 negloglik <- function(par, dat) {
@@ -148,9 +158,9 @@ negloglik <- function(par, dat) {
   n <- design$n_tasks; J <- design$J
   beta <- par[1:P]; cut <- par_to_cut(par, P, W)
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - logS
-  ll_ord <- log(pmax(ord_prob(logS, cut, dat$y, dat$model), 1e-312))
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - mubar
+  ll_ord <- log(pmax(ord_prob(mubar, cut, dat$y, dat$link), 1e-312))
   -(sum(ll_choice) + sum(ll_ord))
 }
 
@@ -159,7 +169,7 @@ fit_dual_mle <- function(dat, start = NULL) {
   if (is.null(start)) {
     freq <- tabulate(dat$y, nbins = W)
     cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-    ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+    ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
     cut0 <- log(design$J) + ginv(cumq)
     if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
     start <- c(rep(0, P), cut_to_par(cut0))
@@ -178,24 +188,24 @@ draw_betas <- function(N, beta_bar, Sigma, seed) {
   sweep(Z %*% chol(Sigma), 2, beta_bar, "+")
 }
 
-simulate_dual_hb <- function(design, Bmat, cut, model = c("A", "B"), seed,
+simulate_dual_hb <- function(design, Bmat, cut, link = c("cloglog", "logit"), seed,
                              shock = c("gumbel", "normal")) {
-  model <- match.arg(model); shock <- match.arg(shock)
+  link <- match.arg(link); shock <- match.arg(shock)
   set.seed(seed)
   n <- design$n_tasks; J <- design$J; N <- design$N
   cutmat <- if (is.matrix(cut)) cut else matrix(cut, N, length(cut), byrow = TRUE)
   W <- ncol(cutmat) + 1L
-  Bx <- Bmat[design$resp_row, , drop = FALSE]
+  Bx <- Bmat[design$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(design$X * Bx), nrow = n, ncol = J, byrow = TRUE)
   eta <- if (shock == "gumbel") rgumbel(n * J) else rnorm(n * J, sd = pi / sqrt(6))
   u <- V + matrix(eta, n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
   eff_cut <- cutmat[design$resp, , drop = FALSE]
   y <- 1L + rowSums(latent >= eff_cut)
-  list(design = design, resp = design$resp, resp_row = design$resp_row,
-       N = N, jstar = jstar, y = as.integer(y), W = W, model = model,
+  list(design = design, resp = design$resp, respondent_id = design$respondent_id,
+       N = N, jstar = jstar, y = as.integer(y), W = W, link = link,
        Bmat_true = Bmat, cut_true = cut)
 }
 
@@ -214,15 +224,15 @@ phi_to_cutmat <- function(Phi, P, W) {
 # panel: this is what makes the all-respondents-at-once MH step affordable.
 resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE) {
   des <- dat$design; n <- des$n_tasks; J <- des$J
-  Bx <- Bmat[dat$resp_row, , drop = FALSE]
+  Bx <- Bmat[dat$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(des$X * Bx), nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  ll <- V[cbind(seq_len(n), dat$jstar)] - logS
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  ll <- V[cbind(seq_len(n), dat$jstar)] - mubar
   if (!choice_only) {
     cut_aug <- cbind(-Inf, cutmat, Inf)
-    lo <- cut_aug[cbind(dat$resp, dat$y)] - logS
-    hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - logS
-    ll <- ll + log(pmax(ord_prob_z(lo, hi, dat$model), 1e-312))
+    lo <- cut_aug[cbind(dat$resp, dat$y)] - mubar
+    hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - mubar
+    ll <- ll + log(pmax(ord_prob_z(lo, hi, dat$link), 1e-312))
   }
   as.numeric(rowsum(ll, dat$resp, reorder = TRUE))
 }
@@ -264,7 +274,7 @@ fit_dual_hb <- function(dat, mcmc = list(R = 30000, burn = 10000, thin = 10),
   Phi <- matrix(0, N, dim_phi)
   freq <- tabulate(dat$y, nbins = W)
   cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-  ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+  ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
   cut0 <- log(des$J) + ginv(cumq)
   if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
   zeta <- cut_to_par(cut0)
@@ -349,7 +359,7 @@ fit_dual_hb <- function(dat, mcmc = list(R = 30000, burn = 10000, thin = 10),
     accept = list(phi = mean(acc_phi / post_iters),
                   zeta = if (het_cut || choice_only) NA else acc_zeta / post_iters),
     settings = list(mcmc = mcmc, het_cut = het_cut, choice_only = choice_only,
-                    P = P, W = W, N = N, model = dat$model, priors = priors),
+                    P = P, W = W, N = N, link = dat$link, priors = priors),
     runtime_min = as.numeric(difftime(Sys.time(), t0, units = "mins"))
   ), class = "dr_hb_fit")
 }
@@ -390,12 +400,12 @@ so respondents genuinely differ in sign on some attributes.
 ```{r}
 #| label: recovery
 out <- list()
-for (model in c("B", "A")) {
-  des <- make_panel_design(N, T_tasks, J, seed = 200 + (model == "A"))
-  B   <- draw_betas(N, beta_bar, Sigma_true, seed = 300 + (model == "A"))
-  dat <- simulate_dual_hb(des, B, cut_true, model = model, seed = 400 + (model == "A"))
+for (link in c("logit", "cloglog")) {
+  des <- make_panel_design(N, T_tasks, J, seed = 200 + (link == "cloglog"))
+  B   <- draw_betas(N, beta_bar, Sigma_true, seed = 300 + (link == "cloglog"))
+  dat <- simulate_dual_hb(des, B, cut_true, link = link, seed = 400 + (link == "cloglog"))
 
-  cat(sprintf("\n=== Model %s ===\ncategory shares: %s\n", model,
+  cat(sprintf("\n=== Model %s ===\ncategory shares: %s\n", link,
               paste(round(tabulate(dat$y, W) / length(dat$y), 3), collapse = " ")))
 
   fit <- fit_dual_hb(dat, mcmc = MCMC, seed = 500, verbose = FALSE)
@@ -412,7 +422,7 @@ for (model in c("B", "A")) {
   cat(sprintf("individual beta_i posterior-mean RMSE: %.3f (sd of true beta_i: %.3f)\n",
               sqrt(mean((bi - dat$Bmat_true)^2)), sqrt(mean(diag(Sigma_true)))))
 
-  out[[paste0("recovery_", model)]] <- list(
+  out[[paste0("recovery_", link)]] <- list(
     summary = s, Sigma_pm = Sig_pm, accept = fit$accept,
     runtime = fit$runtime_min, beta_i_rmse = sqrt(mean((bi - dat$Bmat_true)^2)))
 }
@@ -444,18 +454,18 @@ hierarchy bugs, which is what we are worried about.
 
 ```{r}
 #| label: coverage
-REPS_B <- 20
-REPS_A <- 8
+REPS_logit <- 20
+REPS_cloglog <- 8
 truth <- c(beta_bar, cut_true)
 K <- length(truth)
 MCMC_COV <- list(R = 20000, burn = 8000, thin = 12)
 
-run_reps <- function(model, reps, seed0) {
+run_reps <- function(link, reps, seed0) {
   cover50 <- cover90 <- zstats <- matrix(NA, reps, K)
   for (r in seq_len(reps)) {
     des <- make_panel_design(N, T_tasks, J, seed = seed0 + 3 * r)
     B   <- draw_betas(N, beta_bar, Sigma_true, seed = seed0 + 3 * r + 1)
-    dat <- simulate_dual_hb(des, B, cut_true, model = model, seed = seed0 + 3 * r + 2)
+    dat <- simulate_dual_hb(des, B, cut_true, link = link, seed = seed0 + 3 * r + 2)
     fit <- fit_dual_hb(dat, mcmc = MCMC_COV, seed = seed0 + r,
                        verbose = FALSE, keep_phi = FALSE)
     draws <- cbind(fit$draws$phibar, fit$draws$cut)
@@ -470,18 +480,18 @@ run_reps <- function(model, reps, seed0) {
   list(cover50 = cover50, cover90 = cover90, z = zstats)
 }
 
-res_B <- run_reps("B", REPS_B, seed0 = 7000)
-res_A <- run_reps("A", REPS_A, seed0 = 9000)
+res_logit <- run_reps("logit", REPS_logit, seed0 = 7000)
+res_cloglog <- run_reps("cloglog", REPS_cloglog, seed0 = 9000)
 ```
 
 ```{r}
 #| label: coverage-report
 cov_tab <- data.frame(
-  model = c("B", "A"),
-  reps  = c(REPS_B, REPS_A),
-  `50% coverage` = c(mean(res_B$cover50), mean(res_A$cover50)),
-  `90% coverage` = c(mean(res_B$cover90), mean(res_A$cover90)),
-  `mean |z|` = c(mean(abs(res_B$z)), mean(abs(res_A$z))),
+  link = c("logit", "cloglog"),
+  reps  = c(REPS_logit, REPS_cloglog),
+  `50% coverage` = c(mean(res_logit$cover50), mean(res_cloglog$cover50)),
+  `90% coverage` = c(mean(res_logit$cover90), mean(res_cloglog$cover90)),
+  `mean |z|` = c(mean(abs(res_logit$z)), mean(abs(res_cloglog$z))),
   check.names = FALSE)
 knitr::kable(cov_tab, row.names = FALSE, digits = 3)
 ```
@@ -496,8 +506,8 @@ average:
 #| label: coverage-byparam
 knitr::kable(
   data.frame(parameter = c(names(beta_bar), paste0("c", 1:4)),
-             `B: 90%` = round(colMeans(res_B$cover90), 2),
-             `A: 90%` = round(colMeans(res_A$cover90), 2),
+             `logit: 90%` = round(colMeans(res_logit$cover90), 2),
+             `cloglog: 90%` = round(colMeans(res_cloglog$cover90), 2),
              check.names = FALSE),
   row.names = FALSE)
 ```
@@ -517,7 +527,7 @@ different people years apart.
 #| label: bayesm-data
 des <- make_panel_design(N, T_tasks, J, seed = 210)
 B   <- draw_betas(N, beta_bar, Sigma_true, seed = 310)
-dat <- simulate_dual_hb(des, B, cut_true, model = "B", seed = 410)
+dat <- simulate_dual_hb(des, B, cut_true, link = "logit", seed = 410)
 
 fit_co  <- fit_dual_hb(dat, mcmc = MCMC, choice_only = TRUE, seed = 510, verbose = FALSE)
 ours_mu  <- colMeans(fit_co$draws$phibar)
@@ -585,11 +595,11 @@ that is not there.
 #| label: sigma0
 des  <- make_panel_design(N, T_tasks, J, seed = 220)
 B0   <- matrix(beta_bar, N, P, byrow = TRUE)     # every respondent identical
-dat0 <- simulate_dual_hb(des, B0, cut_true, model = "B", seed = 420)
+dat0 <- simulate_dual_hb(des, B0, cut_true, link = "logit", seed = 420)
 
 fit0 <- fit_dual_hb(dat0, mcmc = MCMC, seed = 520, verbose = FALSE)
 dat0_pooled <- list(design = dat0$design, jstar = dat0$jstar, y = dat0$y,
-                    W = W, model = "B")
+                    W = W, link = "logit")
 mle0 <- fit_dual_mle(dat0_pooled)
 
 comp0 <- data.frame(
@@ -679,23 +689,23 @@ lmd_laplace_agg <- function(fit_agg) {
     0.5 * determinant(H, logarithm = TRUE)$modulus
 }
 
-simulate_dual <- function(design, beta, cut, model = c("A", "B"), seed) {
-  model <- match.arg(model); set.seed(seed)
+simulate_dual <- function(design, beta, cut, link = c("cloglog", "logit"), seed) {
+  link <- match.arg(link); set.seed(seed)
   n <- design$n_tasks; J <- design$J
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
   list(design = design, jstar = jstar, y = findInterval(latent, cut) + 1L,
-       W = length(cut) + 1L, model = model)
+       W = length(cut) + 1L, link = link)
 }
 ```
 
 ```{r}
 #| label: lmd-run
 des_a <- make_design(3600, J, seed = 230)
-dat_a <- simulate_dual(des_a, as.numeric(beta_bar), cut_true, model = "B", seed = 430)
+dat_a <- simulate_dual(des_a, as.numeric(beta_bar), cut_true, link = "logit", seed = 430)
 fa <- fit_dual_bayes_agg(dat_a, iter = 30000, burn = 10000, thin = 5, seed = 530)
 
 lmd_tab <- data.frame(
@@ -724,7 +734,7 @@ PROJ <- if (file.exists("_quarto.yml")) "." else ".."
 OUT  <- file.path(PROJ, "R", "output")
 dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 
-saveRDS(list(B = res_B, A = res_A, truth = truth,
+saveRDS(list(logit = res_logit, cloglog = res_cloglog, truth = truth,
              settings = list(N = N, T_tasks = T_tasks, MCMC = MCMC_COV)),
         file.path(OUT, "hb_coverage.rds"))
 

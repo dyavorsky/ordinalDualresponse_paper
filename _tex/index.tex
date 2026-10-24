@@ -224,7 +224,7 @@ outside good}},
 \makeatother
 \subtitle{Ordinal Dual Response in Choice-Based Conjoint Analysis}
 \author{Dan Yavorsky \and Geoffery Zheng}
-\date{2026-10-22}
+\date{2026-10-24}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -371,17 +371,27 @@ response uses that device on survey data. Our statistical tools come
 from work on ordered and mixed response formats, from frameworks that
 handle ratings, rankings, and choices together (Marshall and Bradlow
 2002) to ordered-choice models that let different people use the same
-scale differently (Greene and Hensher 2010b; Falco et al. 2015). A
-further literature explains why the follow-up should ask for a
-probability. A yes/no question forces the consumer to round to zero or
-one, and Manski (2004) argues that economists should elicit the
-probability itself. Marketing research made the same case decades
-earlier: Juster (1966) replaced the yes/no buying-intentions question
-with an eleven-point probability scale, and Morrison (1979) showed that
-stated intentions predict purchases only probabilistically, and that the
-mapping from one to the other depends on context. To our knowledge, no
-prior work derives the forced choice and the ordinal purchase answer
-from a single account of the consumer.
+scale differently (Greene and Hensher 2010b; Falco et al. 2015). Closest
+to our likelihood is the choice-ordered logit of Webb and Hess (2021),
+which pairs a multinomial logit with an ordered logit for a rating of
+the chosen alternative. Their ordinal response grades that alternative's
+own utility; ours reports a purchase probability measured against an
+outside good the consumer has not resolved, which is what puts the
+no-buy margin into the second response. A parallel literature in
+transport and environmental valuation asks respondents how certain they
+are of each choice and models that answer jointly with the choice itself
+(Hensher et al. 2012; Rose et al. 2015), with Hensher et al. (2012)
+letting the thresholds vary across respondents as our extension in
+Section~\ref{sec-hetcut} does. A further literature explains why the
+follow-up should ask for a probability. A yes/no question forces the
+consumer to round to zero or one, and Manski (2004) argues that
+economists should elicit the probability itself. Marketing research made
+the same case decades earlier: Juster (1966) replaced the yes/no
+buying-intentions question with an eleven-point probability scale, and
+Morrison (1979) showed that stated intentions predict purchases only
+probabilistically, and that the mapping from one to the other depends on
+context. To our knowledge, no prior work derives the forced choice and
+the ordinal purchase answer from a single account of the consumer.
 
 Section~\ref{sec-model} develops the model and its likelihood, nesting,
 information, and estimation results; Section~\ref{sec-simstudy} reports
@@ -534,7 +544,7 @@ p_{it} = \Pr \left( \eta_{it0} < u^*_{it} \mid u^*_{it} \right) = F\left( u^*_{i
 CDF. The ordinal scale discretizes the unit interval: fix cut points
 \(0 = \alpha_0 < \alpha_1 < \cdots < \alpha_{W-1} < \alpha_W = 1\) and
 suppose the consumer reports
-\begin{equation}\protect\phantomsection\label{eq-reportruleA}{
+\begin{equation}\protect\phantomsection\label{eq-reportrule}{
 y_{it} = w
 \quad \Longleftrightarrow \quad
 p_{it} \in \left[ \alpha_{w-1}, \alpha_w \right).
@@ -549,7 +559,7 @@ an interval statement about the consumer's best utility. From the
 researcher's perspective,
 \(u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)\) by
 Lemma~\ref{lem-gumbel}(i), so
-\begin{equation}\protect\phantomsection\label{eq-modelA}{
+\begin{equation}\protect\phantomsection\label{eq-ordprob}{
 \begin{aligned}
 \Pr \left( y_{it} = w \right)
 &= F_{\text{Gumbel}(\overline{\mu}_{it},1)} \left( F^{-1}(\alpha_w) \right) - F_{\text{Gumbel}(\overline{\mu}_{it},1)} \left( F^{-1}(\alpha_{w-1}) \right) \\
@@ -566,10 +576,9 @@ the task's inside goods: the more attractive the set, the more
 probability mass shifts toward high scale points.\footnote{Equivalently,
   from the researcher's perspective the consumer's purchase probability
   is Beta distributed,
-  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\). By the same power
-  property,
-  \(\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}\),
-  which is the \(\text{Beta}(S,1)\) distribution function on \([0,1]\).}
+  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\), with the inclusive
+  value as its only shape parameter. Appendix A proves this and reads
+  \(S_{it}\) as an effective number of alternatives.}
 
 \begin{figure}
 
@@ -580,7 +589,7 @@ probability mass shifts toward high scale points.\footnote{Equivalently,
 }
 
 \caption{\label{fig-derivation}The two steps behind
-Equation~\ref{eq-modelA}. \emph{Left:} the consumer's rule. She knows
+Equation~\ref{eq-ordprob}. \emph{Left:} the consumer's rule. She knows
 \(u^*_{it}\) but not \(\eta_{it0}\), so her purchase probability is
 \(p_{it} = F(u^*_{it})\), and she reports the scale point whose bin
 contains it. Reading the cut points \(\alpha_w\) across to the curve and
@@ -602,10 +611,9 @@ summarizing the attractiveness of the task's inside goods: the more
 attractive the set, the more probability mass shifts toward high scale
 points.\footnote{Equivalently, from the researcher's perspective the
   consumer's purchase probability is Beta distributed,
-  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\). By the same power
-  property,
-  \(\Pr \left( p_{it} \le a \right) = \Pr \left( u^*_{it} \le F^{-1}(a) \right) = a^{S_{it}}\),
-  which is the \(\text{Beta}(S,1)\) distribution function on \([0,1]\).}
+  \(p_{it} \sim \text{Beta}\left(S_{it}, 1\right)\), with the inclusive
+  value as its only shape parameter. Appendix A proves this and reads
+  \(S_{it}\) as an effective number of alternatives.}
 
 The distribution's mean is
 \(\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)\):
@@ -625,7 +633,7 @@ probability scale they are directly interpretable: \(\alpha_w\) is the
 purchase probability at which the consumer moves from label \(w\) to
 label \(w+1\). On the utility scale, written \(c_w = F^{-1}(\alpha_w)\),
 they sit alongside \(\overline{\mu}_{it}\) and cast
-Equation~\ref{eq-modelA} as a cumulative link in the inclusive value,
+Equation~\ref{eq-ordprob} as a cumulative link in the inclusive value,
 \begin{equation}\protect\phantomsection\label{eq-cumlink}{
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right).
 }\end{equation} Ours is the complementary log-log link, inherited from
@@ -642,7 +650,7 @@ of the identity of \(j^*_{it}\); and \(\eta_{it0}\) is independent of
 the inside-good components. The two responses in a task are therefore
 independent conditional on \((\x_t, \bfbeta_i)\), and the per-task
 likelihood contribution is the product of Equation~\ref{eq-mnl} and
-Equation~\ref{eq-modelA}:
+Equation~\ref{eq-ordprob}:
 \begin{equation}\protect\phantomsection\label{eq-joint}{
 L_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
 = \underbrace{\frac{\exp \left( V_{itj^*} \right)}{S_{it}}}_{\text{choice}}
@@ -650,7 +658,11 @@ L_{it} \left( \bfbeta_i, \boldsymbol{\alpha} \right)
 \underbrace{\left( \alpha_{y_{it}}^{\,S_{it}} - \alpha_{y_{it}-1}^{\,S_{it}} \right)}_{\text{ordinal report}},
 }\end{equation} with
 \(\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_{W-1})\), and the
-consumer's likelihood \(L_i = \prod_{t} L_{it}\).
+consumer's likelihood \(L_i = \prod_{t} L_{it}\). The same product form
+appears in the choice-ordered logit of Webb and Hess (2021), where it
+follows from treating choice and rating as separate steps. Here it is
+not an assumption: the two responses are generated by the same utility
+draw, and Lemma~\ref{lem-gumbel}(ii) makes them independent anyway.
 
 The per-task log-likelihood is
 \begin{equation}\protect\phantomsection\label{eq-loglik}{
@@ -662,7 +674,7 @@ The per-task log-likelihood is
 chosen good's utility measured against the inclusive value, so a task
 adds more to the log-likelihood the more the chosen good stands out from
 the set. The ordinal report contributes the log of the mass
-Equation~\ref{eq-modelA} puts in the reported bin, so it adds most when
+Equation~\ref{eq-ordprob} puts in the reported bin, so it adds most when
 the attractiveness of the set sits in that bin: a report near the top of
 the scale pulls \(\overline{\mu}_{it}\) up, and a report near the bottom
 pulls it down.\footnote{Equivalently, in the Beta reading above, the
@@ -697,7 +709,7 @@ From the researcher's perspective
 \(\eta_{it0} \sim \text{Gumbel}(0,1)\) are independent, so their
 difference is logistic,
 \(d_{it} \sim \text{Logistic}\left( \overline{\mu}_{it}, 1 \right)\),
-and \begin{equation}\protect\phantomsection\label{eq-modelB}{
+and \begin{equation}\protect\phantomsection\label{eq-orderedlogit}{
 \Pr \left( y_{it} = w \right)
 = \Lambda \left( c_w - \overline{\mu}_{it} \right) - \Lambda \left( c_{w-1} - \overline{\mu}_{it} \right).
 }\end{equation} This is an ordered logit (Greene and Hensher 2010a) in
@@ -727,7 +739,7 @@ gives the logit link.}
 single cut point as \(c_1 = \gamma\). Then
 \(\Pr(\text{would buy}) = \Lambda\left( \overline{\mu}_{it} - \gamma \right) = S_{it} \big/ \left( e^{\gamma} + S_{it} \right)\),
 and the joint probabilities from Equation~\ref{eq-joint} reduce to:
-\begin{equation}\protect\phantomsection\label{eq-collapseB}{
+\begin{equation}\protect\phantomsection\label{eq-collapse}{
 \Pr \left( j, \text{buy} \right) = \frac{\exp \left( V_{itj} \right)}{e^{\gamma} + S_{it}},
 \qquad
 \Pr \left( j, \text{not buy} \right) = \frac{\exp \left( V_{itj} \right)}{S_{it}} \cdot \frac{e^{\gamma}}{e^{\gamma} + S_{it}}.
@@ -735,14 +747,14 @@ and the joint probabilities from Equation~\ref{eq-joint} reduce to:
 probabilities of the ``Unified Model'' of Hung, Liu, et al. (2025)
 (their Eq. 4), which is in turn algebraically identical to the
 ``DR-AnyMax'' model of Diener et al. (2006); and
-Equation~\ref{eq-collapseB} with free \(\gamma\) is the standard
+Equation~\ref{eq-collapse} with free \(\gamma\) is the standard
 single-stage MNL with a no-choice alternative-specific constant (Haaijer
 et al. 2001). The incumbent binary model is therefore the two-point,
 logistic case of Equation~\ref{eq-cumlink}; for \(W>2\) the additional
 cut points are the only new parameters.
 
 \textbf{Binary dual response, our model.} Set \(W=2\) in
-Equation~\ref{eq-modelA}:
+Equation~\ref{eq-ordprob}:
 \(\Pr(\text{not buy}) = \alpha_1^{S_{it}} = F\left( c_1 - \overline{\mu}_{it}\right)\),
 a complementary log-log rather than logistic binary response. Our model
 therefore implies that when consumers face outside-good uncertainty at
@@ -759,7 +771,14 @@ stage, so that the consumer who just declared \(j^*\) best re-evaluates
 it from scratch. Under our framework such conditioning is unnecessary:
 by Lemma~\ref{lem-gumbel}(ii) the distribution of the best utility does
 not depend on which good attained it, so the second response should
-depend on the set only through \(\overline{\mu}_{it}\).
+depend on the set only through \(\overline{\mu}_{it}\). The same
+conditioning, generalized from a binary follow-up to an ordinal rating,
+is the two-step choice-ordered logit of Webb and Hess (2021), whose
+second stage is an ordered logit in \(\zeta V_{itj^*}\) with a free
+scale \(\zeta\). That specification is therefore the \(\delta = 1\) end
+of the conditioning test of Section~\ref{sec-spectests}, and our
+\(\lambda\) plays the role of their \(\zeta\) on the inclusive value
+rather than on the chosen good.
 
 \textbf{Reductions to the binary model.} An ordinal response can be
 reduced to a form the binary model accepts in two ways: (i)
@@ -771,7 +790,7 @@ fixed purchase probability (e.g., ``definitely would buy'' \(= 0.9\))
 independent of the choice set. These two reductions are the benchmarks
 in our simulation study (Section~\ref{sec-simstudy}). Both are nested
 within, or dominated by, Equation~\ref{eq-joint}: dichotomization is
-Equation~\ref{eq-collapseB} applied to a coarsened \(y_{it}\), and
+Equation~\ref{eq-collapse} applied to a coarsened \(y_{it}\), and
 constant-probability weighting fixes the value of a scale point, which
 by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\)
 (i.e., constant-probability weighting is inappropriate since no single
@@ -883,7 +902,7 @@ alternative-specific constant would shift all cut points equally, which
 is the invariance in the proof, so the cut points subsume it. (Its
 visible trace is the binary case: at \(W=2\), the logistic link's single
 cut point \(c_1\) \emph{is} the no-choice constant of
-Equation~\ref{eq-collapseB}.) The unit Gumbel scale fixes the scale of
+Equation~\ref{eq-collapse}.) The unit Gumbel scale fixes the scale of
 \(\bfbeta\), as in any logit. Beyond these normalizations, the model
 imposes one restriction: the coefficient on \(\overline{\mu}_{it}\) in
 Equation~\ref{eq-cumlink} is fixed at \(1\) by the theory, because both
@@ -1144,7 +1163,17 @@ the location and spread of the response distribution. One is a
 placed. The hierarchical experiments use \(N = 300\) consumers,
 \(T = 12\) estimation tasks plus 2 holdouts,
 \(\bfbeta_i \sim \mathcal{N}(\betabar, \Sigma)\) with substantial
-heterogeneity, and the same attribute scheme.
+heterogeneity, and the same attribute scheme. Attribute levels are drawn
+at random rather than from an efficiency-optimized catalogue. The
+comparisons that carry the results are paired, with competing
+specifications fit to the same simulated data, so design efficiency
+cancels from them, and the rank condition of Proposition~\ref{prp-ident}
+is checked before every fit. Optimizing for the forced choice alone
+would not in any case serve the second response, which is identified by
+variation in task attractiveness \emph{across} tasks rather than by the
+within-task contrasts that utility balance equalizes (Huber and Zwerina
+1996); what an efficient design for a dual-response instrument looks
+like is an open question.
 
 \subsection{Parameter Recovery and Identification}\label{sec-sim-agg}
 
@@ -1167,12 +1196,12 @@ Section~\ref{sec-identification}. Appending an intercept, the canonical
 violation of Proposition~\ref{prp-ident}, collapses the smallest
 eigenvalue of the observed information and produces the predicted flat
 ridge: different starting values reach identical likelihoods at
-different raw \((\beta_{\text{const}}, \mathbf{c})\) while agreeing to
-four decimal places on the identified combinations. And the empirical
-joint distribution of the two responses over one million behavioral
-draws is statistically indistinguishable from the product form of
-Equation~\ref{eq-joint}, confirming the factorization that makes the
-likelihood tractable.
+different raw \((\beta_{\text{const}}, \mathbf{c})\) --- spread 1.00
+across starts --- while agreeing on the identified combinations to
+within 1e-07. And the empirical joint distribution of the two responses
+over one million behavioral draws is statistically indistinguishable
+from the product form of Equation~\ref{eq-joint}, confirming the
+factorization that makes the likelihood tractable.
 
 \textbf{Hierarchical.}
 \href{notebooks/03-hierarchical-recovery.qmd}{Notebook 3} establishes
@@ -1653,12 +1682,15 @@ heterogeneity costs little, so the extension is most useful as a
 diagnostic and as insurance. Fourth, like all stated-preference methods,
 the model calibrates stated rather than revealed purchase behavior; the
 ordinal report inherits whatever hypothetical bias attends
-purchase-intent questions generally (Morrison 1979), and linking the
-estimated cut points to realized purchase rates (the ordinal analogue of
-the calibration literature on binary intentions) is a natural next step.
-Fifth, the likelihood presumes the two questions are asked together, as
-in the standard dual-response task. Designs that separate them, such as
-the separated dual response of Schlereth and Skiera (2017), break the
+purchase-intent questions generally (Morrison 1979), though Wlömert and
+Eggers (2016), recontacting respondents five months after a service
+launch, find that the binary dual response improves predictive accuracy
+against realized adoption, and linking the estimated cut points to
+realized purchase rates (the ordinal analogue of the calibration
+literature on binary intentions) is a natural next step. Fifth, the
+likelihood presumes the two questions are asked together, as in the
+standard dual-response task. Designs that separate them, such as the
+separated dual response of Schlereth and Skiera (2017), break the
 coupling between the two responses and would require modeling the stages
 as separate draws. Appendix C documents a separate methodological
 caution: harmonic-mean estimates of the marginal likelihood are
@@ -1828,6 +1860,60 @@ interval score converges to the exact-observation score and
 information of the latent variable's location (equal to \(1\) for the
 standard Gumbel and \(1/3\) for the standard logistic). \(\square\)
 
+\subsection*{\texorpdfstring{A.4 The purchase probability is
+\(\text{Beta}(S,1)\)}{A.4 The purchase probability is \textbackslash text\{Beta\}(S,1)}}\label{sec-appendix-beta}
+\addcontentsline{toc}{subsection}{A.4 The purchase probability is
+\(\text{Beta}(S,1)\)}
+
+From the researcher's perspective the consumer's purchase probability
+\(p_{it} = F \left( u^*_{it} \right)\) is a random variable, and its
+distribution is Beta with the inclusive value as its only shape
+parameter. The ingredients are classical: the max-stability of the
+Gumbel family (McFadden 1981) and the probability integral transform.
+
+Drop subscripts and write \(F(z) = \exp \left( -e^{-z} \right)\) for the
+standard Gumbel CDF and \(F_{\overline{\mu}}\) for the
+\(\text{Gumbel}(\overline{\mu},1)\) CDF. Max-stability is the statement
+that shifting the location is the same as raising the CDF to a power: \[
+F_{\overline{\mu}}(z)
+= \exp \left( -e^{-(z - \overline{\mu})} \right)
+= \exp \left( -e^{-z} e^{\overline{\mu}} \right)
+= \left[ \exp \left( -e^{-z} \right) \right]^{S}
+= F(z)^{S},
+\qquad S = e^{\overline{\mu}}.
+\] By Lemma~\ref{lem-gumbel}(i),
+\(u^* \sim \text{Gumbel}(\overline{\mu},1)\), and \(F\) is strictly
+increasing, so for \(a \in (0,1)\) \[
+\Pr \left( p \le a \right)
+= \Pr \left( F(u^*) \le a \right)
+= \Pr \left( u^* \le F^{-1}(a) \right)
+= F_{\overline{\mu}} \left( F^{-1}(a) \right)
+= F \left( F^{-1}(a) \right)^{S}
+= a^{S}.
+\] The explicit form of \(F^{-1}\) is never needed; the last step is
+\(F(F^{-1}(a)) = a\). Differentiating gives the density \(S a^{S-1}\) on
+\([0,1]\). The \(\text{Beta}(\alpha, \beta)\) density is
+\(a^{\alpha-1} (1-a)^{\beta-1} / B(\alpha,\beta)\), and at
+\((\alpha,\beta) = (S,1)\) the factor \((1-a)^{\beta-1}\) is one while
+\(B(S,1) = \Gamma(S)\Gamma(1) / \Gamma(S+1) = 1/S\), so the two
+densities coincide: \(p \sim \text{Beta}(S,1)\). The mean follows as
+\(\E[p] = S / (S+1) = \Lambda(\overline{\mu})\). \(\square\)
+
+\textbf{Reading \(S\) as a count.} For integer \(S\), max-stability says
+that \(\text{Gumbel}(\ln S, 1)\) is the distribution of the maximum of
+\(S\) iid standard Gumbel draws, and the probability integral transform
+makes each \(F(\eta_k)\) a standard uniform. Since \(F\) is increasing
+it passes through the maximum, so \[
+p = F \left( \max_{k \le S} \eta_k \right) = \max_{k \le S} F \left( \eta_k \right) = \max_{k \le S} U_k,
+\qquad U_k \iid \text{Uniform}(0,1),
+\] and the maximum of \(S\) iid uniforms is \(\text{Beta}(S,1)\) by the
+usual order-statistic calculation. The consumer's purchase probability
+therefore behaves like the best of \(S\) independent uniform draws,
+which is the sense in which \(S_{it} = e^{\overline{\mu}_{it}}\)
+measures how many chances the choice set gets. The reading is heuristic,
+since \(S_{it} = \sum_j e^{V_{itj}}\) is not generally an integer, but
+the distribution above holds for every real \(S > 0\).
+
 \section*{Appendix B: Estimation Details}\label{sec-appendix-estimation}
 \addcontentsline{toc}{section}{Appendix B: Estimation Details}
 
@@ -1990,16 +2076,16 @@ Letting \(u \to \infty\) recovers the GEV choice probability.
 Everything in Section~\ref{sec-model} follows with \(S_{it}\) replaced
 by \(S^{G}_{it}\). The first response becomes the GEV choice probability
 rather than the multinomial logit; the second response is unchanged in
-form, since Equation~\ref{eq-modelA}, Equation~\ref{eq-modelB}, and the
-cumulative-link representation Equation~\ref{eq-cumlink} depend on the
-choice set only through \(\overline{\mu}_{it}\); and the factorization
-Equation~\ref{eq-joint} holds for the same reason as before. The
-location invariance behind Proposition~\ref{prp-ident} also survives:
-shifting every \(V_{itj}\) by \(\delta\) multiplies \(S^{G}_{it}\) by
-\(e^{\delta}\) and so shifts \(\overline{\mu}_{it}\) by exactly
-\(\delta\), which the cut points absorb. The rank condition must then be
-read against the design as it enters \(G\) rather than a simple sum, and
-the nesting result of Section~\ref{sec-nesting} becomes
+form, since Equation~\ref{eq-ordprob}, Equation~\ref{eq-orderedlogit},
+and the cumulative-link representation Equation~\ref{eq-cumlink} depend
+on the choice set only through \(\overline{\mu}_{it}\); and the
+factorization Equation~\ref{eq-joint} holds for the same reason as
+before. The location invariance behind Proposition~\ref{prp-ident} also
+survives: shifting every \(V_{itj}\) by \(\delta\) multiplies
+\(S^{G}_{it}\) by \(e^{\delta}\) and so shifts \(\overline{\mu}_{it}\)
+by exactly \(\delta\), which the cut points absorb. The rank condition
+must then be read against the design as it enters \(G\) rather than a
+simple sum, and the nesting result of Section~\ref{sec-nesting} becomes
 \(\Pr(\text{buy}) = S^{G}_{it} / \left( e^{\gamma} + S^{G}_{it} \right)\).
 
 The leading application is nested logit,
@@ -2066,7 +2152,7 @@ inclusive value passed as its single explanatory variable and the cut
 points as its thresholds, and \texttt{apollo\_combineModels} to join
 them. Our model has no stock part. Apollo supplies ordered components
 for the logistic and normal links and no others, so the
-complementary-log-log form Equation~\ref{eq-modelA} must be written out
+complementary-log-log form Equation~\ref{eq-ordprob} must be written out
 and passed through \texttt{apollo\_ownModel}, the hook for user-defined
 likelihoods. The function is short, and once supplied it inherits the
 rest of the package. The asymmetry also shows that the standard toolkit
@@ -2356,6 +2442,12 @@ Haaijer, Rinus, Wagner A. Kamakura, and Michel Wedel. 2001. {``The
 \emph{International Journal of Market Research} 43 (1): 93--106.
 \url{https://doi.org/10.1177/147078530104300105}.
 
+\bibitem[\citeproctext]{ref-Hensher_2012}
+Hensher, David A., John M. Rose, and Matthew J. Beck. 2012. {``Are There
+Specific Design Elements of Choice Experiments and Types of People That
+Influence Choice Response Certainty?''} \emph{Journal of Choice
+Modelling} 5 (1): 77--97.
+
 \bibitem[\citeproctext]{ref-Hess_2019}
 Hess, Stephane, and David Palma. 2019. {``Apollo: A Flexible, Powerful
 and Customisable Freeware Package for Choice Model Estimation and
@@ -2423,6 +2515,11 @@ Newton, Michael A., and Adrian E. Raftery. 1994. {``Approximate
 (Methodological)} 56 (1): 3--48.
 \url{https://doi.org/10.1111/j.2517-6161.1994.tb01956.x}.
 
+\bibitem[\citeproctext]{ref-Rose_2015}
+Rose, John M., Matthew J. Beck, and David A. Hensher. 2015. {``The Joint
+Estimation of Respondent-Reported Certainty and Acceptability with
+Choice.''} \emph{Transportation Research Part A} 71: 141--52.
+
 \bibitem[\citeproctext]{ref-Rossi_2005}
 Rossi, Peter E., Greg M. Allenby, and Robert McCulloch. 2005.
 \emph{Bayesian Statistics and Marketing}. John Wiley \& Sons.
@@ -2458,6 +2555,18 @@ Watanabe, Sumio. 2010. {``Asymptotic Equivalence of {Bayes} Cross
 Validation and Widely Applicable Information Criterion in Singular
 Learning Theory.''} \emph{Journal of Machine Learning Research} 11:
 3571--94.
+
+\bibitem[\citeproctext]{ref-Webb_2021}
+Webb, Edward J. D., and Stephane Hess. 2021. {``Joint Modelling of
+Choice and Rating Data: Theory and Examples.''} \emph{Journal of Choice
+Modelling} 40: 100304. \url{https://doi.org/10.1016/j.jocm.2021.100304}.
+
+\bibitem[\citeproctext]{ref-Wlomert_2016}
+Wlömert, Nils, and Felix Eggers. 2016. {``Predicting New Service
+Adoption with Conjoint Analysis: External Validity of {BDM}-Based
+Incentive-Aligned and Dual-Response Choice Designs.''} \emph{Marketing
+Letters} 27 (1): 195--210.
+\url{https://doi.org/10.1007/s11002-014-9326-x}.
 
 \end{CSLReferences}
 

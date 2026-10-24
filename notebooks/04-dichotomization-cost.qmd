@@ -83,15 +83,25 @@ decomposition directly.
 #| code-summary: "Design, simulator, likelihood, and exact Fisher information"
 rgumbel <- function(n) -log(-log(runif(n)))
 
-make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+# Attribute levels are drawn at random rather than from an efficiency-optimized
+# catalogue of the kind commercial practice uses (one-way and two-way level
+# balance, D-efficiency, utility balance). Nothing here needs one. The headline
+# comparisons are paired -- competing specifications are fit to the same
+# simulated data on the same design -- so design efficiency cancels from them,
+# and recovery needs only the rank condition, which id_rank_check() verifies.
+# Optimizing for the forced choice alone would not obviously serve the second
+# response in any case: it is identified by variation in task attractiveness
+# across tasks, which within-task utility balance does nothing to produce.
+make_design <- function(n_tasks, J, seed) {
   set.seed(seed)
   n_rows <- n_tasks * J
   a <- sample(1:3, n_rows, replace = TRUE); b <- sample(1:3, n_rows, replace = TRUE)
   price <- runif(n_rows, 0.5, 2.5)
   X <- cbind(a2 = as.numeric(a == 2), a3 = as.numeric(a == 3),
              b2 = as.numeric(b == 2), b3 = as.numeric(b == 3), price = price)
-  if (intercept) X <- cbind(X, const = 1)
-  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X),
+       task_id = rep(seq_len(n_tasks), each = J),   # task of each X row
+       alt_id  = rep(seq_len(J), times = n_tasks))  # alternative within task
 }
 id_rank_check <- function(X) {
   aug <- cbind(X, 1); list(rank = qr(aug)$rank, required = ncol(aug),
@@ -104,45 +114,45 @@ par_to_cut <- function(par, P, W) {
 cut_to_par <- function(cut) if (length(cut) == 1) cut else c(cut[1], log(diff(cut)))
 row_max <- function(M) do.call(pmax, as.data.frame(M))
 
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   else { ea <- exp(-lo); eb <- exp(-hi)
          p <- exp(-eb) * (-expm1(-(ea - eb))); p[!is.finite(eb)] <- 0; p }
 }
-ord_prob <- function(mubar, cut, y, model) {
-  caug <- c(-Inf, cut, Inf); ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, model)
+ord_prob <- function(mubar, cut, y, link) {
+  caug <- c(-Inf, cut, Inf); ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, link)
 }
 negloglik <- function(par, dat) {
   design <- dat$design; P <- design$P; W <- dat$W
   n <- design$n_tasks; J <- design$J
   beta <- par[1:P]; cut <- par_to_cut(par, P, W)
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  -(sum(V[cbind(seq_len(n), dat$jstar)] - logS) +
-    sum(log(pmax(ord_prob(logS, cut, dat$y, dat$model), 1e-312))))
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  -(sum(V[cbind(seq_len(n), dat$jstar)] - mubar) +
+    sum(log(pmax(ord_prob(mubar, cut, dat$y, dat$link), 1e-312))))
 }
 num_grad <- function(f, x, eps = 1e-6) {
   vapply(seq_along(x), function(k) {
     h <- eps * max(1, abs(x[k])); xp <- x; xp[k] <- xp[k] + h
     xm <- x; xm[k] <- xm[k] - h; (f(xp) - f(xm)) / (2 * h) }, numeric(1))
 }
-simulate_dual <- function(design, beta, cut, model = c("A","B"), seed) {
-  model <- match.arg(model); set.seed(seed)
+simulate_dual <- function(design, beta, cut, link = c("cloglog","logit"), seed) {
+  link <- match.arg(link); set.seed(seed)
   n <- design$n_tasks; J <- design$J
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
   list(design = design, jstar = jstar, y = findInterval(latent, cut) + 1L,
-       W = length(cut) + 1L, model = model, beta_true = beta, cut_true = cut)
+       W = length(cut) + 1L, link = link, beta_true = beta, cut_true = cut)
 }
 fit_dual_mle <- function(dat, start = NULL) {
   design <- dat$design; P <- design$P; W <- dat$W
   if (is.null(start)) {
     freq <- tabulate(dat$y, nbins = W)
     cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-    ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+    ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
     cut0 <- log(design$J) + ginv(cumq)
     if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
     start <- c(rep(0, P), cut_to_par(cut0))
@@ -163,11 +173,11 @@ fit_dual_mle <- function(dat, start = NULL) {
 }
 
 # ---- exact Fisher information (R/homogeneous/fisher.R) ---------------------
-link_cdf <- function(z, model) if (model == "B") plogis(z) else exp(-exp(-z))
-link_pdf <- function(z, model) if (model == "B") dlogis(z) else exp(-(z + exp(-z)))
+link_cdf <- function(z, link) if (link == "logit") plogis(z) else exp(-exp(-z))
+link_pdf <- function(z, link) if (link == "logit") dlogis(z) else exp(-(z + exp(-z)))
 
 # Information from one task: the MNL block plus the ordinal-stage block.
-fisher_task <- function(Xt, beta, cut, model) {
+fisher_task <- function(Xt, beta, cut, link) {
   P <- ncol(Xt); W <- length(cut) + 1L; K <- P + W - 1L
   V <- as.numeric(Xt %*% beta)
   eV <- exp(V - max(V)); p <- eV / sum(eV)
@@ -175,7 +185,7 @@ fisher_task <- function(Xt, beta, cut, model) {
   I <- matrix(0, K, K)
   I[1:P, 1:P] <- t(Xt) %*% (diag(p) - tcrossprod(p)) %*% Xt   # choice stage
   z <- cut - mubar
-  Gz <- c(0, link_cdf(z, model), 1); gz <- c(0, link_pdf(z, model), 0)
+  Gz <- c(0, link_cdf(z, link), 1); gz <- c(0, link_pdf(z, link), 0)
   pi_w <- diff(Gz)
   xbar <- as.numeric(t(p) %*% Xt)
   for (w in seq_len(W)) {                                      # ordinal stage
@@ -187,19 +197,19 @@ fisher_task <- function(Xt, beta, cut, model) {
   }
   I
 }
-fisher_total <- function(design, beta, cut, model) {
+fisher_total <- function(design, beta, cut, link) {
   n <- design$n_tasks; J <- design$J; K <- design$P + length(cut)
   I <- matrix(0, K, K)
   for (t in seq_len(n)) {
     rows <- ((t - 1) * J + 1):(t * J)
-    I <- I + fisher_task(design$X[rows, , drop = FALSE], beta, cut, model)
+    I <- I + fisher_task(design$X[rows, , drop = FALSE], beta, cut, link)
   }
   I
 }
 # The scalar weight omega: how much the second response contributes per task.
-omega_weight <- function(mubar, cut, model) {
+omega_weight <- function(mubar, cut, link) {
   z <- outer(mubar, cut, function(m, c) c - m)
-  Gz <- cbind(0, link_cdf(z, model), 1); gz <- cbind(0, link_pdf(z, model), 0)
+  Gz <- cbind(0, link_cdf(z, link), 1); gz <- cbind(0, link_pdf(z, link), 0)
   W <- length(cut) + 1L
   om <- 0
   for (w in seq_len(W)) om <- om + (gz[, w + 1] - gz[, w])^2 / (Gz[, w + 1] - Gz[, w])
@@ -209,7 +219,7 @@ omega_weight <- function(mubar, cut, model) {
 
 ```{r}
 #| label: config
-MODEL <- "B"; N_TASKS <- 3600; J <- 4; W <- 5; P <- 5
+MODEL <- "logit"; N_TASKS <- 3600; J <- 4; W <- 5; P <- 5
 R_REPS <- 100; N_EVAL <- 200
 MC_SETS <- c("set1_moderate", "set4_skewed")
 
@@ -409,7 +419,7 @@ for (sn in MC_SETS) {
   pred_n <- pred_sse
 
   for (r in seq_len(R_REPS)) {
-    dat5 <- simulate_dual(design, ps$beta, ps$cut, model = MODEL, seed = 60000 + r)
+    dat5 <- simulate_dual(design, ps$beta, ps$cut, link = MODEL, seed = 60000 + r)
     fits <- list()
     fits$ord5 <- fit_dual_mle(dat5)
     dat3 <- dat5; dat3$y <- collapse3(dat5$y); dat3$W <- 3L
@@ -493,31 +503,31 @@ stage.
 #| label: hb-machinery
 #| code-fold: true
 #| code-summary: "Panel simulation and the hierarchical sampler"
-make_panel_design <- function(N, T_tasks, J, seed, intercept = FALSE) {
-  des <- make_design(N * T_tasks, J, seed = seed, intercept = intercept)
+make_panel_design <- function(N, T_tasks, J, seed) {
+  des <- make_design(N * T_tasks, J, seed = seed)
   des$N <- N; des$T_tasks <- T_tasks
   des$resp <- rep(seq_len(N), each = T_tasks)
-  des$resp_row <- rep(des$resp, each = J)
+  des$respondent_id <- rep(des$resp, each = J)
   des
 }
 draw_betas <- function(N, beta_bar, Sigma, seed) {
   set.seed(seed); P <- length(beta_bar)
   sweep(matrix(rnorm(N * P), N, P) %*% chol(Sigma), 2, beta_bar, "+")
 }
-simulate_dual_hb <- function(design, Bmat, cut, model = c("A","B"), seed) {
-  model <- match.arg(model); set.seed(seed)
+simulate_dual_hb <- function(design, Bmat, cut, link = c("cloglog","logit"), seed) {
+  link <- match.arg(link); set.seed(seed)
   n <- design$n_tasks; J <- design$J; N <- design$N
   cutmat <- if (is.matrix(cut)) cut else matrix(cut, N, length(cut), byrow = TRUE)
   W <- ncol(cutmat) + 1L
-  Bx <- Bmat[design$resp_row, , drop = FALSE]
+  Bx <- Bmat[design$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(design$X * Bx), nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
   y <- 1L + rowSums(latent >= cutmat[design$resp, , drop = FALSE])
-  list(design = design, resp = design$resp, resp_row = design$resp_row, N = N,
-       jstar = jstar, y = as.integer(y), W = W, model = model,
+  list(design = design, resp = design$resp, respondent_id = design$respondent_id, N = N,
+       jstar = jstar, y = as.integer(y), W = W, link = link,
        Bmat_true = Bmat, cut_true = cut)
 }
 split_holdout <- function(dat, n_holdout) {
@@ -527,8 +537,8 @@ split_holdout <- function(dat, n_holdout) {
     rows <- rep(keep, each = des$J); d <- des
     d$X <- des$X[rows, , drop = FALSE]; d$n_tasks <- sum(keep)
     d$T_tasks <- d$n_tasks / des$N; d$resp <- des$resp[keep]
-    d$resp_row <- rep(d$resp, each = des$J)
-    out <- dat; out$design <- d; out$resp <- d$resp; out$resp_row <- d$resp_row
+    d$respondent_id <- rep(d$resp, each = des$J)
+    out <- dat; out$design <- d; out$resp <- d$resp; out$respondent_id <- d$respondent_id
     out$jstar <- dat$jstar[keep]; out$y <- dat$y[keep]; out
   }
   list(est = sub(keep_t), holdout = sub(!keep_t))
@@ -543,15 +553,15 @@ phi_to_cutmat <- function(Phi, P, W) {
 }
 resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE) {
   des <- dat$design; n <- des$n_tasks; J <- des$J
-  Bx <- Bmat[dat$resp_row, , drop = FALSE]
+  Bx <- Bmat[dat$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(des$X * Bx), nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  ll <- V[cbind(seq_len(n), dat$jstar)] - logS
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  ll <- V[cbind(seq_len(n), dat$jstar)] - mubar
   if (!choice_only) {
     ca <- cbind(-Inf, cutmat, Inf)
-    ll <- ll + log(pmax(ord_prob_z(ca[cbind(dat$resp, dat$y)] - logS,
-                                   ca[cbind(dat$resp, dat$y + 1L)] - logS,
-                                   dat$model), 1e-312))
+    ll <- ll + log(pmax(ord_prob_z(ca[cbind(dat$resp, dat$y)] - mubar,
+                                   ca[cbind(dat$resp, dat$y + 1L)] - mubar,
+                                   dat$link), 1e-312))
   }
   as.numeric(rowsum(ll, dat$resp, reorder = TRUE))
 }
@@ -579,7 +589,7 @@ fit_dual_hb <- function(dat, mcmc = list(R=30000, burn=10000, thin=10),
   Phi <- matrix(0, N, dim_phi)
   freq <- tabulate(dat$y, nbins = W)
   cumq <- pmin(pmax(cumsum(freq)[1:(W-1)]/sum(freq), 1e-4), 1-1e-4)
-  ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+  ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
   cut0 <- log(des$J) + ginv(cumq)
   if (W > 2) for (k in 2:(W-1)) cut0[k] <- max(cut0[k], cut0[k-1] + 1e-3)
   zeta <- cut_to_par(cut0)
@@ -645,7 +655,7 @@ fit_dual_hb <- function(dat, mcmc = list(R=30000, burn=10000, thin=10),
                                zeta = if (het_cut || choice_only) NA else acc_zeta/post),
                  settings = list(mcmc = mcmc, het_cut = het_cut,
                                  choice_only = choice_only, P = P, W = W, N = N,
-                                 model = dat$model, priors = priors),
+                                 link = dat$link, priors = priors),
                  runtime_min = as.numeric(difftime(Sys.time(), t0, units="mins"))),
             class = "dr_hb_fit")
 }
@@ -664,33 +674,33 @@ REPS <- 20
 ITER <- 20000
 MCMC <- list(R = ITER, burn = floor(ITER * 0.4), thin = 10)
 
-gen_panel <- function(seed, model = "B") {
+gen_panel <- function(seed, link = "logit") {
   des <- make_panel_design(N, T_EST + T_HOLD, J, seed = seed)
   B <- draw_betas(N, beta_bar, Sigma_true, seed = seed + 1)
-  split_holdout(simulate_dual_hb(des, B, cut_true, model = model, seed = seed + 2), T_HOLD)
+  split_holdout(simulate_dual_hb(des, B, cut_true, link = link, seed = seed + 2), T_HOLD)
 }
 task_mubar <- function(design, Bmat) {
-  Bx <- Bmat[design$resp_row, , drop = FALSE]
+  Bx <- Bmat[design$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(design$X * Bx), ncol = design$J, byrow = TRUE)
   m <- row_max(V); m + log(rowSums(exp(V - m)))
 }
 true_exceed_panel <- function(sp) {
   d <- sp$holdout$design
-  mu <- task_mubar(d, sp$holdout$Bmat_true)
+  mubar <- task_mubar(d, sp$holdout$Bmat_true)
   cutm <- matrix(sp$holdout$cut_true, N, W - 1, byrow = TRUE)
-  1 - plogis(cutm[d$resp, KBUY - 1] - mu)
+  1 - plogis(cutm[d$resp, KBUY - 1] - mubar)
 }
 pred_exceed_panel <- function(fit, sp, k = KBUY) {
   d <- sp$holdout$design
-  mu <- task_mubar(d, hb_beta_i(fit))
+  mubar <- task_mubar(d, hb_beta_i(fit))
   cutvec <- colMeans(fit$draws$cut)
-  cc <- rep(cutvec[min(k - 1, length(cutvec))], length(mu))
-  G <- if (fit$settings$model == "B") plogis else function(z) exp(-exp(-z))
-  1 - G(cc - mu)
+  cc <- rep(cutvec[min(k - 1, length(cutvec))], length(mubar))
+  G <- if (fit$settings$link == "logit") plogis else function(z) exp(-exp(-z))
+  1 - G(cc - mubar)
 }
 hit_rate <- function(fit, sp) {
   d <- sp$holdout$design
-  Bx <- hb_beta_i(fit)[d$resp_row, , drop = FALSE]
+  Bx <- hb_beta_i(fit)[d$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(d$X * Bx), ncol = d$J, byrow = TRUE)
   mean(max.col(V, ties.method = "first") == sp$holdout$jstar)
 }

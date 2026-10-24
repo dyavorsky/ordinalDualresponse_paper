@@ -62,7 +62,16 @@ alpha_to_cut <- function(a) -log(-log(a))   # probability -> utility,  F^{-1}
 cut_to_alpha <- function(c) exp(-exp(-c))   # utility -> probability,  F
 rgumbel      <- function(n) alpha_to_cut(runif(n))
 
-make_design <- function(n_tasks, J, seed, intercept = FALSE) {
+# Attribute levels are drawn at random rather than from an efficiency-optimized
+# catalogue of the kind commercial practice uses (one-way and two-way level
+# balance, D-efficiency, utility balance). Nothing here needs one. The headline
+# comparisons are paired -- competing specifications are fit to the same
+# simulated data on the same design -- so design efficiency cancels from them,
+# and recovery needs only the rank condition, which id_rank_check() verifies.
+# Optimizing for the forced choice alone would not obviously serve the second
+# response in any case: it is identified by variation in task attractiveness
+# across tasks, which within-task utility balance does nothing to produce.
+make_design <- function(n_tasks, J, seed) {
   set.seed(seed)
   n_rows <- n_tasks * J
   a <- sample(1:3, n_rows, replace = TRUE)
@@ -70,8 +79,9 @@ make_design <- function(n_tasks, J, seed, intercept = FALSE) {
   price <- runif(n_rows, 0.5, 2.5)
   X <- cbind(a2 = as.numeric(a == 2), a3 = as.numeric(a == 3),
              b2 = as.numeric(b == 2), b3 = as.numeric(b == 3), price = price)
-  if (intercept) X <- cbind(X, const = 1)
-  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X))
+  list(X = X, n_tasks = n_tasks, J = J, P = ncol(X),
+       task_id = rep(seq_len(n_tasks), each = J),   # task of each X row
+       alt_id  = rep(seq_len(J), times = n_tasks))  # alternative within task
 }
 
 # Unconstrained working parameters: (beta, c_1, log gaps). See notebook 01 for
@@ -127,8 +137,8 @@ The only thing that changes is the interval probability.
 # Interval probability G(hi) - G(lo), tail-stable, for either link.
 # Gumbel link:   G = standard Gumbel CDF   (she reports the probability she holds)
 # Logistic link: G = standard logistic CDF (she resolves, then grades)
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") {
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") {
     plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   } else {
     ea <- exp(-lo); eb <- exp(-hi)
@@ -138,9 +148,9 @@ ord_prob_z <- function(lo, hi, model) {
   }
 }
 
-ord_prob <- function(mubar, cut, y, model) {
+ord_prob <- function(mubar, cut, y, link) {
   caug <- c(-Inf, cut, Inf)
-  ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, model)
+  ord_prob_z(caug[y] - mubar, caug[y + 1L] - mubar, link)
 }
 
 row_max <- function(M) do.call(pmax, as.data.frame(M))
@@ -154,10 +164,10 @@ negloglik <- function(par, dat) {
 
   V    <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   m    <- row_max(V)
-  logS <- m + log(rowSums(exp(V - m)))
+  mubar <- m + log(rowSums(exp(V - m)))
 
-  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - logS
-  ll_ord    <- log(pmax(ord_prob(logS, cut, dat$y, dat$model), 1e-312))
+  ll_choice <- V[cbind(seq_len(n), dat$jstar)] - mubar
+  ll_ord    <- log(pmax(ord_prob(mubar, cut, dat$y, dat$link), 1e-312))
   -(sum(ll_choice) + sum(ll_ord))
 }
 
@@ -177,18 +187,18 @@ $u^* - \eta_0$ rather than reporting $F(u^*)$.
 
 ```{r}
 #| label: general-sim
-simulate_dual <- function(design, beta, cut, model = c("A", "B"), seed) {
-  model <- match.arg(model)
+simulate_dual <- function(design, beta, cut, link = c("cloglog", "logit"), seed) {
+  link <- match.arg(link)
   set.seed(seed)
   n <- design$n_tasks; J <- design$J
   V <- matrix(design$X %*% beta, nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
   y <- findInterval(latent, cut) + 1L
   list(design = design, jstar = jstar, y = y, W = length(cut) + 1L,
-       model = model, beta_true = beta, cut_true = cut)
+       link = link, beta_true = beta, cut_true = cut)
 }
 
 fit_dual_mle <- function(dat, start = NULL) {
@@ -196,7 +206,7 @@ fit_dual_mle <- function(dat, start = NULL) {
   if (is.null(start)) {
     freq <- tabulate(dat$y, nbins = W)
     cumq <- pmin(pmax(cumsum(freq)[1:(W - 1)] / sum(freq), 1e-4), 1 - 1e-4)
-    ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+    ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
     cut0 <- log(design$J) + ginv(cumq)
     if (W > 2) for (k in 2:(W - 1)) cut0[k] <- max(cut0[k], cut0[k - 1] + 1e-3)
     start <- c(rep(0, P), cut_to_par(cut0))
@@ -223,7 +233,7 @@ fit_dual_mle <- function(dat, start = NULL) {
               grad_max = max(abs(g)), eigen = ev, min_eig = min(ev),
               cond = max(ev) / max(min(ev), .Machine$double.eps),
               par = opt$par, counts = opt$counts)
-  if (dat$model == "A") {
+  if (dat$link == "cloglog") {
     a <- cut_to_alpha(cut_hat)
     out$alpha <- a
     out$se_alpha <- out$se_cut * a * (-log(a))
@@ -245,11 +255,11 @@ script does, so cell `A / set1_moderate` reproduces the walkthrough above.
 N_TASKS <- 20000
 J <- 4
 
-recover_one <- function(model, set_name, pars, design_seed, sim_seed) {
+recover_one <- function(link, set_name, pars, design_seed, sim_seed) {
   design <- make_design(N_TASKS, J, seed = design_seed)
   rc <- id_rank_check(design$X)
-  cut_true <- if (model == "A") alpha_to_cut(pars$alphaA) else pars$cutB
-  dat <- simulate_dual(design, pars$beta, cut_true, model = model, seed = sim_seed)
+  cut_true <- if (link == "cloglog") alpha_to_cut(pars$alphaA) else pars$cutB
+  dat <- simulate_dual(design, pars$beta, cut_true, link = link, seed = sim_seed)
   fit <- fit_dual_mle(dat)
 
   truth <- c(pars$beta, cut_true)
@@ -257,14 +267,14 @@ recover_one <- function(model, set_name, pars, design_seed, sim_seed) {
   se    <- c(fit$se_beta, fit$se_cut)
   tab <- data.frame(param = c(names(pars$beta), paste0("c", 1:(W - 1))),
                     truth = truth, est = est, se = se, z = (est - truth) / se)
-  if (model == "A") {
+  if (link == "cloglog") {
     tab <- rbind(tab, data.frame(
       param = paste0("alpha", 1:(W - 1)),
       truth = pars$alphaA, est = fit$alpha, se = fit$se_alpha,
       z = (fit$alpha - pars$alphaA) / fit$se_alpha))
   }
   rownames(tab) <- NULL
-  list(model = model, set = set_name, rank_check = rc, table = tab,
+  list(link = link, set = set_name, rank_check = rc, table = tab,
        y_freq = tabulate(dat$y, nbins = W) / N_TASKS,
        nll = fit$nll, convergence = fit$convergence, grad_max = fit$grad_max,
        min_eig = fit$min_eig, cond = fit$cond,
@@ -273,12 +283,12 @@ recover_one <- function(model, set_name, pars, design_seed, sim_seed) {
 
 results <- list()
 seed_counter <- 0
-for (model in c("A", "B")) {
+for (link in c("cloglog", "logit")) {
   for (s in seq_along(param_sets)) {
     seed_counter <- seed_counter + 1
     nm <- names(param_sets)[s]
-    results[[paste(model, nm, sep = "_")]] <-
-      recover_one(model, nm, param_sets[[s]],
+    results[[paste(link, nm, sep = "_")]] <-
+      recover_one(link, nm, param_sets[[s]],
                   design_seed = 100 + seed_counter, sim_seed = 500 + seed_counter)
   }
 }
@@ -292,7 +302,7 @@ grid_tab <- do.call(rbind, lapply(results, function(r) {
   z_free <- r$table$z[!grepl("alpha", r$table$param)]
   lr <- 2 * (r$nll_truth - r$nll)
   data.frame(
-    cell          = paste(r$model, r$set),
+    cell          = paste(r$link, r$set),
     `max |z|`     = round(max(abs(z_free)), 2),
     `LR vs truth` = round(lr, 2),
     `chi2 .95`    = round(qchisq(0.95, 9), 2),
@@ -318,7 +328,7 @@ article quotes. A true $\alpha_1$ of 0.02 recovers to:
 
 ```{r}
 #| label: stress-alpha
-st <- results$A_set3_stress$table
+st <- results$cloglog_set3_stress$table
 knitr::kable(st[grepl("alpha", st$param), ], row.names = FALSE, digits = 4)
 ```
 
@@ -340,14 +350,14 @@ rep_pars <- list(
   alphaA = c(0.10, 0.30, 0.60, 0.85)
 )
 
-run_model <- function(model) {
-  cut_true <- if (model == "A") alpha_to_cut(rep_pars$alphaA) else rep_pars$cutB
+run_model <- function(link) {
+  cut_true <- if (link == "cloglog") alpha_to_cut(rep_pars$alphaA) else rep_pars$cutB
   truth <- c(rep_pars$beta, cut_true)
   est <- se <- matrix(NA_real_, R_REPS, length(truth))
   conv <- integer(R_REPS)
   for (r in seq_len(R_REPS)) {
     design <- make_design(N_REP, J, seed = 10000 + r)
-    dat <- simulate_dual(design, rep_pars$beta, cut_true, model = model,
+    dat <- simulate_dual(design, rep_pars$beta, cut_true, link = link,
                          seed = 20000 + r)
     fit <- fit_dual_mle(dat)
     est[r, ] <- c(fit$beta, fit$cut)
@@ -357,7 +367,7 @@ run_model <- function(model) {
   bias   <- colMeans(est) - truth
   emp_sd <- apply(est, 2, sd)
   data.frame(
-    model = model,
+    link = link,
     param = c(names(rep_pars$beta), paste0("c", 1:(W - 1))),
     truth = truth, mean_est = colMeans(est), bias = bias,
     t_bias = bias / (emp_sd / sqrt(R_REPS)), emp_sd = emp_sd,
@@ -365,7 +375,7 @@ run_model <- function(model) {
     n_nonconv = sum(conv != 0))
 }
 
-rep_res <- do.call(rbind, lapply(c("A", "B"), run_model))
+rep_res <- do.call(rbind, lapply(c("cloglog", "logit"), run_model))
 rownames(rep_res) <- NULL
 knitr::kable(rep_res, row.names = FALSE, digits = 4)
 ```
@@ -393,22 +403,22 @@ to quadruple $n$ on fresh seeds and see whether the bias falls by about four.
 ```{r}
 #| label: bias-scaling
 N_BIG <- 20000
-cut_A <- alpha_to_cut(rep_pars$alphaA)
-truth_A <- c(rep_pars$beta, cut_A)
+cut_cloglog <- alpha_to_cut(rep_pars$alphaA)
+truth_cloglog <- c(rep_pars$beta, cut_cloglog)
 
-est_big <- matrix(NA_real_, R_REPS, length(truth_A))
+est_big <- matrix(NA_real_, R_REPS, length(truth_cloglog))
 for (r in seq_len(R_REPS)) {
   design <- make_design(N_BIG, J, seed = 30000 + r)
-  dat <- simulate_dual(design, rep_pars$beta, cut_A, model = "A", seed = 40000 + r)
+  dat <- simulate_dual(design, rep_pars$beta, cut_cloglog, link = "cloglog", seed = 40000 + r)
   fit <- fit_dual_mle(dat)
   est_big[r, ] <- c(fit$beta, fit$cut)
 }
 
-bias_big   <- colMeans(est_big) - truth_A
+bias_big   <- colMeans(est_big) - truth_cloglog
 emp_sd_big <- apply(est_big, 2, sd)
 bias_res <- data.frame(
   param = c(names(rep_pars$beta), paste0("c", 1:(W - 1))),
-  truth = truth_A, mean_est = colMeans(est_big), bias = bias_big,
+  truth = truth_cloglog, mean_est = colMeans(est_big), bias = bias_big,
   t_bias = bias_big / (emp_sd_big / sqrt(R_REPS)), emp_sd = emp_sd_big)
 rownames(bias_res) <- NULL
 knitr::kable(bias_res, row.names = FALSE, digits = 4)
@@ -416,7 +426,7 @@ knitr::kable(bias_res, row.names = FALSE, digits = 4)
 
 ```{r}
 #| label: bias-scaling-verdict
-b2_small <- rep_res$bias[rep_res$model == "A" & rep_res$param == "b2"]
+b2_small <- rep_res$bias[rep_res$link == "cloglog" & rep_res$param == "b2"]
 b2_big   <- bias_res$bias[bias_res$param == "b2"]
 cat(sprintf("b2 bias at n = 5,000:  %+.4f\n", b2_small))
 cat(sprintf("b2 bias at n = 20,000: %+.4f\n", b2_big))
@@ -427,7 +437,86 @@ cat(sprintf("ratio %.1fx (O(1/n) predicts ~4x); max |t_bias| now %.2f\n",
 The bias shrinks in proportion to $n$, which is what the finite-sample
 explanation predicts and what a structural problem would not do.
 
-## 5. Results written
+## 5. The identification condition, violated
+
+@prp-ident says the design matrix augmented with a column of ones must have
+full column rank. The canonical way to break that is to give every alternative
+the same extra attribute, so we append a constant column and refit. The theory
+predicts a specific signature rather than an outright failure: the likelihood
+stays perfectly flat along the direction that trades the constant's part-worth
+against an equal shift in every cut point, so the optimiser still converges,
+but where it stops depends on where it started.
+
+```{r}
+#| label: ridge
+
+des_bad <- make_design(4000, J, seed = 12345)
+rc_ok   <- id_rank_check(des_bad$X)
+
+des_bad$X <- cbind(des_bad$X, const = 1)   # the deliberate violation
+des_bad$P <- ncol(des_bad$X)
+rc_bad    <- id_rank_check(des_bad$X)
+
+pars     <- param_sets$set1_moderate
+cut_true <- alpha_to_cut(pars$alphaA)
+dat_bad  <- simulate_dual(des_bad, c(pars$beta, const = 0), cut_true,
+                          link = "cloglog", seed = 909)
+
+# Three starting values differing only in the constant's coefficient. The
+# singular Hessian makes the standard errors NaN, which is part of the point.
+starts <- c(-1, 0, 1)
+fits <- suppressWarnings(lapply(starts, function(s0)
+  fit_dual_mle(dat_bad, start = c(rep(0, des_bad$P - 1), s0, cut_to_par(cut_true)))))
+
+bconst <- sapply(fits, function(f) f$beta[des_bad$P])
+ridge_tab <- data.frame(
+  start_const = starts,
+  nll         = sapply(fits, `[[`, "nll"),
+  beta_const  = bconst,
+  c1_raw      = sapply(fits, function(f) f$cut[1]),
+  `c1_-_const` = sapply(fits, function(f) f$cut[1]) - bconst,
+  min_eig     = sapply(fits, `[[`, "min_eig"),
+  check.names = FALSE
+)
+
+# Everything the proof says is identified: the non-constant part-worths and
+# the differences cut_w - beta_const.
+ident <- sapply(fits, function(f)
+  c(f$beta[1:(des_bad$P - 1)], f$cut - f$beta[des_bad$P]))
+ridge_res <- list(
+  rank_ok     = rc_ok,
+  rank_bad    = rc_bad,
+  table       = ridge_tab,
+  nll_spread  = diff(range(ridge_tab$nll)),
+  raw_spread  = diff(range(bconst)),
+  ident_spread = max(apply(ident, 1, function(r) diff(range(r))))
+)
+
+knitr::kable(ridge_tab, digits = 6)
+```
+
+```{r}
+#| label: ridge-verdict
+cat("rank of [X 1] without the constant:", rc_ok$rank,  "of", rc_ok$required,
+    "->", if (rc_ok$pass) "identified" else "not identified", "\n")
+cat("rank of [X 1] with the constant:   ", rc_bad$rank, "of", rc_bad$required,
+    "->", if (rc_bad$pass) "identified" else "not identified", "\n\n")
+cat("spread across starts, raw beta_const:", signif(ridge_res$raw_spread, 4), "\n")
+cat("spread across starts, identified:    ", signif(ridge_res$ident_spread, 4), "\n")
+cat("spread in log-likelihood:            ", signif(ridge_res$nll_spread, 4), "\n")
+```
+
+Appending the constant drops the rank by one, exactly as @prp-ident requires.
+The three fits reach the same log-likelihood to nine decimal places while their
+raw $(\beta_{\text{const}}, \mathbf{c})$ differ by the full distance between the
+starting values: the optimiser is sliding along a flat ridge and stopping
+wherever it entered. What the proof says *is* identified agrees across all
+three fits to six decimal places, which is the practical content of the
+proposition: the data pin down $c_w - \beta_{\text{const}}$ and the
+non-constant part-worths, and nothing pins down where along the ridge those
+sit.
+
+## 6. Results written
 
 ```{r}
 #| label: save
@@ -441,11 +530,13 @@ saveRDS(list(recovery = results,
         file.path(OUT, "aggregate_recovery.rds"))
 saveRDS(rep_res,  file.path(OUT, "replication_study.rds"))
 saveRDS(bias_res, file.path(OUT, "bias_scaling_check.rds"))
+saveRDS(ridge_res, file.path(OUT, "identification_ridge.rds"))
 
-cat("wrote aggregate_recovery.rds, replication_study.rds, bias_scaling_check.rds\n")
+cat("wrote aggregate_recovery.rds, replication_study.rds, bias_scaling_check.rds,",
+    "identification_ridge.rds\n")
 ```
 
-## 6. Related material
+## 7. Related material
 
 | where | what |
 |---|---|

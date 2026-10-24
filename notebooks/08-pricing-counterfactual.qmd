@@ -67,8 +67,8 @@ par_to_cut <- function(par, P, W) {
 }
 cut_to_par <- function(cut) if (length(cut) == 1) cut else c(cut[1], log(diff(cut)))
 row_max <- function(M) do.call(pmax, as.data.frame(M))
-ord_prob_z <- function(lo, hi, model) {
-  if (model == "B") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
+ord_prob_z <- function(lo, hi, link) {
+  if (link == "logit") plogis(hi) * plogis(-lo) * (-expm1(lo - hi))
   else { ea <- exp(-lo); eb <- exp(-hi)
          p <- exp(-eb) * (-expm1(-(ea - eb))); p[!is.finite(eb)] <- 0; p }
 }
@@ -78,20 +78,20 @@ draw_betas <- function(N, beta_bar, Sigma, seed) {
   set.seed(seed); P <- length(beta_bar)
   sweep(matrix(rnorm(N*P), N, P) %*% chol(Sigma), 2, beta_bar, "+")
 }
-simulate_dual_hb <- function(design, Bmat, cut, model = c("A","B"), seed) {
-  model <- match.arg(model); set.seed(seed)
+simulate_dual_hb <- function(design, Bmat, cut, link = c("cloglog","logit"), seed) {
+  link <- match.arg(link); set.seed(seed)
   n <- design$n_tasks; J <- design$J; N <- design$N
   cutmat <- if (is.matrix(cut)) cut else matrix(cut, N, length(cut), byrow = TRUE)
   W <- ncol(cutmat) + 1L
-  Bx <- Bmat[design$resp_row, , drop = FALSE]
+  Bx <- Bmat[design$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(design$X * Bx), nrow = n, ncol = J, byrow = TRUE)
   u <- V + matrix(rgumbel(n * J), n, J)
   jstar <- max.col(u, ties.method = "first")
   ustar <- u[cbind(seq_len(n), jstar)]
-  latent <- if (model == "A") ustar else ustar - rgumbel(n)
-  list(design = design, resp = design$resp, resp_row = design$resp_row, N = N,
+  latent <- if (link == "cloglog") ustar else ustar - rgumbel(n)
+  list(design = design, resp = design$resp, respondent_id = design$respondent_id, N = N,
        jstar = jstar, y = as.integer(1L + rowSums(latent >= cutmat[design$resp, , drop = FALSE])),
-       W = W, model = model, Bmat_true = Bmat, cut_true = cut)
+       W = W, link = link, Bmat_true = Bmat, cut_true = cut)
 }
 phi_to_cutmat <- function(Phi, P, W) {
   c1 <- Phi[, P + 1]
@@ -103,15 +103,15 @@ phi_to_cutmat <- function(Phi, P, W) {
 }
 resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE) {
   des <- dat$design; n <- des$n_tasks; J <- des$J
-  Bx <- Bmat[dat$resp_row, , drop = FALSE]
+  Bx <- Bmat[dat$respondent_id, , drop = FALSE]
   V <- matrix(rowSums(des$X * Bx), nrow = n, ncol = J, byrow = TRUE)
-  m <- row_max(V); logS <- m + log(rowSums(exp(V - m)))
-  ll <- V[cbind(seq_len(n), dat$jstar)] - logS
+  m <- row_max(V); mubar <- m + log(rowSums(exp(V - m)))
+  ll <- V[cbind(seq_len(n), dat$jstar)] - mubar
   if (!choice_only) {
     ca <- cbind(-Inf, cutmat, Inf)
-    ll <- ll + log(pmax(ord_prob_z(ca[cbind(dat$resp, dat$y)] - logS,
-                                   ca[cbind(dat$resp, dat$y + 1L)] - logS,
-                                   dat$model), 1e-312))
+    ll <- ll + log(pmax(ord_prob_z(ca[cbind(dat$resp, dat$y)] - mubar,
+                                   ca[cbind(dat$resp, dat$y + 1L)] - mubar,
+                                   dat$link), 1e-312))
   }
   as.numeric(rowsum(ll, dat$resp, reorder = TRUE))
 }
@@ -139,7 +139,7 @@ fit_dual_hb <- function(dat, mcmc = list(R=30000, burn=10000, thin=10),
   Phi <- matrix(0, N, dim_phi)
   freq <- tabulate(dat$y, nbins = W)
   cumq <- pmin(pmax(cumsum(freq)[1:(W-1)]/sum(freq), 1e-4), 1-1e-4)
-  ginv <- if (dat$model == "B") qlogis else function(q) -log(-log(q))
+  ginv <- if (dat$link == "logit") qlogis else function(q) -log(-log(q))
   cut0 <- log(des$J) + ginv(cumq)
   if (W > 2) for (k in 2:(W-1)) cut0[k] <- max(cut0[k], cut0[k-1] + 1e-3)
   zeta <- cut_to_par(cut0)
@@ -201,7 +201,7 @@ fit_dual_hb <- function(dat, mcmc = list(R=30000, burn=10000, thin=10),
                                zeta = if (het_cut || choice_only) NA else acc_zeta/post),
                  settings = list(mcmc = mcmc, het_cut = het_cut,
                                  choice_only = choice_only, P = P, W = W, N = N,
-                                 model = dat$model, priors = priors),
+                                 link = dat$link, priors = priors),
                  runtime_min = as.numeric(difftime(Sys.time(), t0, units="mins"))),
             class = "dr_hb_fit")
 }
@@ -237,13 +237,13 @@ make_market_design <- function(N, T_tasks, seed) {
              q2 = as.numeric(qual == 2), q3 = as.numeric(qual == 3), price = price)
   list(X = X, n_tasks = n, J = J, P = ncol(X), N = N, T_tasks = T_tasks,
        resp = rep(seq_len(N), each = T_tasks),
-       resp_row = rep(rep(seq_len(N), each = T_tasks), each = J))
+       respondent_id = rep(rep(seq_len(N), each = T_tasks), each = J))
 }
 
 des <- make_market_design(N, T_tasks, seed = 4001)
 stopifnot(id_rank_check(des$X)$pass)
 B_true <- draw_betas(N, beta_bar, Sigma_true, seed = 4002)
-dat <- simulate_dual_hb(des, B_true, cut_true, model = "B", seed = 4003)
+dat <- simulate_dual_hb(des, B_true, cut_true, link = "logit", seed = 4003)
 shares <- tabulate(dat$y, W) / length(dat$y)
 cat("category shares:", round(shares, 3),
     " top-2-box:", round(sum(shares[4:5]), 3), "\n")
@@ -267,10 +267,10 @@ shelf_X <- function(p) cbind(
   b2 = c(0,1,0,0,0), b3 = c(0,0,1,0,0), b4 = c(0,0,0,1,0), b5 = c(0,0,0,0,1),
   q2 = rep(1,5), q3 = rep(0,5), price = p)
 
-demand_model <- function(p, BigB, cut_row, link = "B") {
+demand_model <- function(p, BigB, cut_row, link = "logit") {
   V <- BigB %*% t(shelf_X(p))
   m <- do.call(pmax, as.data.frame(V)); eV <- exp(V - m); S <- rowSums(eV)
-  G <- if (link == "B") plogis else function(z) exp(-exp(-z))
+  G <- if (link == "logit") plogis else function(z) exp(-exp(-z))
   colMeans((eV / S) * (1 - G(cut_row - (m + log(S)))))
 }
 # The heuristic: MNL shares times a CONSTANT incidence that cannot see price.
