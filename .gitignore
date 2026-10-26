@@ -108,7 +108,14 @@ empirical_application/
 
 # Literature PDFs. Publisher copyright: fine to hold locally for research,
 # not to redistribute from a public repo. Kept on disk, out of git.
-lit/
+# NOTE: no trailing slash. Git treats a symlink as a file, so 'lit/' would
+# NOT match once lit became a link into Dropbox.
+lit
+
+# Everything under conference/ is local unless un-ignored below. Draft and
+# personal talk material lives there and stays out of this public repo.
+conference/*
+!conference/sawtooth-2027/
 
 # Quarto manuscript build artifact (one per notebook; not source)
 **/*.embed.ipynb
