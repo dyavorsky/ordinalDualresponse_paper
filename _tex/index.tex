@@ -178,9 +178,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{lemma}{Lemma}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -263,73 +263,63 @@ marketing (Allenby et al. 2019), has a device for separating the two:
 the dual-response format (Brazell et al. 2006). In each task, the
 consumer first makes a forced choice among the displayed product
 profiles and then answers a follow-up question about whether she would
-actually purchase her selection. The format was introduced to fix a
-practical problem with the traditional no-choice option: tasks in which
-``none of these'' is chosen carry no information about attribute
-preferences. The dual-response format recovers that lost information
-because the forced choice always reveals preference among profiles,
-while still measuring demand for the category through the follow-up
-question, and it does so without systematically biasing the preference
-estimates (Brazell et al. 2006; Dhar and Simonson 2003). Following its
-implementation in Sawtooth Software's widely used choice-based conjoint
-(CBC) system (Diener et al. 2006; Sawtooth Software 2017), the
-dual-response format became common practice in commercial conjoint
-research. The format was not, however, derived from a behavioral model
-of the consumer. This paper supplies such a model for an ordinal
-follow-up. It rationalizes the dual-response format, determines the link
-function, and extends the purchase question from binary to ordinal.
+purchase her selection. The format was introduced to fix a practical
+problem with the traditional no-choice option: tasks in which ``none of
+these'' is chosen carry no information about attribute preferences. The
+dual-response format recovers that lost information: the forced choice
+always reveals preference among profiles, while the follow-up still
+measures demand for the category. It does so without systematically
+biasing the preference estimates (Brazell et al. 2006; Dhar and Simonson
+2003). Following its implementation in Sawtooth Software's widely used
+choice-based conjoint (CBC) system (Diener et al. 2006; Sawtooth
+Software 2017), the dual-response format became common practice in
+commercial conjoint research. The format was not, however, derived from
+a behavioral model of the consumer. This paper supplies such a model for
+an ordinal follow-up. It rationalizes the dual-response format,
+determines the link function, and extends the purchase question from
+binary to ordinal.
 
-We start from the behavioral premise that a consumer facing a
-dual-response conjoint task can indicate her most-preferred product
-profile in the forced choice, but whether she would purchase her
-selection concerns a hypothetical future occasion about which she
-remains uncertain. That second question has traditionally been binary:
-``would you buy the option you selected above?'', answered yes or no and
-modeled by pairing a multinomial logit for the forced choice with a
-binary logit for the purchase question (Diener et al. 2006; Hung, Liu,
-et al. 2025). But a yes-or-no answer requires the consumer to settle
-something she has not yet had reason to settle. What she holds is a
-probability (Manski 1990). A finer scale would ask instead for her
-degree of conviction, and would carry more information about what she
-will do. The natural extension is an ordinal dual-response follow-up,
-``how likely are you to buy the option you selected above?'', answered,
-e.g., on a five-, seven-, or eleven-point scale from ``very unlikely''
-to ``very likely.''
+A consumer facing a dual-response conjoint task can indicate her
+most-preferred product profile in the forced choice, but whether she
+would purchase her selection concerns a hypothetical future occasion
+about which she remains uncertain. That second question has
+traditionally been binary: ``would you buy the option you selected
+above?'', answered yes or no and modeled by pairing a multinomial logit
+for the forced choice with a binary logit for the purchase question
+(Diener et al. 2006; Hung, Liu, et al. 2025). A yes-or-no answer asks
+her to settle something she has not yet had reason to settle, when what
+she holds is a probability (Manski 1990); a finer scale would ask for
+the probability itself and carry more information about what she will
+do. In an ordinal dual-response follow-up the question becomes ``how
+likely are you to buy the option you selected above?'', answered on a
+five-, seven-, or eleven-point scale from ``very unlikely'' to ``very
+likely.'' The case for asking this way is not new. Juster (1966)
+replaced the yes/no buying-intentions question with an eleven-point
+probability scale, Morrison (1979) showed that stated intentions predict
+purchases only probabilistically and that the mapping between them
+depends on context, and Manski (2004) argues for eliciting it rather
+than forcing a round to zero or one.
 
 We formalize that uncertainty as a component of utility for the outside
-good that she has not yet resolved, and, in our primary specification,
-we let the error components (for both the inside goods and the outside
-good) be independent Gumbel (McFadden 1981; Train 2009). (Appendix D
-relaxes independence across goods to any generalized extreme value
-structure.) Together the behavioral premise and the distributional
-kernel do two things. First, they deliver a closed-form likelihood: the
-maximum of Gumbel utilities is itself Gumbel, with location equal to the
-log-sum inclusive value, and independent of which alternative attains
-it, so the two responses factor and the model pairs a multinomial logit
-for the forced choice with a cumulative link for the ordinal report.
-Second, they make the link complementary log-log. The familiar ordered
-logit (logistic link) arises instead when the uncertainty is resolved
-before the follow-up, the assumption underlying the binary dual-response
-models, which Hung, Liu, et al. (2025) state explicitly. At two scale
-points the logistic link is the ``Unified Model'' of Hung, Liu, et al.
-(2025), equivalently the DR-AnyMax model of Diener et al. (2006) and,
-once the inclusive value cancels, the single-stage multinomial logit
-with a no-choice constant (Haaijer et al. 2001). Our model predicts a
-complementary log-log binary response, so the familiar yes/no follow-up
-is misspecified (if only mildly) whenever consumers remain uncertain.
+good that the consumer has not resolved at the moment she answers. That
+premise makes the two responses separable, which keeps the model as
+tractable as the standard choice model, and it determines the form of
+the second response rather than leaving it to be assumed. The existing
+binary models are the case in which she resolves the uncertainty before
+answering, so what they assume about her becomes explicit and testable.
 
-We make four contributions. First, we develop the behavioral model: a
-utility-theoretic account of dual-response conjoint in which
-outside-good uncertainty is the primitive. That premise rationalizes the
-design and fixes the link function, and the cumulative-link family it
-generates contains the existing binary models as the two-point case of
-the alternative link, so the assumptions underlying those models become
-explicit and testable. Second, we analyze the information content of the
-ordinal follow-up: we derive the information a second response of a
-given length contributes and show that it is always non-negative and
-never falls when the scale is made finer, extending the binary
-efficiency results of Brazell et al. (2006) and Hung, Liu, et al. (2025)
-and providing design guidance on how many scale points to use. Third, we
+To our knowledge, no prior work derives the forced choice and the
+ordinal purchase answer from a single account of the consumer. We make
+four contributions. First, we develop the behavioral model: a model of
+dual-response conjoint in which the consumer's unresolved uncertainty
+about the outside good is the only new assumption, together with the
+likelihood it implies and the conditions under which its parameters are
+identified. Second, we analyze the information content of the ordinal
+follow-up: we derive the information a scale with a given number of
+points contributes and show that it is always non-negative and never
+falls when the scale is made finer, extending the binary efficiency
+results of Brazell et al. (2006) and Hung, Liu, et al. (2025) and
+providing design guidance on how many scale points to use. Third, we
 provide estimation routines: maximum likelihood for the aggregate model
 and a custom Markov chain Monte Carlo sampler for the hierarchical
 Bayesian model with heterogeneous preferences, including an extension
@@ -343,65 +333,68 @@ dichotomization and constant-probability weighting, and an empirical
 application to a commercial choice-based conjoint study with an ordinal
 dual response, conducted in partnership with a consumer insights
 consultancy. Complete replication code accompanies the paper, with each
-study in the simulation program laid out as an executable notebook.
+study in the simulation program laid out as an executable
+notebook.\footnote{The repository is at
+  \url{https://github.com/dyavorsky/ordinalDualresponse_paper}, and the
+  rendered notebooks are published at
+  \url{https://dyavorsky.github.io/ordinalDualresponse_paper/}.}
 
 Several literatures stand behind the model. Marketing work on
-dual-response and no-choice designs established why asking two questions
-beats a single question with ``none of these'' as an option: the
-preference information in a task survives even when the consumer would
-not buy. That work set the conventions for estimating such models
-(Brazell et al. 2006; Diener et al. 2006; Haaijer et al. 2001; Hung,
-Liu, et al. 2025), and the format itself is still being refined. For
-example, Schlereth and Skiera (2017) separate the forced and the free
+dual-response and no-choice designs set the conventions for estimating
+such models (Brazell et al. 2006; Diener et al. 2006; Haaijer et al.
+2001; Hung, Liu, et al. 2025), and the format itself is still being
+refined. Schlereth and Skiera (2017) separate the forced and the free
 questions into blocks and add an adaptive rule for choosing which free
 questions to ask, which limits context effects and extreme response
-behavior when willingness to pay is the target. Hung, Kurz, et al.
-(2025) show that the appeal of the no-buy option shifts as a consumer
-works through the choice tasks. The opt-out literature in choice
-modeling documents the consequences of getting the no-buy option wrong:
+behavior when willingness to pay is the target; our likelihood presumes
+the two questions are asked together, so designs that separate them fall
+outside it (Section~\ref{sec-discussion}). Hung, Kurz, et al. (2025)
+show that the appeal of the no-buy option shifts as a consumer works
+through the choice tasks, a drift our cut points absorb and our
+task-order diagnostic detects. The opt-out literature in choice modeling
+documents the consequences of getting the no-buy option wrong:
 misspecifying it degrades the accuracy of both willingness-to-pay
-estimates and market-share forecasts (Campbell and Erdem 2019).
+estimates and market-share forecasts (Campbell and Erdem 2019). Our
+model replaces that constant with cut points the data identify, which is
+where the ordinal follow-up does its work.
 
 The separation of the two decisions is older than the dual-response
 design. Demand models fit to supermarket scanner data have long
 estimated whether a household buys in a category separately from which
 brand it picks, joining the two stages through the inclusive value of
-the brand-choice stage (Gupta 1988; Bucklin and Gupta 1992). Our second
-response uses that device on survey data. Our statistical tools come
-from work on ordered and mixed response formats, from frameworks that
-handle ratings, rankings, and choices together (Marshall and Bradlow
-2002) to ordered-choice models that let different people use the same
-scale differently (Greene and Hensher 2010b; Falco et al. 2015). Closest
-to our likelihood is the choice-ordered logit of Webb and Hess (2021),
-which pairs a multinomial logit with an ordered logit for a rating of
-the chosen alternative. Their ordinal response grades that alternative's
-own utility; ours reports a purchase probability measured against an
-outside good the consumer has not resolved, which is what puts the
-no-buy margin into the second response. A parallel literature in
-transport and environmental valuation asks respondents how certain they
-are of each choice and models that answer jointly with the choice itself
-(Hensher et al. 2012; Rose et al. 2015), with Hensher et al. (2012)
-letting the thresholds vary across respondents as our extension in
-Section~\ref{sec-hetcut} does. A further literature explains why the
-follow-up should ask for a probability. A yes/no question forces the
-consumer to round to zero or one, and Manski (2004) argues that
-economists should elicit the probability itself. Marketing research made
-the same case decades earlier: Juster (1966) replaced the yes/no
-buying-intentions question with an eleven-point probability scale, and
-Morrison (1979) showed that stated intentions predict purchases only
-probabilistically, and that the mapping from one to the other depends on
-context. To our knowledge, no prior work derives the forced choice and
-the ordinal purchase answer from a single account of the consumer.
+the brand-choice stage (Gupta 1988; Bucklin and Gupta 1992). We put that
+device on survey data, where the second stage reports a stated
+probability rather than a revealed purchase.
+
+Our statistical tools come from work on ordered and mixed response
+formats, from frameworks that handle ratings, rankings, and choices
+together (Marshall and Bradlow 2002) to ordered-choice models that let
+different people use the same scale differently (Greene and Hensher
+2010b; Falco et al. 2015). Closest to our likelihood is the
+choice-ordered logit of Webb and Hess (2021), which pairs a multinomial
+logit with an ordered logit for a rating of the chosen alternative.
+Their ordinal response grades that alternative's own utility; ours
+reports a purchase probability measured against an outside good the
+consumer has not resolved, which is what puts the no-buy margin into the
+second response. Their two stages are joined by assumption, where ours
+factor because the behavioral premise makes them independent. A parallel
+literature in transport and environmental valuation asks respondents how
+certain they are of each choice and models that answer jointly with the
+choice itself (Hensher et al. 2012; Rose et al. 2015), with Hensher et
+al. (2012) letting the thresholds vary across respondents as our
+extension in Section~\ref{sec-hetcut} does. Those designs grade
+confidence in the choice just made; ours grades the purchase decision
+that the choice sets up.
 
 Section~\ref{sec-model} develops the model and its likelihood, nesting,
-information, and estimation results; Section~\ref{sec-simstudy} reports
-the simulation study, Section~\ref{sec-analysis} the empirical
-application, and Section~\ref{sec-discussion} the implications for
-practice, including scale design; Section~\ref{sec-conclusion}
-concludes. The appendices give the proofs (A), the sampler and
-marginal-likelihood details (B and C), the extension to correlated
-alternatives (D), the implementation in Apollo (E), and a worked example
-of the model at its smallest (F).
+identification, information, and estimation results;
+Section~\ref{sec-simstudy} reports the simulation study,
+Section~\ref{sec-analysis} the empirical application, and
+Section~\ref{sec-discussion} the implications for practice, including
+scale design; Section~\ref{sec-conclusion} concludes, and six appendices
+collect the proofs, the sampler and marginal-likelihood details, the
+extension to correlated alternatives, the implementation in Apollo, and
+a worked example of the model at its smallest.
 
 \section{Model}\label{sec-model}
 
@@ -798,65 +791,32 @@ value assigned to a scale point is right for every task).
 
 \subsection{Identification}\label{sec-identification}
 
-Because the second response depends on the choice set only through the
-log-sum \(\overline{\mu}_{it}\), and because the cut points sit on the
-same utility scale as \(\overline{\mu}_{it}\), the model requires a
-location normalization. Fix the aggregate model
-(\(\bfbeta_i = \bfbeta\)) and let a task \(t\) have inside-good
-attribute vectors \(\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}\) and
-responses \(\left( j^*_t, y_t \right)\) generated by
-Equation~\ref{eq-joint} with parameter
+The second response depends on the choice set only through the log-sum
+\(\overline{\mu}_{it}\), and the cut points sit on the same utility
+scale as \(\overline{\mu}_{it}\), so the data see the two only through
+the differences \(c_w - \overline{\mu}_{it}\). The model therefore needs
+a location normalization: something must pin the origin of the scale
+against which the cut points are measured. The rank condition below is
+what supplies it. Any attribute combination whose value is the same for
+every inside good raises every task's inclusive value by one common
+amount, which the cut points can undo by moving with it, so excluding
+such combinations from the design is exactly what fixes the origin: it
+leaves no common shift available.
+
+Fix the aggregate model (\(\bfbeta_i = \bfbeta\)) and let a task \(t\)
+have inside-good attribute vectors
+\(\lbrace \x_{tj} \rbrace_{j \in \mathcal{J}^+}\) and responses
+\(\left( j^*_t, y_t \right)\) generated by Equation~\ref{eq-joint} with
+parameter
 \(\theta = \left( \bfbeta, \mathbf{c} \right) \in \mathbb{R}^P \times \mathcal{C}\),
 where
 \(\mathcal{C} = \lbrace \mathbf{c} : c_1 < \cdots < c_{W-1} \rbrace\).
-Call \(\theta\) and \(\theta'\) \emph{observationally equivalent} if
-they imply the same joint probabilities
+We call \(\theta\) \emph{identified} if no other parameter vector
+implies the same joint probabilities
 \(\Pr_\theta \left( j^*_t = j, y_t = w \right)\) for every task design
-in the support of the design distribution, and let \(X\) denote the
+in the support of the design distribution, and we let \(X\) denote the
 design matrix that stacks the rows \(\x_{tj}'\) over all inside goods
 and tasks in that support.
-
-\begin{proposition}[]\protect\hypertarget{prp-ident}{}\label{prp-ident}
-
-\(\theta = \left( \bfbeta, \mathbf{c} \right)\) is identified if and
-only if the augmented matrix \(\left[ X \;\; \iota \right]\) has full
-column rank \(P+1\), where \(\iota\) is a conformable vector of ones.
-Equivalently: the only
-\(\left( v, \delta \right) \in \mathbb{R}^P \times \mathbb{R}\)
-satisfying \(\x_{tj}'v = \delta\) for every inside good \(j\) and task
-\(t\) is \(\left( v, \delta \right) = \left( \mathbf{0}, 0 \right)\).
-
-\end{proposition}
-
-\begin{proof}
-(\emph{Sufficiency.}) Suppose \(\theta\) and
-\(\theta' = \left( \bfbeta', \mathbf{c}' \right)\) are observationally
-equivalent. Marginalizing the joint probabilities over \(y\) equates the
-MNL choice probabilities task by task, which implies
-\(\left( \x_{tj} - \x_{tk} \right)' \left( \bfbeta - \bfbeta' \right) = 0\)
-for all \(j,k,t\); hence
-\(\x_{tj}' \left( \bfbeta - \bfbeta' \right) = a_t\), a constant within
-each task. Marginalizing over \(j\) equates the cumulative ordinal
-probabilities:
-\(F \left( c_w - \overline{\mu}_t(\bfbeta) \right) = F \left( c'_w - \overline{\mu}_t(\bfbeta') \right)\)
-for all \(w,t\). Since \(F\) is strictly increasing,
-\(c_w - c'_w = \overline{\mu}_t(\bfbeta) - \overline{\mu}_t(\bfbeta')\)
-for all \(w,t\); the left side is free of \(t\) and the right side free
-of \(w\), so both equal a constant \(\delta\). Direct computation gives
-\(\overline{\mu}_t(\bfbeta') = \ln \sum_j \exp \left( V_{tj} - a_t \right) = \overline{\mu}_t(\bfbeta) - a_t\),
-so \(a_t = \delta\) for every \(t\); that is,
-\(\x_{tj}' \left( \bfbeta - \bfbeta' \right) = \delta\) for all \(j,t\).
-The rank condition then forces \(\bfbeta = \bfbeta'\) and
-\(\delta = 0\), hence \(\mathbf{c} = \mathbf{c}'\). (\emph{Necessity.})
-If some \(\left( v, \delta \right) \ne \left( \mathbf{0}, 0 \right)\)
-satisfies \(\x_{tj}'v = \delta\) everywhere, then
-\(\theta' = \left( \bfbeta + v, \mathbf{c} + \delta \iota \right)\)
-shifts every \(V_{tj}\) and every cut point by \(\delta\), leaving the
-MNL probabilities (a within-task constant drops out) and the ordinal
-probabilities (\(F(c_w + \delta - (\overline{\mu}_t + \delta))\))
-unchanged, so \(\theta' \ne \theta\) is observationally equivalent to
-\(\theta\). \(\square\)
-\end{proof}
 
 \textbf{The condition in miniature.} Return to the two consumers of
 Appendix F, with \(\beta = 1\) and \(\mathbf{c} = (0,2)\), so that
@@ -873,47 +833,79 @@ therefore unchanged. The forced choice never saw the constant at all,
 since it turns on \(\x_{t1} - \x_{t2}\). No quantity of data separates
 \(\left( \beta_{\text{const}}, \mathbf{c} \right) = \left( 0, (0,2) \right)\)
 from \(\left( 1, (1,3) \right)\), or from any other point along that
-ridge, on which the cut points move one for one with the constant.
+ridge, on which the cut points move one for one with the constant. The
+proposition rules out every ridge of this kind at once.
 
-Several remarks unpack Proposition~\ref{prp-ident}.
+\begin{proposition}[]\protect\hypertarget{prp-ident}{}\label{prp-ident}
 
-\textbf{What the condition rules out.} A violating direction
-\(\left( v, \delta \right)\) is an attribute combination whose value is
-the same for every inside good ever shown. The leading case is an
-intercept: a column of ones in \(X\) makes
-\(\left[ X \;\; \iota \right]\) rank deficient by construction. The
-subtler case is a \emph{hidden} intercept: if an attribute is
-dummy-coded with all \(L\) of its levels included, every alternative
-carries exactly one of them, so the dummies sum to \(\iota\) and the
-same invariance appears (shift all \(L\) part-worths and all cut points
-equally). Attributes must therefore be coded against omitted reference
+\(\theta = \left( \bfbeta, \mathbf{c} \right)\) is identified if and
+only if the augmented matrix \(\left[ X \;\; \iota \right]\) has full
+column rank \(P+1\), where \(\iota\) is a conformable vector of ones.
+Equivalently: the only
+\(\left( v, \delta \right) \in \mathbb{R}^P \times \mathbb{R}\)
+satisfying \(\x_{tj}'v = \delta\) for every inside good \(j\) and task
+\(t\) is \(\left( v, \delta \right) = \left( \mathbf{0}, 0 \right)\).
+
+\end{proposition}
+
+Appendix A gives the proof.
+
+\textbf{The outside good's location.} The equivalent form of
+Proposition~\ref{prp-ident} says that no attribute combination takes a
+common value across all inside goods, and in particular that the design
+carries no constant. That is what makes the convention
+\(\x_{t0} = \mathbf{0}\), and hence \(V_{it0} = 0\), a normalization
+rather than a restriction: with no constant in \(X\), nothing in the
+design can be traded against the outside good's location. An
+outside-good alternative-specific constant would shift all the cut
+points equally, which is the invariance the proposition rules out, so
+the cut points subsume it. The binary case shows this plainly. At
+\(W=2\) with the logistic link we wrote the single cut point as
+\(c_1 = \gamma\), and Equation~\ref{eq-collapse} is then the
+single-stage multinomial logit whose no-choice constant is that same
+\(\gamma\): the cut point \emph{is} the outside good's constant, under
+another name.
+
+\textbf{What the condition rules out.} The model cannot identify
+preference for a characteristic that every inside good shares. Such a
+characteristic has no contrast to be measured against: raise its
+part-worth and every inclusive value rises by the same amount, the cut
+points slide up to match, and both responses are left unchanged. An
+intercept is the mathematical form of such a characteristic, and a
+column of ones in \(X\) makes \(\left[ X \;\; \iota \right]\) rank
+deficient by construction. The general case is a violating direction
+\(\left( v, \delta \right)\), an attribute combination whose value is
+the same for every inside good ever shown.
+
+The practical bite is a coding rule that differs from the one
+practitioners carry over from the single-stage model. The dual-response
+model must omit one level of every attribute as a base, because the
+outside good never appears as a design row here: its role is absorbed by
+the cut points. In the single-stage MNL with a no-choice alternative, by
+contrast, a full set of brand dummies is identified, because the
+no-choice row of zeros supplies the contrast that breaks the constancy
+(Haaijer et al. 2001). Include dummies for all \(L\) brands in our model
+and that contrast is gone: each alternative carries exactly one brand
+dummy, so the dummies sum to \(\iota\), ``being one of the \(L\)
+brands'' is a characteristic every good shares, and raising all \(L\)
+part-worths and all cut points by the same amount changes nothing
+observable. Attributes must therefore be coded against omitted reference
 levels (or effects-coded), and the design must contain no global
-constant. This requirement is stricter than in the single-stage MNL with
-a no-choice alternative, where a full set of brand dummies is identified
-because the no-choice row of zeros breaks the constancy (Haaijer et al.
-2001). In the dual-response model the outside good never appears as a
-design row, since its role is absorbed by the cut points, so anything
-the design holds constant across inside goods is absorbed along with it.
+constant.
 
-\textbf{What the normalizations do.} The convention
-\(\x_{t0} = \mathbf{0}\) with a \(\text{Gumbel}(0,1)\) shock fixes the
-origin against which the cut points are measured: an outside-good
-alternative-specific constant would shift all cut points equally, which
-is the invariance in the proof, so the cut points subsume it. (Its
-visible trace is the binary case: at \(W=2\), the logistic link's single
-cut point \(c_1\) \emph{is} the no-choice constant of
-Equation~\ref{eq-collapse}.) The unit Gumbel scale fixes the scale of
-\(\bfbeta\), as in any logit. Beyond these normalizations, the model
-imposes one restriction: the coefficient on \(\overline{\mu}_{it}\) in
-Equation~\ref{eq-cumlink} is fixed at \(1\) by the theory, because both
-responses are driven by the same utility draw. Estimating a free slope
-\(\lambda\) on \(\overline{\mu}_{it}\) and testing \(\lambda = 1\) is
-therefore an overidentification test of the behavioral model
+\textbf{What the remaining normalizations do.} The unit Gumbel scale
+fixes the scale of \(\bfbeta\), as in any logit. Beyond the location and
+scale normalizations the model imposes one restriction: the coefficient
+on \(\overline{\mu}_{it}\) in Equation~\ref{eq-cumlink} is fixed at
+\(1\) by the theory, because both responses are driven by the same
+utility draw. Estimating a free slope \(\lambda\) on
+\(\overline{\mu}_{it}\) and testing \(\lambda = 1\) is therefore an
+overidentification test of the behavioral model
 (Section~\ref{sec-spectests}).
 
 \textbf{Cut points versus the link.} Given \(\bfbeta\) (identified from
 the forced choice alone whenever \(X\)'s within-task differences have
-full rank), the cut points are exactly identified even \emph{without}
+full rank), the cut points are exactly identified \emph{even without}
 variation in task attractiveness:
 \(c_w = \overline{\mu} + F^{-1} \left( \Pr(y \le w) \right)\) pointwise.
 Because \(\bfbeta\) fixes each task's inclusive value, we can read a cut
@@ -926,8 +918,10 @@ across tasks therefore overidentifies \(\mathbf{c}\), and it is what
 identifies the link: at a single value of \(\overline{\mu}\), any two
 strictly increasing links fit the \(W\) category frequencies perfectly
 by relabeling cut points, so the shape of the link is identified only
-through how the ordinal distribution shifts as \(S_{it}\) varies.
-Designs that hold task attractiveness fixed cannot speak to it at all.
+through how the ordinal distribution shifts as \(S_{it}\) varies. A
+design that holds task attractiveness fixed therefore supplies no
+further information about the link's shape, however many tasks it
+contains.
 
 \textbf{Population versus sample.} Under Proposition~\ref{prp-ident}
 every scale category has strictly positive probability in every task
@@ -939,32 +933,9 @@ points weakly identified, and near-violations of the rank condition
 manifest as an ill-conditioned information matrix. Both pathologies are
 visible in the smallest eigenvalues of the observed information, a
 diagnostic we report alongside the simulation results in
-Section~\ref{sec-simstudy}.
-
-\textbf{Numerical demonstration.} The proof settles
-Proposition~\ref{prp-ident}; simulation instead checks that our
-likelihood and estimation code behave as it describes, and makes the
-predicted failure concrete (replication code accompanies the paper).
-Data simulated from the raw behavioral process (Gumbel utility draws,
-argmax, and the two reporting rules, not the derived likelihood) at
-three distinct parameter configurations for each model, on designs
-satisfying the rank condition, are recovered by maximum likelihood:
-across all configurations the true parameter vector lies inside the 95\%
-likelihood-ratio confidence region, the observed information is
-well-conditioned, repeated-sampling bias is statistically
-indistinguishable from zero, and model-based standard errors match the
-empirical sampling variation. Appending an intercept column, the
-canonical violation, produces the predicted failure:
-\(\left[ X \;\; \iota \right]\) loses rank, the smallest eigenvalue of
-the observed information collapses to zero, and different starting
-values converge to different raw
-\(\left( \beta_{\text{const}}, \mathbf{c} \right)\) on the flat ridge
-while agreeing, to numerical precision, on the identified combinations
-\(c_w - \beta_{\text{const}}\) and the non-constant coordinates of
-\(\bfbeta\). The same exercise confirms the factorization in
-Equation~\ref{eq-joint}: the empirical joint distribution of
-\(\left( j^*, y \right)\) from one million behavioral draws is
-statistically indistinguishable from the product form.
+Section~\ref{sec-simstudy}, where we also confirm that our estimation
+code behaves as Proposition~\ref{prp-ident} describes and trace the flat
+ridge that an appended intercept column produces.
 
 \subsection{Specification Tests}\label{sec-spectests}
 
@@ -1207,14 +1178,15 @@ factorization that makes the likelihood tractable.
 \href{notebooks/03-hierarchical-recovery.qmd}{Notebook 3} establishes
 that the sampler of Section~\ref{sec-estimation} recovers population
 means, covariances, and cut points on synthetic panels, and that its
-posterior uncertainty is calibrated: across 8 replications, 90\% central
-posterior intervals cover the truth at 89\% (resolved comparison) and
-83\% (our model), with 50\% intervals at 51\% and 43\%. Calibration
-matters independently of recovery, since a sampler can find the right
-answer and still misstate its own uncertainty. As a check on the
-hierarchical code, the forced-choice-only special case of our sampler
-agrees with an established hierarchical-MNL implementation on identical
-data to within 0.007 on every population parameter.
+posterior uncertainty is calibrated: across 20 replications of the
+resolved comparison and 8 of our model, 90\% central posterior intervals
+cover the truth at 89\% and 83\% respectively, and 50\% intervals at
+51\% and 43\%. Calibration matters independently of recovery, since a
+sampler can find the right answer and still misstate its own
+uncertainty. As a check on the hierarchical code, the forced-choice-only
+special case of our sampler agrees with an established hierarchical-MNL
+implementation on identical data to within 0.007 on every population
+parameter.
 
 \subsection{The Cost of Dichotomization}\label{sec-sim-benchmarks}
 
@@ -1667,15 +1639,17 @@ form: under a probit or a mixed logit with a correlated kernel the max
 utility has no closed-form distribution, and the second response would
 require simulation over it. Our robustness experiments soften the
 concern in one direction: with variance-matched normal errors,
-preference and demand estimates are essentially unimpaired because the
-cut points absorb the misspecification, so the cut points deserve more
-caution as structural parameters than do the demand quantities built
-from them. Second, we treat tasks as independent draws, abstracting from
-learning, fatigue, and reference formation across the sequence (Hung,
-Kurz, et al. 2025); the task-order diagnostic of
-Section~\ref{sec-sim-robust} detects such drift reliably when present.
-Third, the common-cut-point model assumes a shared reading of the scale
-labels; the extension of Section~\ref{sec-hetcut} relaxes the
+preference and demand estimates are essentially unimpaired, because the
+forced choice is almost unaffected and the cut points absorb what the
+second response cannot express. That absorption moves the cut points
+away from the thresholds the theory assigns them, so what the
+misspecification endangers is their structural reading rather than the
+demand quantities built from them. Second, we treat tasks as independent
+draws, abstracting from learning, fatigue, and reference formation
+across the sequence (Hung, Kurz, et al. 2025); the task-order diagnostic
+of Section~\ref{sec-sim-robust} detects such drift reliably when
+present. Third, the common-cut-point model assumes a shared reading of
+the scale labels; the extension of Section~\ref{sec-hetcut} relaxes the
 assumption, but individual-level identification is thin at commercial
 task counts, and our simulations find that ignoring moderate scale-usage
 heterogeneity costs little, so the extension is most useful as a
@@ -1814,9 +1788,49 @@ inside goods, because the waiting times may be dependent and still
 arrive at rates whose ratios are constant over time; what fails outside
 the extreme-value family is the constancy of those ratios.
 
-\subsection*{\texorpdfstring{A.2 Derivation of the information increment
-(Equation~\ref{eq-fisher})}{A.2 Derivation of the information increment (Equation~)}}\label{a.2-derivation-of-the-information-increment-eq-fisher}
-\addcontentsline{toc}{subsection}{A.2 Derivation of the information
+\subsection*{\texorpdfstring{A.2 Proof of
+Proposition~\ref{prp-ident}}{A.2 Proof of Proposition~}}\label{a.2-proof-of-prp-ident}
+\addcontentsline{toc}{subsection}{A.2 Proof of
+Proposition~\ref{prp-ident}}
+
+Call \(\theta = \left( \bfbeta, \mathbf{c} \right)\) and
+\(\theta' = \left( \bfbeta', \mathbf{c}' \right)\) \emph{observationally
+equivalent} if they imply the same joint probabilities
+\(\Pr_\theta \left( j^*_t = j, y_t = w \right)\) for every task design
+in the support of the design distribution. Identification is the
+statement that no \(\theta' \ne \theta\) is observationally equivalent
+to \(\theta\).
+
+(\emph{Sufficiency.}) Suppose \(\theta\) and \(\theta'\) are
+observationally equivalent. Marginalizing the joint probabilities over
+\(y\) equates the MNL choice probabilities task by task, which implies
+\(\left( \x_{tj} - \x_{tk} \right)' \left( \bfbeta - \bfbeta' \right) = 0\)
+for all \(j,k,t\); hence
+\(\x_{tj}' \left( \bfbeta - \bfbeta' \right) = a_t\), a constant within
+each task. Marginalizing over \(j\) equates the cumulative ordinal
+probabilities:
+\(F \left( c_w - \overline{\mu}_t(\bfbeta) \right) = F \left( c'_w - \overline{\mu}_t(\bfbeta') \right)\)
+for all \(w,t\). Since \(F\) is strictly increasing,
+\(c_w - c'_w = \overline{\mu}_t(\bfbeta) - \overline{\mu}_t(\bfbeta')\)
+for all \(w,t\); the left side is free of \(t\) and the right side free
+of \(w\), so both equal a constant \(\delta\). Direct computation gives
+\(\overline{\mu}_t(\bfbeta') = \ln \sum_j \exp \left( V_{tj} - a_t \right) = \overline{\mu}_t(\bfbeta) - a_t\),
+so \(a_t = \delta\) for every \(t\); that is,
+\(\x_{tj}' \left( \bfbeta - \bfbeta' \right) = \delta\) for all \(j,t\).
+The rank condition then forces \(\bfbeta = \bfbeta'\) and
+\(\delta = 0\), hence \(\mathbf{c} = \mathbf{c}'\). (\emph{Necessity.})
+If some \(\left( v, \delta \right) \ne \left( \mathbf{0}, 0 \right)\)
+satisfies \(\x_{tj}'v = \delta\) everywhere, then
+\(\theta' = \left( \bfbeta + v, \mathbf{c} + \delta \iota \right)\)
+shifts every \(V_{tj}\) and every cut point by \(\delta\), leaving the
+MNL probabilities (a within-task constant drops out) and the ordinal
+probabilities (\(F(c_w + \delta - (\overline{\mu}_t + \delta))\))
+unchanged, so \(\theta' \ne \theta\) is observationally equivalent to
+\(\theta\). \(\square\)
+
+\subsection*{\texorpdfstring{A.3 Derivation of the information increment
+(Equation~\ref{eq-fisher})}{A.3 Derivation of the information increment (Equation~)}}\label{a.3-derivation-of-the-information-increment-eq-fisher}
+\addcontentsline{toc}{subsection}{A.3 Derivation of the information
 increment (Equation~\ref{eq-fisher})}
 
 The second response contributes the multinomial log-likelihood
@@ -1836,9 +1850,9 @@ including the cut-point blocks used by the estimation code, follows from
 the same score with
 \(\partial \pi_w / \partial c_m = f_w \mathbb{1}\lbrace m = w \rbrace - f_{w-1} \mathbb{1}\lbrace m = w-1 \rbrace\).
 
-\subsection*{\texorpdfstring{A.3 Monotonicity of \(\omega\) under
-refinement}{A.3 Monotonicity of \textbackslash omega under refinement}}\label{a.3-monotonicity-of-omega-under-refinement}
-\addcontentsline{toc}{subsection}{A.3 Monotonicity of \(\omega\) under
+\subsection*{\texorpdfstring{A.4 Monotonicity of \(\omega\) under
+refinement}{A.4 Monotonicity of \textbackslash omega under refinement}}\label{a.4-monotonicity-of-omega-under-refinement}
+\addcontentsline{toc}{subsection}{A.4 Monotonicity of \(\omega\) under
 refinement}
 
 Let \(\mathcal{C}'\) be a coarsening of the partition \(\mathcal{C}\)
@@ -1860,9 +1874,9 @@ interval score converges to the exact-observation score and
 information of the latent variable's location (equal to \(1\) for the
 standard Gumbel and \(1/3\) for the standard logistic). \(\square\)
 
-\subsection*{\texorpdfstring{A.4 The purchase probability is
-\(\text{Beta}(S,1)\)}{A.4 The purchase probability is \textbackslash text\{Beta\}(S,1)}}\label{sec-appendix-beta}
-\addcontentsline{toc}{subsection}{A.4 The purchase probability is
+\subsection*{\texorpdfstring{A.5 The purchase probability is
+\(\text{Beta}(S,1)\)}{A.5 The purchase probability is \textbackslash text\{Beta\}(S,1)}}\label{sec-appendix-beta}
+\addcontentsline{toc}{subsection}{A.5 The purchase probability is
 \(\text{Beta}(S,1)\)}
 
 From the researcher's perspective the consumer's purchase probability
@@ -2247,7 +2261,7 @@ Let both consumers share the scalar taste parameter \(\beta = 1\), which
 we treat as known for the arithmetic. Each faces one task with two
 inside goods described by a single attribute \(x\), answers the forced
 choice, and then reports on the three-point scale
-\(\mathcal{W} = \lbrace \text{"unlikely"}, \text{"unsure"}, \text{"likely"} \rbrace\)
+\(\mathcal{W} = \lbrace \text{“unlikely”}, \text{“unsure”}, \text{“likely”} \rbrace\)
 with utility-scale cut points \(\mathbf{c} = (c_1, c_2) = (0, 2)\). (In
 our model these correspond to probability-scale cut points
 \(\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)\):
@@ -2318,13 +2332,13 @@ Attribute values \(x\) & \((2,\ 1)\) & \((-1,\ -2)\) \\
 \(S = \sum_j e^{V_j}\), \(\ \overline{\mu} = \ln S\) & \(10.11\),
 \(\ 2.31\) & \(0.50\), \(\ -0.69\) \\
 \(\Pr(y = w)\) & \((0.00,\ 0.25,\ 0.75)\) & \((0.60,\ 0.33,\ 0.07)\) \\
-\(\E \left[ p \mid y = \text{"unsure"} \right]\) & \(0.80\) &
+\(\E \left[ p \mid y = \text{“unsure”} \right]\) & \(0.80\) &
 \(0.60\) \\
 \end{longtable}
 
 The joint likelihood of the observed data, in which each consumer chose
-her better good and \(y_1 = \text{"likely"}\),
-\(y_2 = \text{"unlikely"}\), follows from Equation~\ref{eq-joint}:
+her better good and \(y_1 = \text{“likely”}\),
+\(y_2 = \text{“unlikely”}\), follows from Equation~\ref{eq-joint}:
 \begin{equation}\protect\phantomsection\label{eq-toylik}{
 L \left( \beta, \alpha_1, \alpha_2 \right)
 = \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
