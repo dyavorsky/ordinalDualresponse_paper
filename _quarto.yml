@@ -53,11 +53,20 @@ manuscript:
 execute:
   freeze: auto
 
+# Quarto has no built-in "assumption" environment, so the paper's formal
+# assumptions use the conjecture type (#cnj-) under a different name.
+crossref:
+  cnj-title: "Assumption"
+  cnj-prefix: "Assumption"
+
 format:
   html:
     toc: true
-  pdf: 
+    # Notebook links go in the sidebar, not above each code chunk's output.
+    notebook-links: global
+  pdf:
     pdf-engine: pdflatex
+    notebook-links: false
     include-in-header: 
       - text: |
           \usepackage{mathtools}
