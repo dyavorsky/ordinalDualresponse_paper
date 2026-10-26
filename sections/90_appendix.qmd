@@ -208,7 +208,7 @@ Point estimates agree to `r sprintf("%.0e", max(ap$res$max_d_beta, ap$res$max_d_
 
 The smallest interesting instance of the model makes the machinery concrete: two consumers with identical preferences, one attribute, one task each, and a three-point scale.
 
-Let both consumers share the scalar taste parameter $\beta = 1$, which we treat as known for the arithmetic. Each faces one task with two inside goods described by a single attribute $x$, answers the forced choice, and then reports on the three-point scale $\mathcal{W} = \lbrace \text{"unlikely"}, \text{"unsure"}, \text{"likely"} \rbrace$ with utility-scale cut points $\mathbf{c} = (c_1, c_2) = (0, 2)$. (In our model these correspond to probability-scale cut points $\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)$: the consumer answers "unsure" when her purchase probability lies between 37% and 87%.) The two tasks, one for each consumer, differ in the level of the attribute but not in its spread: consumer 1 faces an attractive pair, $x = (2, 1)$, and consumer 2 an unattractive pair, $x = (-1, -2)$.
+Let both consumers share the scalar taste parameter $\beta = 1$, which we treat as known for the arithmetic. Each faces one task with two inside goods described by a single attribute $x$, answers the forced choice, and then reports on the three-point scale $\mathcal{W} = \lbrace \text{“unlikely”}, \text{“unsure”}, \text{“likely”} \rbrace$ with utility-scale cut points $\mathbf{c} = (c_1, c_2) = (0, 2)$. (In our model these correspond to probability-scale cut points $\left( \alpha_1, \alpha_2 \right) = \left( F(0), F(2) \right) = (0.37, 0.87)$: the consumer answers "unsure" when her purchase probability lies between 37% and 87%.) The two tasks, one for each consumer, differ in the level of the attribute but not in its spread: consumer 1 faces an attractive pair, $x = (2, 1)$, and consumer 2 an unattractive pair, $x = (-1, -2)$.
 
 Consider the model's account of their behavior, giving both consumers the same realized components $\eta = (0.30, -0.86)$ on their two inside goods. Consumer 1's utilities are $u = (2.30, 0.14)$: she picks her first good and knows her best utility, $u^* = 2.30$. She cannot resolve the outside-good shock $\eta_0$, so she reports the bin containing her purchase probability $p = F(2.30) = 0.90$, namely "likely." Consumer 2's utilities are $u = (-0.70, -2.86)$: she also picks her first good, but her best utility is $u^* = -0.70$, her purchase probability is $F(-0.70) = 0.13$, and she reports "unlikely." The two consumers made identical first-response choices from identical realizations, yet gave opposite second responses.
 
@@ -220,11 +220,11 @@ The walkthrough fixed one set of draws. Averaging over all of them, as the resea
 | $\Pr(\text{choose better good})$ | $0.73$ | $0.73$ |
 | $S = \sum_j e^{V_j}$, $\ \overline{\mu} = \ln S$ | $10.11$, $\ 2.31$ | $0.50$, $\ -0.69$ |
 | $\Pr(y = w)$ | $(0.00,\ 0.25,\ 0.75)$ | $(0.60,\ 0.33,\ 0.07)$ |
-| $\E \left[ p \mid y = \text{"unsure"} \right]$ | $0.80$ | $0.60$ |
+| $\E \left[ p \mid y = \text{“unsure”} \right]$ | $0.80$ | $0.60$ |
 
 : Two tasks that are indistinguishable in the forced choice and nearly opposite in the ordinal report ($\beta = 1$, $\mathbf{c} = (0,2)$, $W = 3$). {#tbl-toy}
 
-The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{"likely"}$, $y_2 = \text{"unlikely"}$, follows from @eq-joint:
+The joint likelihood of the observed data, in which each consumer chose her better good and $y_1 = \text{“likely”}$, $y_2 = \text{“unlikely”}$, follows from @eq-joint:
 $$
 L \left( \beta, \alpha_1, \alpha_2 \right)
 = \underbrace{\Lambda(\beta) \Big[ 1 - \alpha_2^{\,S_1(\beta)} \Big]}_{\text{consumer 1:} \ \ 0.73 \times 0.75}
