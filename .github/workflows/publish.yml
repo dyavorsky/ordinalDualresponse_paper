@@ -21,10 +21,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      # Pinned, not floating. "pre-release" was re-resolved on every push, so
+      # the published site could change without the source changing, and a
+      # pre-release regression would land unannounced. 1.10.19 is what both
+      # authors render with locally; bump this line deliberately.
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
-          version: pre-release
+          version: 1.10.19
           tinytex: true
 
       # index.qmd includes sections/simstudy.qmd and sections/appendix.qmd,
