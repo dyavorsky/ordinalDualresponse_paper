@@ -87,7 +87,9 @@ $$
 &= \alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}},
 \end{aligned}
 $$ {#eq-ordprob}
-To see this, drop subscripts and note $F_{\text{Gumbel}(\overline{\mu},1)}(z) = \exp\left( -e^{-(z - \overline{\mu})} \right) = \exp\left( -e^{-z}S \right) = \left[ \exp\left( -e^{-z} \right) \right]^{S} = F(z)^{S}$ with $S = e^{\overline{\mu}}$. Evaluate that at $z = F^{-1}(\alpha)$, where $F(z) = \alpha$ by definition, and what is left is $\alpha^{S}$. The second-response probabilities are differences of powers of the cut points, with the exponent $S_{it} = e^{\overline{\mu}_{it}}$ summarizing the attractiveness of the task's inside goods: the more attractive the set, the more probability mass shifts toward high scale points.[^beta] 
+To see this, drop subscripts and note $F_{\text{Gumbel}(\overline{\mu},1)}(z) = \exp\left( -e^{-(z - \overline{\mu})} \right) = \exp\left( -e^{-z}S \right) = \left[ \exp\left( -e^{-z} \right) \right]^{S} = F(z)^{S}$ with $S = e^{\overline{\mu}}$. Evaluate that at $z = F^{-1}(\alpha)$, where $F(z) = \alpha$ by definition, and what is left is $\alpha^{S}$. The second-response probabilities are differences of powers of the cut points, with the exponent $S_{it} = e^{\overline{\mu}_{it}}$ summarizing the attractiveness of the task's inside goods: the more attractive the set, the more probability mass shifts toward high scale points.[^beta]
+
+[^beta]: Equivalently, from the researcher's perspective the consumer's purchase probability is Beta distributed, $p_{it} \sim \text{Beta}\left(S_{it}, 1\right)$, with the inclusive value as its only shape parameter. Appendix A proves this and reads $S_{it}$ as an effective number of alternatives.
 
 <!-- Source: figures/derivation.tex. Rebuild derivation.pdf and derivation.svg with the command in its header. -->
 ::: {.content-visible when-format="html"}
@@ -97,15 +99,6 @@ To see this, drop subscripts and note $F_{\text{Gumbel}(\overline{\mu},1)}(z) = 
 ::: {.content-visible when-format="pdf"}
 ![The two steps behind @eq-ordprob. *Left:* the consumer's rule. She knows $u^*_{it}$ but not $\eta_{it0}$, so her purchase probability is $p_{it} = F(u^*_{it})$, and she reports the scale point whose bin contains it. Reading the cut points $\alpha_w$ across to the curve and down restates the same rule as an interval on the utility scale, $\left[ F^{-1}(\alpha_{w-1}), F^{-1}(\alpha_w) \right)$. *Right:* the researcher's evaluation. From the researcher's perspective $u^*_{it} \sim \text{Gumbel}(\overline{\mu}_{it},1)$, written $\overline{F}$, so evaluating those same thresholds gives $\overline{F}(F^{-1}(\alpha_w)) = \alpha_w^{S_{it}}$, and the second-response probabilities are differences of these. Drawn for $W=4$ with $(\alpha_1, \alpha_2, \alpha_3) = (0.19, 0.67, 0.90)$, $u^*_{it} = 0.30$ and $S_{it} = 2$.](figures/derivation.pdf){#fig-derivation width="100%"}
 :::
-
-The distribution's mean is $\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)$: integrating out unobservables, the probability of purchase is the logistic of the inclusive value, $\Lambda(z) = 1 \big/ \left( 1 + e^{-z} \right)$. Conditioning on what she reported rescales it. A consumer who answers $w$ has
-$$
-\E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
-$$ {#eq-condexp}
-the unconditional mean times a correction for the bin. Because $S_{it}$ appears here as well as in the bin boundaries, the same scale point implies different purchase probabilities in tasks with different choice sets.
-
-[^beta]: Equivalently, from the researcher's perspective the consumer's purchase probability is Beta distributed, $p_{it} \sim \text{Beta}\left(S_{it}, 1\right)$, with the inclusive value as its only shape parameter. Appendix A proves this and reads $S_{it}$ as an effective number of alternatives. 
-
 
 It will be convenient to carry these thresholds on two scales. On the probability scale they are directly interpretable: $\alpha_w$ is the purchase probability at which the consumer moves from label $w$ to label $w+1$. On the utility scale, written $c_w = F^{-1}(\alpha_w)$, they sit alongside $\overline{\mu}_{it}$ and cast @eq-ordprob as a cumulative link in the inclusive value,
 $$
@@ -144,7 +137,7 @@ $$
 \Pr \left( y_{it} = w \right)
 = \Lambda \left( c_w - \overline{\mu}_{it} \right) - \Lambda \left( c_{w-1} - \overline{\mu}_{it} \right).
 $$ {#eq-orderedlogit}
-This is an ordered logit [@Greene_2010_book] in the inclusive value: @eq-cumlink with the logistic CDF $\Lambda$ in place of our $F$. @fig-timing sets the two rules side by side; they share the forced choice and differ only in whether $\eta_{it0}$ is resolved before or after the report.
+This is an ordered logit [@Greene_2010_book] in the inclusive value: @eq-cumlink with the logistic CDF $\Lambda(z) = 1 \big/ \left( 1 + e^{-z} \right)$ in place of our $F$. @fig-timing sets the two rules side by side; they share the forced choice and differ only in whether $\eta_{it0}$ is resolved before or after the report.
 
 <!-- Source: figures/timing.tex. Rebuild timing.pdf and timing.svg with the command in its header. -->
 ::: {.content-visible when-format="html"}
@@ -165,7 +158,13 @@ With $\gamma = 0$ these are exactly the joint probabilities of the "Unified Mode
 
 **Binary dual response, our model.** Set $W=2$ in @eq-ordprob: $\Pr(\text{not buy}) = \alpha_1^{S_{it}} = F\left( c_1 - \overline{\mu}_{it}\right)$, a complementary log-log rather than logistic binary response. Our model therefore implies that when consumers face outside-good uncertainty at the moment they answer, the familiar (logistic) binary dual response model is misspecified, if only mildly, since the two links are close. 
 
-**DR-2Max.** The other binary model in the literature, "DR-2Max" [@Diener_2006], as implemented in Sawtooth Software's CBC/HB [@Sawtooth_2017], models the second response as a binary logit on the *chosen good's* deterministic utility: $\Pr(\text{buy} \mid j^*) = e^{V_{itj^*}} \big/ \left( e^{V_{itj^*}} + e^{\gamma} \right)$. This implies drawing a fresh error for the chosen good in the second stage, so that the consumer who just declared $j^*$ best re-evaluates it from scratch. Under our framework such conditioning is unnecessary: by @lem-gumbel(ii) the distribution of the best utility does not depend on which good attained it, so the second response should depend on the set only through $\overline{\mu}_{it}$. The same conditioning, generalized from a binary follow-up to an ordinal rating, is the two-step choice-ordered logit of @Webb_2021, whose second stage is an ordered logit in $\zeta V_{itj^*}$ with a free scale $\zeta$. That specification is therefore the $\delta = 1$ end of the conditioning test of @sec-spectests, and our $\lambda$ plays the role of their $\zeta$ on the inclusive value rather than on the chosen good. 
+**DR-2Max.** The other binary model in the literature, "DR-2Max" [@Diener_2006], as implemented in Sawtooth Software's CBC/HB [@Sawtooth_2017], models the second response as a binary logit on the *chosen good's* deterministic utility: $\Pr(\text{buy} \mid j^*) = e^{V_{itj^*}} \big/ \left( e^{V_{itj^*}} + e^{\gamma} \right)$. This implies drawing a fresh error for the chosen good in the second stage, so that the consumer who just declared $j^*$ best re-evaluates it when assessing the follow up question. Under our framework such conditioning is unnecessary: by @lem-gumbel(ii) the distribution of the best utility does not depend on which good attained it, so the second response should depend on the set only through $\overline{\mu}_{it}$. The same conditioning, generalized from a binary follow-up to an ordinal rating, is the two-step choice-ordered logit of @Webb_2021, whose second stage is an ordered logit in $\zeta V_{itj^*}$ with a free scale $\zeta$. That specification is therefore the $\delta = 1$ end of the conditioning test of @sec-spectests, and our $\lambda$ plays the role of their $\zeta$ on the inclusive value rather than on the chosen good. 
+
+**The meaning of a scale point.** From the researcher's perspective $\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)$: integrating out unobservables, the probability of purchase is the logistic of the inclusive value. Conditioning on the report rescales it: a consumer who answers $w$ has
+$$
+\E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
+$$ {#eq-condexp}
+the unconditional mean times a correction for the bin. Because $S_{it}$ appears here as well as in the bin boundaries, the same scale point implies different purchase probabilities in tasks with different choice sets.
 
 **Reductions to the binary model.** An ordinal response can be reduced to a form the binary model accepts in two ways: (i) *dichotomization*, collapsing the scale at some point (e.g., top-box or top-2-box) and estimating the binary model, which discards the ordinal information and hard-codes an arbitrary cut; or (ii) *constant-probability weighting*, mapping each scale point to a fixed purchase probability (e.g., "definitely would buy" $= 0.9$) independent of the choice set. These two reductions are the benchmarks in our simulation study (@sec-simstudy). Both are nested within, or dominated by, @eq-joint: dichotomization is @eq-collapse applied to a coarsened $y_{it}$, and constant-probability weighting fixes the value of a scale point, which by @eq-condexp varies with the task through $S_{it}$ (i.e., constant-probability weighting is inappropriate since no single value assigned to a scale point is right for every task). 
 
