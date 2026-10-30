@@ -22,5 +22,9 @@ symlink as a file rather than a directory, so `lit/` would silently fail to matc
 once `lit` became a link. Do not "fix" it by putting the slash back.
 
 `empirical application/` is likewise untracked: it holds un-anonymized client data
-and must never be committed. Anything under `conference/` other than
-`sawtooth-2027/` is local material and is ignored by default.
+and must never be committed. It also holds the ingest script that reads that
+data and every cached fit (`derived/`); the tracked side of the application is
+`R/empirical/`, and the only artefact that crosses from one to the other is the
+blind summary `R/output/empirical_cobrand.rds`. See `R/README.md`. Anything under
+`conference/` other than `sawtooth-2027/` is local material and is ignored by
+default.

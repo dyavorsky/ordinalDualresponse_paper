@@ -1,30 +1,133 @@
 ## Empirical Application {#sec-analysis}
 
-We illustrate the model with data from a commercial choice-based conjoint study conducted in partnership with a consumer insights consultancy, in which an ordinal purchase-likelihood question followed each choice task.
+```{r}
+#| label: emp-load
+#| echo: false
+emp <- readRDS(file.path("R", "output", "empirical_cobrand.rds"))
+M <- emp$member; NM <- emp$nonmember
+f0 <- function(x) formatC(x, digits = 0, format = "f")
+f1 <- function(x) formatC(x, digits = 1, format = "f")
+f2 <- function(x) formatC(x, digits = 2, format = "f")
+f3 <- function(x) formatC(x, digits = 3, format = "f")
+pct <- function(x, d = 0) paste0(formatC(100 * x, digits = d, format = "f"), "%")
+```
 
-<!-- TODO [DATA — Dan to locate]: this section is fully structured but awaits the GBK study data. Fill in: product category, sample size and recruitment/screening, number of tasks and alternatives per task, attribute list and levels, the exact wording and number of points (W) of the purchase-likelihood question, and fielding dates. -->
+We illustrate the model with data from a commercial choice-based conjoint study conducted in partnership with a consumer insights consultancy, in which an ordinal purchase-likelihood question followed each choice task. The study is reported blind: the card issuer, its retail partner, and the consultancy are not named, and attribute labels are generic.
 
 ### Data {#sec-data}
 
-<!-- TODO: describe the study. Include (1) a table of attributes and levels; (2) descriptive statistics: distribution of the ordinal responses overall and by task order (any drift across tasks connects to @Hung_2025_nochoice); (3) model-free evidence that the ordinal response co-moves with task attractiveness — e.g., mean response plotted against the estimated inclusive value or against simple proxies like number of low-priced options — which is the reduced-form signature of @eq-cumlink and motivates the structural model. -->
+The study was fielded online in August 2023 for the issuer of a co-branded credit card facing a regulatory cap on late fees. The business question was which benefit reductions and fee changes would cost the fewest sign-ups among prospects. The prospect sample comprises `r M$N + NM$N` adults who said they would consider applying for the card within twelve months, split by membership in the retail partner's loyalty programme: `r M$N` members and `r NM$N` non-members. Each respondent completed twelve choice tasks, each presenting three card configurations with no "none" alternative, and after each forced choice answered "If the card you selected were available to you, how likely would you be to sign up for it?" on a five-point scale from *very unlikely* to *very likely*. The study also surveyed current cardholders, but their follow-up asked how their card usage would change rather than how likely they would be to sign up; it is an ordinal response but not a probability report, so we do not use it.
+
+@tbl-emp-attributes lists the nine attributes. Members saw the partner-purchase cash-back attribute fixed at a level outside the tested range, so it is a constant for them and is dropped, leaving `r M$P` part-worths against `r NM$P` for non-members. Because the two segments saw different attribute sets and may use the scale differently, we fit them separately throughout, which gives each its own cut points. The design is level-balanced and carries no alternative-specific constants, so the rank condition of @prp-ident holds by construction; we verified it directly in both segments. The study has no designed holdout, so we withhold the last two of each respondent's twelve tasks; task order was randomised, so these are a random pair.
+
+```{r}
+#| label: tbl-emp-attributes
+#| echo: false
+#| tbl-cap: "Attributes and levels in the prospect study. Level 1 is the omitted reference level. Members saw the first attribute fixed and it is not estimated for them."
+att <- do.call(rbind, lapply(NM$attributes, function(a)
+  data.frame(Attribute = a$label, Levels = paste(a$levels, collapse = " / "))))
+knitr::kable(att, row.names = FALSE)
+```
+
+Every scale point is used in both segments: the shares of the five responses are `r paste(pct(M$descr$y_share), collapse = " / ")` for members and `r paste(pct(NM$descr$y_share), collapse = " / ")` for non-members. There is no drift across task position of the kind @Hung_2025_nochoice document for no-choice responses: the top-two-box share ranges from `r pct(min(M$descr$t2b_by_task))` to `r pct(max(M$descr$t2b_by_task))` across the twelve positions for members, with no trend.
+
+The consultancy analysed these data with the incumbent binary dual-response model: the five-point scale dichotomised at top-two-box and fit as a logit, the special case of @sec-nesting. Its report gives the implied share of prospects "likely to sign up" for the current card. Our own hierarchical fit of that model reproduces it --- `r f1(M$scenarios$table$binary_t2b_logit[1])`% against the report's `r f1(M$scenarios$table$report[1])`% for members, `r f1(NM$scenarios$table$binary_t2b_logit[1])`% (posterior sd `r f1(NM$scenarios$table$binary_t2b_logit_sd[1])`) against `r f1(NM$scenarios$table$report[1])`% for non-members --- which fixes both the alignment of choices to the design and the reading that "likely to sign up" means the top-two-box event.
 
 ### Model Specifications and Estimation {#sec-empirical-spec}
 
-We estimate four specifications on the same data: our model (@sec-model) in aggregate and hierarchical form; the binary dual-response benchmark applied to the dichotomized scale (top-2-box); and the constant-probability heuristic. Hierarchical specifications use the sampler of @sec-estimation.
+We estimate our model at the three levels of @sec-estimation --- aggregate maximum likelihood, the hierarchical model with common cut points, and the hierarchical model with respondent-specific cut points (@sec-hetcut) --- together with the binary dual-response benchmark at the top-two-box and top-box cuts, a choice-only hierarchical logit, and the constant-probability heuristic. All hierarchical fits use the sampler of Appendix B with `r f0(M$hb$mcmc$R)` iterations, `r f0(M$hb$mcmc$burn)` discarded and every `r M$hb$mcmc$thin`th draw kept; acceptance rates are `r f2(M$hb$accept$phi)` on the individual blocks and `r f2(M$hb$accept$zeta)` on the cut-point block for members, and a second seed moves every population mean by at most `r f2(max(M$hb$seed_check$max_abs_z, NM$hb$seed_check$max_abs_z))` posterior standard deviations.
 
-**Pre-specified test battery.** Before any model comparison, we commit to the three specification tests of @sec-spectests on the aggregate fit: the unit-slope test ($\lambda = 1$), the conditioning test ($\delta = 0$), and the DR-2Max test ($\delta = 1$), whose operating characteristics @sec-sim-spectests establishes, together with a test, by holdout likelihood and WAIC, of our model's complementary log-log link against the logit link of the resolved comparison. We also commit to re-running the pricing counterfactual of @sec-sim-counterfactual on the empirical posteriors, replacing the synthetic market with the study's own category structure.
-
-<!-- TODO: report MCMC settings (iterations, burn-in, thinning), convergence diagnostics (appendix), and holdout design (withheld tasks per consumer). -->
+**Pre-specified test battery.** Before any model comparison we committed to the three specification tests of @sec-spectests on the aggregate fit --- the unit-slope test ($\lambda = 1$), the conditioning test ($\delta = 0$), and the DR-2Max test ($\delta = 1$) --- and to a test of our complementary log-log link against the logit link of the resolved comparison by holdout likelihood and WAIC. Two things changed in execution, both reported below. Aggregate standard errors are clustered by respondent, since the twelve tasks of one respondent share her tastes and the inverse-Hessian errors understate uncertainty on panel data. And because the aggregate unit-slope test turned out to be uninformative under the heterogeneity we found, we added $\lambda$ and $\delta$ as common parameters to the hierarchical sampler, in both the common-cut and the respondent-specific-cut model, and bootstrapped each test by simulating from the fitted model with $\lambda = 1$ exactly. In place of the pricing counterfactual of @sec-sim-counterfactual, which needs prices, we re-run the consultancy's own scenario analysis: nine card configurations from the current offer to a worst case, evaluated under every estimator.
 
 ### Results {#sec-empirical-results}
 
-<!-- TODO: results, mirroring the simulation-study structure so the reader can map findings across sections:
-(1) Model comparison: LMD for all specifications — headline question: which link (our model's cloglog vs. the resolved comparison's logit) fits real consumers better, and how much does the ordinal model improve on the dichotomized binary model?
-(2) Parameter estimates: part-worths across specifications (expect: attribute part-worths broadly stable, in line with Brazell_2006 and Hung_2025_dual; differences concentrated in the outside-good/cut-point structure); estimated cut points with interpretation — what purchase probability does each scale label correspond to (our model's alphas are directly interpretable here and are a selling point of the framework).
-(3) Predictive validity: holdout hit rates and predicted vs. actual ordinal response distributions.
-(4) Managerial quantities: purchase-incidence/share predictions across methods — show how much the dichotomization choice (top-box vs. top-two-box) moves the answer vs. the model-based estimate.
-(5) If task-order drift appears in the descriptives, a robustness fit with task-number effects, connecting to Hung_2025_nochoice. -->
+**Part-worths.** @tbl-emp-partworths reports the population means of the part-worths from the hierarchical cloglog fit. Signs and ordering are what the category predicts in both segments: every cash-back coefficient is positive and increases with the rate, the higher purchase APR and every fee are negative, and cash back on local transit is the weakest attribute. The aggregate estimates and the respondent-specific-cut-point estimates agree in sign and ordering throughout; the aggregate ones are smaller in magnitude, as pooled logit coefficients are under heterogeneity.
+
+```{r}
+#| label: tbl-emp-partworths
+#| echo: false
+#| tbl-cap: "Population means of the part-worths, hierarchical cloglog fit with common cut points: posterior mean and (posterior standard deviation). Members did not see the partner-purchase cash-back attribute vary."
+pw <- merge(data.frame(Attribute = NM$hb$phibar$coef, nm = paste0(f2(NM$hb$phibar$mean), " (", f3(NM$hb$phibar$sd), ")")),
+            data.frame(Attribute = M$hb$phibar$coef, m = paste0(f2(M$hb$phibar$mean), " (", f3(M$hb$phibar$sd), ")")),
+            all.x = TRUE, sort = FALSE)
+pw <- pw[match(NM$hb$phibar$coef, pw$Attribute), ]
+pw$m[is.na(pw$m)] <- "---"
+names(pw) <- c("Part-worth", "Non-members", "Members")
+knitr::kable(pw, row.names = FALSE)
+```
+
+**Cut points.** The cut points on the probability scale, $\alpha_w = F(c_w)$, are the quantities of @sec-cumlink that no binary model delivers: the purchase probability at which each label begins. For members they are `r paste(f2(M$hb$alpha), collapse = ", ")` and for non-members `r paste(f2(NM$hb$alpha), collapse = ", ")`. The same words carry different probabilities in the two segments --- "somewhat likely" begins at a purchase probability of `r f2(M$hb$alpha[3])` for members and `r f2(NM$hb$alpha[3])` for non-members --- which is the first of two ways the data say a scale point is not worth a fixed number.
+
+**Model comparison.** At the aggregate level the logit link fits better: bridge-sampling log marginal likelihoods of `r f1(M$agg$lmd$cloglog["bridge"])` (cloglog) against `r f1(M$agg$lmd$logit["bridge"])` (logit) for members. At the hierarchical level, which is where any applied analysis would operate, the ordering reverses decisively (@tbl-emp-compare): WAIC favours the cloglog link by `r f0(M$hb$link$waic_logit - M$hb$link$waic_cloglog)` and `r f0(NM$hb$link$waic_logit - NM$hb$link$waic_cloglog)`, and the held-out log-likelihood by `r f0(M$hb$link$holdout_cloglog - M$hb$link$holdout_logit)` and `r f0(NM$hb$link$holdout_cloglog - NM$hb$link$holdout_logit)`. Holdout hit rates for the forced choice are equal across links, as they must be. The larger gap in the table is between common and respondent-specific cut points, to which we return in @sec-empirical-hetcut.
+
+```{r}
+#| label: tbl-emp-compare
+#| echo: false
+#| tbl-cap: "Model comparison on the prospect data: WAIC, log posterior-predictive density of the two held-out tasks per respondent, and the held-out forced-choice hit rate."
+cmp <- function(R, seg) with(R, data.frame(
+  Segment = seg,
+  Model = c("ordinal, cloglog, common cut points", "ordinal, logit, common cut points",
+            "ordinal, cloglog, respondent-specific cut points",
+            "binary top-two-box, logit (incumbent)", "binary top-two-box, cloglog"),
+  WAIC = f0(c(hb$link$waic_cloglog, hb$link$waic_logit, hetcut$waic, NA, NA)),
+  `Holdout log-lik` = f0(c(hb$link$holdout_cloglog, hb$link$holdout_logit, hetcut$holdout_ll, NA, NA)),
+  `Hit rate` = f3(c(hb$link$hit_cloglog, hb$link$hit_logit, hetcut$hit, dichot$hit["t2b_logit"], dichot$hit["t2b_cloglog"])),
+  check.names = FALSE))
+tab <- rbind(cmp(M, "Members"), cmp(NM, "Non-members"))
+tab[tab == "NA"] <- "---"
+knitr::kable(tab, row.names = FALSE)
+```
+
+**Specification tests.** The conditioning test is unambiguous at every level (@tbl-emp-spec). The estimated $\delta$ sits near zero at every level: within a clustered standard error or two of zero in the aggregate fit, and with posterior intervals that cover zero in five of the six hierarchical cases, the exception being the common-cut-point fit for non-members (`r f2(NM$hb_spec$delta$mean)`, interval `r paste0("[", f2(NM$hb_spec$delta$ci[1]), ", ", f2(NM$hb_spec$delta$ci[2]), "]")`), which falls on the side away from DR-2Max and disappears once scale usage is individual. $\delta = 1$ --- the DR-2Max reading in which she grades the product she picked --- is rejected with clustered Wald statistics of $`r f1(M$agg$spec$wald_z_cl[3])`$ and $`r f1(NM$agg$spec$wald_z_cl[3])`$ and lies far outside every hierarchical interval. Respondents grade the set, not the product they picked, which is the conditioning the model assumes.
+
+```{r}
+#| label: tbl-emp-spec
+#| echo: false
+#| tbl-cap: "Specification tests. Aggregate rows: estimate, respondent-clustered standard error and Wald statistic for the null shown. Hierarchical rows: posterior mean, standard deviation and 95% interval of the common parameter. The bootstrap rows give the mean estimate across three data sets simulated from the fitted model with lambda = 1 exactly."
+sp <- function(R, seg) {
+  s <- R$agg$spec
+  agg <- data.frame(Segment = seg, Level = "aggregate",
+    Test = c("lambda = 1", "delta = 0", "delta = 1"),
+    Estimate = f2(s$estimate), `SE / sd` = f3(s$se_cl),
+    `z / 95% interval` = f1(s$wald_z_cl), check.names = FALSE)
+  g <- function(x, lvl, nm) data.frame(Segment = seg, Level = lvl, Test = nm, Estimate = f2(x$mean),
+    `SE / sd` = f3(x$sd), `z / 95% interval` = paste0("[", f2(x$ci[1]), ", ", f2(x$ci[2]), "]"), check.names = FALSE)
+  hb <- rbind(g(R$hb_spec$lambda, "hierarchical, common cuts", "lambda = 1"),
+              g(R$hb_spec$delta, "hierarchical, common cuts", "delta = 0"),
+              g(R$hb_spec$lambda_hetcut, "hierarchical, resp.-specific cuts", "lambda = 1"),
+              g(R$hb_spec$delta_hetcut, "hierarchical, resp.-specific cuts", "delta = 0"))
+  b <- R$attenuation
+  boot <- data.frame(Segment = seg, Level = c("bootstrap of aggregate", "bootstrap, common cuts", "bootstrap, resp.-specific cuts"),
+    Test = "lambda = 1 (true)", Estimate = f2(c(b$lambda_agg_sim_mean, b$lambda_hb_sim_mean,
+      if (is.null(b$lambda_hetcut_sim_mean)) NA else b$lambda_hetcut_sim_mean)),
+    `SE / sd` = "", `z / 95% interval` = "", check.names = FALSE)
+  rbind(agg, hb, boot)
+}
+tab <- rbind(sp(M, "Members"), sp(NM, "Non-members"))
+tab[tab == "NA"] <- "---"
+knitr::kable(tab, row.names = FALSE)
+```
+
+The unit-slope test is where the empirical application earns its keep, because the answer depends on the estimation level in a way that is informative rather than contradictory. The aggregate estimate is $\hat\lambda = `r f2(M$agg$spec$estimate[1])`$ for members and $`r f2(NM$agg$spec$estimate[1])`$ for non-members, far below one. But a pooled $\overline{\mu}_{it}$ is a noisy proxy for each respondent's own, and the bootstrap shows what that does: heterogeneity in tastes alone attenuates the aggregate estimate to `r f2(M$attenuation$lambda_agg_sim_mean)` when the truth is one, and heterogeneity in scale usage of the size estimated in @sec-empirical-hetcut attenuates it further, to `r f2(mean(M$attenuation$boot_hetcut$lambda_agg))` (members) and `r f2(mean(NM$attenuation$boot_hetcut$lambda_agg))` (non-members) --- most of the way to the real-data value. The aggregate test cannot be read at face value. In the hierarchical model with common cut points the estimate moves to the other side of one, $`r f2(M$hb_spec$lambda$mean)`$ (members) and $`r f2(NM$hb_spec$lambda$mean)`$ (non-members), and its bootstrap returns `r f2(M$attenuation$lambda_hb_sim_mean)` under a true value of one, so that value is not an artifact of shrinkage either. The two disagree because they are identified from different variation. With common cut points, the only way the model can fit between-respondent differences in the *level* of the ordinal response --- one respondent who answers "somewhat likely" to every card, another who answers "neither" --- is to amplify the between-respondent spread of $\overline{\mu}_i$, which is what a $\lambda$ above one does. Once each respondent carries her own cut points, that level is absorbed and $\lambda$ is identified from *within*-respondent variation across tasks. There the estimate is $`r f2(M$hb_spec$lambda_hetcut$mean)`$ (members, interval `r paste0("[", f2(M$hb_spec$lambda_hetcut$ci[1]), ", ", f2(M$hb_spec$lambda_hetcut$ci[2]), "]")`) and $`r f2(NM$hb_spec$lambda_hetcut$mean)`$ (non-members): when the displayed set improves, a respondent's stated likelihood moves about a third as far as her choices say it should. This is the scale-compression reading of $\lambda < 1$ in @sec-spectests, and it is the second way the data say that a scale point is not worth a fixed number. The estimator is not unbiased, and we say so: with four free thresholds per respondent informed by ten reports, its bootstrap returns `r f2(M$attenuation$lambda_hetcut_sim_mean)` (members) and `r f2(NM$attenuation$lambda_hetcut_sim_mean)` (non-members) when the truth is one, so the compression should be measured against those values rather than against one. The real-data estimates lie a further `r f2(M$attenuation$lambda_hetcut_sim_mean - M$hb_spec$lambda_hetcut$mean)` and `r f2(NM$attenuation$lambda_hetcut_sim_mean - NM$hb_spec$lambda_hetcut$mean)` below them, several posterior standard deviations, so the compression is real but smaller than the raw estimate suggests.
+
+**Dichotomising the scale.** Collapsing the five points to top-two-box and fitting the binary model costs precision and nothing else, as @sec-sim-benchmarks predicts. The posterior standard deviations of the population part-worths are `r pct(M$dichot$sd_ratio_mean["t2b_logit"] - 1)` larger under the incumbent binary logit for members and `r pct(NM$dichot$sd_ratio_mean["t2b_logit"] - 1)` for non-members, while holdout hit rates are within sampling error of the ordinal model's (@tbl-emp-compare). The consultancy's report recovered the scale's thresholds by fitting a sequence of binary models, one per cut; one ordinal fit returns all four, with posterior standard deviations no larger than the separate fits', and answers the top-box margin --- `r f1(M$scenarios$table$ordinal_top[1])`% of members for the current card --- that a top-two-box model cannot address at all.
+
+**Fixed probabilities per label.** The constant-probability heuristic attaches `r paste(emp$settings$wts_juster, collapse = "/")` to the five labels. @eq-condexp says what each label is actually worth given the task it was given in, and @tbl-emp-worth reports that quantity across the estimation tasks. The constants are wrong for every label, and "somewhat likely" is worth `r f2(M$fixedprob$label_worth$median[4])` to a member and `r f2(NM$fixedprob$label_worth$median[4])` to a non-member. The managerial consequence appears in the scenario analysis: because the heuristic's incidence is a constant computed from observed label shares, it reports `r f1(M$scenarios$table$heur_juster[1])`% of members likely to sign up for the current card and exactly the same figure for the worst case, in which the consultancy's own model puts sign-up at `r f1(M$scenarios$table$report[9])`% and ours at `r f1(M$scenarios$table$ordinal_t2b[9])`%. The ordinal model and the incumbent binary model agree closely across all nine scenarios at the top-two-box margin (@fig-emp-scenarios); the difference between them is what the ordinal model can additionally say.
+
+```{r}
+#| label: tbl-emp-worth
+#| echo: false
+#| tbl-cap: "The purchase probability behind each scale point, E[p | y = w, task], across the estimation tasks (hierarchical cloglog fit, posterior means), against the fixed constant the heuristic assigns."
+lw <- function(R, seg) { d <- R$fixedprob$label_worth
+  data.frame(Segment = seg, Label = d$label, `Fixed constant` = f2(d$fixed), `10th pct` = f2(d$q10),
+             Median = f2(d$median), `90th pct` = f2(d$q90), check.names = FALSE) }
+knitr::kable(rbind(lw(M, "Members"), lw(NM, "Non-members")), row.names = FALSE)
+```
+
+![Share of prospects likely to sign up under the consultancy's nine card scenarios, by method. The report column is the consultancy's own simulator and anchors the current-offer scenario; the fixed-probability heuristic cannot respond to the scenario.](R/output/figs/empirical_scenarios.png){#fig-emp-scenarios}
 
 ### Scale-Usage Heterogeneity {#sec-empirical-hetcut}
 
-<!-- TODO: estimate the heterogeneous-cut-point extension (@sec-hetcut) on the empirical data; report the estimated dispersion of theta_i (how differently do real consumers use the scale?), the correlation between scale usage and preferences, and the effect on managerial quantities of accounting for it. -->
+Scale-usage heterogeneity is large in these data. Letting each respondent carry her own cut points improves WAIC by `r f0(M$hb$waic - M$hetcut$waic)` (members) and `r f0(NM$hb$waic - NM$hetcut$waic)` (non-members) and the held-out log-likelihood by `r f0(M$hetcut$holdout_ll - M$hb$holdout_ll)` and `r f0(NM$hetcut$holdout_ll - NM$hb$holdout_ll)`, and raises the held-out forced-choice hit rate from `r f3(M$hb$hit)` to `r f3(M$hetcut$hit)` and from `r f3(NM$hb$hit)` to `r f3(NM$hetcut$hit)`: once the ordinal responses are no longer forced through common thresholds, they stop distorting the individual tastes. The population standard deviation of the first threshold is `r f1(M$hetcut$sd_c1_across_resp)` utility units for members and `r f1(NM$hetcut$sd_c1_across_resp)` for non-members, against population part-worths of order one, and scale usage correlates positively with taste intensity (correlations between the individual part-worths and the first threshold of `r f2(min(M$hetcut$corr_beta_c1))` to `r f2(max(M$hetcut$corr_beta_c1))` for members).
+
+As @sec-hetcut anticipates, the individual thresholds themselves are only partially identified from ten ordinal reports, and their posterior means sit at the extremes: for the median member, "somewhat likely" covers purchase probabilities from `r f2(M$hetcut$alpha_i_quantiles["50%", 3])` to `r f2(M$hetcut$alpha_i_quantiles["50%", 4])`. Most respondents use two of the five scale points, which is what the marginal response distribution looks like through the model. What the extension recovers is the population distribution of scale usage and its correlation with tastes, not each respondent's thresholds. For the managerial quantities it matters less than one might expect --- the respondent-specific-cut-point model's sign-up shares track the common-cut model's within a few points across the scenarios --- but for inference about the behavioural model it matters a great deal, since it is the level at which the unit-slope test becomes interpretable.

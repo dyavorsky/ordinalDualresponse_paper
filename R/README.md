@@ -13,7 +13,26 @@ functions it needs from this directory, runs its experiment, and writes the
 | `homogeneous/` | aggregate-model pieces: `fisher.R` (exact information), `spec_tests.R` (the lambda and delta extensions), `bayes_agg.R` (aggregate posterior and marginal-likelihood estimators) |
 | `hierarchical/` | panel pieces: `hb.R` (the sampler), `dgp_panel.R` (panel simulation), `compare_hb.R` (WAIC, holdout likelihood) |
 | `apollo/` | the model expressed in Apollo, as an independent cross-check (Appendix E) |
+| `empirical/` | the empirical application (Section 4): `run_fits.R` (every estimation run, staged and cached), `cluster_se.R` (respondent-clustered sandwich SEs for the aggregate fits and tests), `scenarios.R` (the consultancy's card scenarios and sign-up predictors), `analyze_cobrand.R` (assembles the fits into `output/empirical_cobrand.rds`) |
 | `output/` | results files, written by the notebooks and read by the article |
+
+### The empirical application
+
+`empirical/` is deliberately incomplete on its own. The script that reads the
+client's SPSS export, `ingest.R`, lives **beside the data** in the gitignored
+`empirical application/` folder, because it names the export's columns and the
+study's product. `run_fits.R` sources it from there. Every fit object is cached
+under `empirical application/derived/fits/`; nothing respondent-level leaves
+that folder. `analyze_cobrand.R` writes only population-level estimates,
+posterior summaries and scenario shares, under generic attribute labels, to
+`output/empirical_cobrand.rds`, which `sections/04_analysis.qmd` and
+`notebooks/09-empirical-application.qmd` read. The notebook is not in the
+render list and is rendered by hand; CI never needs the data.
+
+The hierarchical sampler gained an optional common extension parameter for
+this work (`fit_dual_hb(..., ext = "lambda" | "delta")`), which runs the
+paper's two specification tests at the hierarchical level. With the default
+`ext = "none"` the sampler's draws are unchanged to the last digit.
 
 `homogeneous/gev_check.R` is the one remaining runnable script here. It verifies
 the GEV lemma behind Appendix D numerically and is quoted in that appendix

@@ -102,9 +102,17 @@ design/*_files/
 notebooks/R/
 
 # Client data and documents for the empirical application. Never commit.
-# Raw, un-anonymized material lives here; anonymized extracts go elsewhere.
+# Raw, un-anonymized material lives here, together with the ingest script
+# (it names the export's columns) and every fit object under derived/. The
+# only things that leave this folder are the blind, respondent-free summaries
+# R/empirical/analyze_cobrand.R writes to R/output/.
 empirical application/
 empirical_application/
+
+# The empirical notebook is rendered by hand, not by the project render, so
+# its standalone output lands beside the source.
+notebooks/09-empirical-application.html
+notebooks/09-empirical-application_files/
 
 # Literature PDFs. Publisher copyright: fine to hold locally for research,
 # not to redistribute from a public repo. Kept on disk, out of git.
