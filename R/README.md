@@ -13,7 +13,7 @@ functions it needs from this directory, runs its experiment, and writes the
 | `homogeneous/` | aggregate-model pieces: `fisher.R` (exact information), `spec_tests.R` (the lambda and delta extensions), `bayes_agg.R` (aggregate posterior and marginal-likelihood estimators) |
 | `hierarchical/` | panel pieces: `hb.R` (the sampler), `dgp_panel.R` (panel simulation), `compare_hb.R` (WAIC, holdout likelihood) |
 | `apollo/` | the model expressed in Apollo, as an independent cross-check (Appendix E) |
-| `empirical/` | the empirical application (Section 4): `run_fits.R` (every estimation run, staged and cached), `cluster_se.R` (respondent-clustered sandwich SEs for the aggregate fits and tests), `scenarios.R` (the consultancy's card scenarios and sign-up predictors), `analyze_cobrand.R` (assembles the fits into `output/empirical_cobrand.rds`) |
+| `empirical/` | the empirical application (Section 4): `run_fits.R` (every estimation run, staged and cached), `cluster_se.R` (respondent-clustered sandwich SEs for the aggregate fits and tests), `scenarios.R` (the consultancy's card scenarios and sign-up predictors), `analyze_cobrand.R` (assembles the fits into `output/empirical_cobrand.rds`), `make_figs.R` (two Section 4 figures drawn from that summary alone) |
 | `output/` | results files, written by the notebooks and read by the article |
 
 ### The empirical application

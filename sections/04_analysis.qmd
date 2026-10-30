@@ -41,22 +41,38 @@ We estimate our model at the three levels of @sec-estimation --- aggregate maxim
 
 ### Results {#sec-empirical-results}
 
-**Part-worths.** @tbl-emp-partworths reports the population means of the part-worths from the hierarchical cloglog fit. Signs and ordering are what the category predicts in both segments: every cash-back coefficient is positive and increases with the rate, the higher purchase APR and every fee are negative, and cash back on local transit is the weakest attribute. The aggregate estimates and the respondent-specific-cut-point estimates agree in sign and ordering throughout; the aggregate ones are smaller in magnitude, as pooled logit coefficients are under heterogeneity.
+**Part-worths.** @tbl-emp-partworths reports the part-worths and cut points at all three levels. Signs and ordering are what the category predicts in both segments: every cash-back coefficient is positive and increases with the rate, the higher purchase APR and every fee are negative, and cash back on local transit is the weakest attribute. The three levels agree in sign and ordering throughout, and the ratios between coefficients are stable, while the magnitudes grow from the aggregate fit to the hierarchical ones. That growth is the familiar attenuation of a pooled logit under unmodelled heterogeneity [@Yatchew_1985]: a logit coefficient is identified only relative to the error scale, and when every respondent is assigned one $\bfbeta$, each respondent's own taste deviation joins the error term, so every coefficient is scaled down by the same factor. The hierarchical fit estimates each $\bfbeta_i$ against that respondent's own residual, and the respondent-specific cut points remove scale-use noise from the second response as well, so the magnitudes rise once more. Across the three levels only the ratios are comparable, and those are.
 
 ```{r}
 #| label: tbl-emp-partworths
 #| echo: false
-#| tbl-cap: "Population means of the part-worths, hierarchical cloglog fit with common cut points: posterior mean and (posterior standard deviation). Members did not see the partner-purchase cash-back attribute vary."
-pw <- merge(data.frame(Attribute = NM$hb$phibar$coef, nm = paste0(f2(NM$hb$phibar$mean), " (", f3(NM$hb$phibar$sd), ")")),
-            data.frame(Attribute = M$hb$phibar$coef, m = paste0(f2(M$hb$phibar$mean), " (", f3(M$hb$phibar$sd), ")")),
-            all.x = TRUE, sort = FALSE)
-pw <- pw[match(NM$hb$phibar$coef, pw$Attribute), ]
-pw$m[is.na(pw$m)] <- "---"
-names(pw) <- c("Part-worth", "Non-members", "Members")
-knitr::kable(pw, row.names = FALSE)
+#| tbl-cap: "Part-worths and cut points at the three estimation levels, cloglog link. Aggregate: maximum-likelihood estimate and (respondent-clustered standard error). Hierarchical: posterior mean and (posterior standard deviation) of the population mean, with common cut points or respondent-specific cut points; for the latter the cut point shown is the population mean of the individual cut points, which the summary does not carry a standard deviation for. Level 1 of each attribute is the omitted reference; members (M) did not see the partner-purchase cash-back attribute vary. NM: non-members."
+#| tbl-colwidths: [16, 14, 14, 14, 14, 14, 14]
+short <- c(partner_cb = "partner cash back", gas_cb = "gas cash back", rest_cb = "restaurant cash back",
+           transit_cb = "transit cash back", apr = "purchase APR", penalty = "penalty APR",
+           bt_fee = "balance-transfer fee", fx_fee = "foreign-transaction fee", metal = "metal card")
+lab <- unlist(lapply(NM$attributes, function(a)
+  setNames(paste(short[[a$var]], a$levels[-1]),
+           paste0(a$var, "_", gsub("[^a-z0-9]+", "", tolower(a$levels[-1]))))))
+# math-mode numbers: a text hyphen-minus is a legal line break in a narrow LaTeX cell
+cell <- function(m, s) ifelse(is.na(m), "---", paste0("$", f2(m), "$\u00a0(", f2(s), ")"))
+cols <- function(R, cn) { i <- match(cn, R$colnames)
+  c(cell(R$agg$table$beta[i], R$agg$table$se_cl[i]),
+    cell(R$hb$phibar$mean[i], R$hb$phibar$sd[i]),
+    cell(R$hetcut$phibar[i], R$hetcut$phibar_sd[i])) }
+cuts <- function(R, w) c(cell(R$agg$cut[w], R$agg$se_cut_cl[w]), cell(R$hb$cut[w], R$hb$cut_sd[w]),
+                         paste0("$", f2(R$hetcut$cut_pop[w]), "$"))
+body <- rbind(
+  t(sapply(names(lab), function(cn) c(cols(M, cn), cols(NM, cn)))),
+  t(sapply(1:4, function(w) c(cuts(M, w), cuts(NM, w)))))
+pw <- data.frame(Parameter = c(unname(lab), paste0("cut point $c_", 1:4, "$")), body, check.names = FALSE)
+names(pw)[-1] <- paste(rep(c("M", "NM"), each = 3), rep(c("aggregate", "common $c$", "indiv. $c_i$"), 2))
+knitr::kable(pw, row.names = FALSE, align = c("l", rep("r", 6)))
 ```
 
-**Cut points.** The cut points on the probability scale, $\alpha_w = F(c_w)$, are the quantities of @sec-cumlink that no binary model delivers: the purchase probability at which each label begins. For members they are `r paste(f2(M$hb$alpha), collapse = ", ")` and for non-members `r paste(f2(NM$hb$alpha), collapse = ", ")`. The same words carry different probabilities in the two segments --- "somewhat likely" begins at a purchase probability of `r f2(M$hb$alpha[3])` for members and `r f2(NM$hb$alpha[3])` for non-members --- which is the first of two ways the data say a scale point is not worth a fixed number.
+**Cut points.** The cut points on the probability scale, $\alpha_w = F(c_w)$, are the quantities of @sec-model that no binary model delivers: the purchase probability at which each label begins. For members they are `r paste(f2(M$hb$alpha), collapse = ", ")` and for non-members `r paste(f2(NM$hb$alpha), collapse = ", ")`. The same words carry different probabilities in the two segments --- "somewhat likely" begins at a purchase probability of `r f2(M$hb$alpha[3])` for members and `r f2(NM$hb$alpha[3])` for non-members --- which is the first of two ways the data say a scale point is not worth a fixed number. @fig-emp-thresholds shows the four thresholds with their intervals, from the aggregate and the common-cut hierarchical fits; the hierarchical fit spreads the thresholds apart, with the outer ones nearer 0 and 1, which is the attenuation of the previous paragraph seen from the cut points' side: a pooled fit that compresses the index also bunches the thresholds that partition it.
+
+![Cut points on the probability scale, $\alpha_w = F(c_w)$: the purchase probability at which each label begins, with 95% intervals (clustered, for the aggregate fit; posterior, for the hierarchical fit).](R/output/figs/empirical_thresholds.png){#fig-emp-thresholds}
 
 **Model comparison.** At the aggregate level the logit link fits better: bridge-sampling log marginal likelihoods of `r f1(M$agg$lmd$cloglog["bridge"])` (cloglog) against `r f1(M$agg$lmd$logit["bridge"])` (logit) for members. At the hierarchical level, which is where any applied analysis would operate, the ordering reverses decisively (@tbl-emp-compare): WAIC favours the cloglog link by `r f0(M$hb$link$waic_logit - M$hb$link$waic_cloglog)` and `r f0(NM$hb$link$waic_logit - NM$hb$link$waic_cloglog)`, and the held-out log-likelihood by `r f0(M$hb$link$holdout_cloglog - M$hb$link$holdout_logit)` and `r f0(NM$hb$link$holdout_cloglog - NM$hb$link$holdout_logit)`. Holdout hit rates for the forced choice are equal across links, as they must be. The larger gap in the table is between common and respondent-specific cut points, to which we return in @sec-empirical-hetcut.
 
@@ -129,5 +145,9 @@ knitr::kable(rbind(lw(M, "Members"), lw(NM, "Non-members")), row.names = FALSE)
 ### Scale-Usage Heterogeneity {#sec-empirical-hetcut}
 
 Scale-usage heterogeneity is large in these data. Letting each respondent carry her own cut points improves WAIC by `r f0(M$hb$waic - M$hetcut$waic)` (members) and `r f0(NM$hb$waic - NM$hetcut$waic)` (non-members) and the held-out log-likelihood by `r f0(M$hetcut$holdout_ll - M$hb$holdout_ll)` and `r f0(NM$hetcut$holdout_ll - NM$hb$holdout_ll)`, and raises the held-out forced-choice hit rate from `r f3(M$hb$hit)` to `r f3(M$hetcut$hit)` and from `r f3(NM$hb$hit)` to `r f3(NM$hetcut$hit)`: once the ordinal responses are no longer forced through common thresholds, they stop distorting the individual tastes. The population standard deviation of the first threshold is `r f1(M$hetcut$sd_c1_across_resp)` utility units for members and `r f1(NM$hetcut$sd_c1_across_resp)` for non-members, against population part-worths of order one, and scale usage correlates positively with taste intensity (correlations between the individual part-worths and the first threshold of `r f2(min(M$hetcut$corr_beta_c1))` to `r f2(max(M$hetcut$corr_beta_c1))` for members).
+
+@fig-emp-cuts-i shows how wide the spread is: for every boundary the middle half of respondents spans about three utility units, wider than the largest part-worth in either segment, and the common cut point falls within the middle 90% of respondents' thresholds without being typical of them.
+
+![Respondent-specific cut points on the utility scale: the median, the middle 50% and the middle 90% of respondents' posterior means for each boundary, with the common-cut-point estimate for comparison.](R/output/figs/empirical_cuts_i.png){#fig-emp-cuts-i}
 
 As @sec-hetcut anticipates, the individual thresholds themselves are only partially identified from ten ordinal reports, and their posterior means sit at the extremes: for the median member, "somewhat likely" covers purchase probabilities from `r f2(M$hetcut$alpha_i_quantiles["50%", 3])` to `r f2(M$hetcut$alpha_i_quantiles["50%", 4])`. Most respondents use two of the five scale points, which is what the marginal response distribution looks like through the model. What the extension recovers is the population distribution of scale usage and its correlation with tastes, not each respondent's thresholds. For the managerial quantities it matters less than one might expect --- the respondent-specific-cut-point model's sign-up shares track the common-cut model's within a few points across the scenarios --- but for inference about the behavioural model it matters a great deal, since it is the level at which the unit-slope test becomes interpretable.
