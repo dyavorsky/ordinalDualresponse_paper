@@ -7,7 +7,7 @@
 
     <meta name="author" content="Dan Yavorsky">
     <meta name="author" content="Geoffery Zheng">
-    <meta name="dcterms.date" content="2026-10-27">
+    <meta name="dcterms.date" content="2026-10-30">
 
     <title>The Model and the Likelihood</title>
     <style>
@@ -166,7 +166,7 @@
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-52483ea99717d4978fea1cc04f8d48e3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-02700438fd2983cfbe645b9e7a9fc9eb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -186,7 +186,7 @@
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
       <h1 class="title">The Model and the Likelihood</h1>
-            <p class="subtitle lead">The model, worked end to end on a single configuration</p>
+            <p class="subtitle lead">A Simple Example</p>
           </div>
 
     
@@ -206,7 +206,7 @@
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">October 27, 2026</p>
+              <p class="date">October 30, 2026</p>
             </div>
           </div>
           
@@ -261,10 +261,10 @@
 \]</span></p>
 <section id="what-this-notebook-does" class="level2">
 <h2 class="anchored" data-anchor-id="what-this-notebook-does">What this notebook does</h2>
-<p>This notebook is the walkthrough. It takes one parameter configuration of the model and follows it the whole way: draw a design, simulate the behavioral process, write out the joint likelihood, maximize it, and check what comes back.</p>
-<p>Everything is self-contained, and the code is deliberately the simplest that will work. Nothing is generalized yet. Notebook 02 takes the same machinery, generalizes it to both links, and runs it across configurations and repeated samples.</p>
+<p>This notebook is a walkthrough. It simulates data from the aggregate model under one simple specification for one parameter configuration, estimates the model using the simulated data, and compares the resulting estimates to the known parameter values.</p>
+<p>Everything is self-contained, and the code is deliberately the simplest that will work. Nothing is generalized yet.</p>
 <p>The functions are copies of <code>R/lib/dgp.R</code> and <code>R/lib/likelihood.R</code>, commented so the mechanics are visible and documented.</p>
-<p>This notebook writes no results files. Nothing in the article depends on it, so it can be edited freely.</p>
+<p>This notebook writes no results files. Nothing in the article depends on it.</p>
 </section>
 <section id="the-model-in-one-screen" class="level2">
 <h2 class="anchored" data-anchor-id="the-model-in-one-screen">1. The model in one screen</h2>

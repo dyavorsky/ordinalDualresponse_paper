@@ -226,7 +226,7 @@ outside good}},
 \makeatother
 \subtitle{Ordinal Dual Response in Choice-Based Conjoint Analysis}
 \author{Dan Yavorsky \and Geoffery Zheng}
-\date{2026-10-27}
+\date{2026-10-30}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -240,9 +240,10 @@ most-preferred option among a set of alternatives but face uncertainty
 in their evaluation of the outside good. We develop estimation routines
 for both aggregate and hierarchical Bayesian versions of the model and
 apply them to a conjoint study conducted with a consumer insights
-consultancy. The model outperforms two common alternatives: collapsing
-the ordinal scale into a binary response, and assigning a fixed purchase
-probability to each scale point.
+consultancy. We quantify the information content of the ordinal follow
+up and demonstrate that it outperforms two common alternatives:
+collapsing the ordinal scale into a binary response, and assigning a
+fixed purchase probability to each scale point.
 \end{abstract}
 
 
@@ -265,12 +266,12 @@ profiles and then answers a follow-up question about whether she would
 purchase her selection. The format was introduced to fix a practical
 problem with the traditional no-choice option: tasks in which ``none of
 these'' is chosen carry no information about attribute preferences. The
-dual-response format recovers that lost information without
-systematically biasing the preference estimates (Brazell et al. 2006;
-Dhar and Simonson 2003): the forced choice always reveals preference
-among profiles, while the follow-up still measures demand for the
-category. Following its implementation in Sawtooth Software's widely
-used choice-based conjoint (CBC) system (Diener et al. 2006; Sawtooth
+dual-response format recovers that lost information -- the forced choice
+always reveals preference among profiles, while the follow-up still
+measures demand for the category -- without systematically biasing the
+preference estimates (Brazell et al. 2006; Dhar and Simonson 2003).
+Following its implementation in Sawtooth Software's widely used
+choice-based conjoint (CBC) system (Diener et al. 2006; Sawtooth
 Software 2017), the dual-response format became common practice in
 commercial conjoint research. The format was not, however, derived from
 a behavioral model of the consumer. This paper supplies such a model for
@@ -303,8 +304,9 @@ good that the consumer has not resolved at the moment she answers. That
 premise makes the two responses separable, which keeps the model as
 tractable as the standard choice model, and it determines the form of
 the follow-up rather than leaving it to be assumed. The existing binary
-models are the case in which she resolves the uncertainty before
-answering, so what they assume about her becomes explicit and testable.
+models are the case in which the consumer resolves her uncertainty
+before answering, so what they assume about her becomes explicit and
+testable.
 
 To our knowledge, no prior work derives the forced choice and the
 ordinal follow-up from a single account of the consumer. We make four
@@ -611,19 +613,6 @@ second-response probabilities are differences of these. Drawn for
 
 \end{figure}%
 
-The distribution's mean is
-\(\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)\):
-integrating out unobservables, the probability of purchase is the
-logistic of the inclusive value,
-\(\Lambda(z) = 1 \big/ \left( 1 + e^{-z} \right)\). Conditioning on what
-she reported rescales it. A consumer who answers \(w\) has
-\begin{equation}\protect\phantomsection\label{eq-condexp}{
-\E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
-}\end{equation} the unconditional mean times a correction for the bin.
-Because \(S_{it}\) appears here as well as in the bin boundaries, the
-same scale point implies different purchase probabilities in tasks with
-different choice sets.
-
 It will be convenient to carry these thresholds on two scales. On the
 probability scale they are directly interpretable: \(\alpha_w\) is the
 purchase probability at which the consumer moves from label \(w\) to
@@ -715,9 +704,10 @@ and \begin{equation}\protect\phantomsection\label{eq-orderedlogit}{
 = \Lambda \left( c_w - \overline{\mu}_{it} \right) - \Lambda \left( c_{w-1} - \overline{\mu}_{it} \right).
 }\end{equation} This is an ordered logit (Greene and Hensher 2010a) in
 the inclusive value: Equation~\ref{eq-cumlink} with the logistic CDF
-\(\Lambda\) in place of our \(F\). Figure~\ref{fig-timing} sets the two
-rules side by side; they share the forced choice and differ only in
-whether \(\eta_{it0}\) is resolved before or after the report.
+\(\Lambda(z) = 1 \big/ \left( 1 + e^{-z} \right)\) in place of our
+\(F\). Figure~\ref{fig-timing} sets the two rules side by side; they
+share the forced choice and differ only in whether \(\eta_{it0}\) is
+resolved before or after the report.
 
 \begin{figure}
 
@@ -752,7 +742,13 @@ Equation~\ref{eq-collapse} with free \(\gamma\) is the standard
 single-stage MNL with a no-choice alternative-specific constant (Haaijer
 et al. 2001). This model is therefore the two-point, logistic case of
 Equation~\ref{eq-cumlink}; for \(W>2\) the additional cut points are the
-only new parameters.
+only new parameters. It is also what commercial practice estimates. The
+dual-response routine in Sawtooth Software's CBC/HB stacks the forced
+choice with a second task over the inside goods \emph{and} the outside
+good, and drops the first task when the consumer reports a purchase,
+because the second one then already records both which good she
+preferred and that she rejected the outside good (Sawtooth Software
+2016). Those two cases are the two lines of Equation~\ref{eq-collapse}.
 
 \textbf{Binary dual response, our model.} Set \(W=2\) in
 Equation~\ref{eq-ordprob}:
@@ -763,23 +759,39 @@ the moment they answer, the familiar (logistic) binary dual response
 model is misspecified, if only mildly, since the two links are close.
 
 \textbf{DR-2Max.} The other binary model in the literature, ``DR-2Max''
-(Diener et al. 2006), as implemented in Sawtooth Software's CBC/HB
-(Sawtooth Software 2017), models the second response as a binary logit
-on the \emph{chosen good's} deterministic utility:
+(Diener et al. 2006), models the second response as a binary logit on
+the \emph{chosen good's} deterministic utility:
 \(\Pr(\text{buy} \mid j^*) = e^{V_{itj^*}} \big/ \left( e^{V_{itj^*}} + e^{\gamma} \right)\).
 This implies drawing a fresh error for the chosen good in the second
 stage, so that the consumer who just declared \(j^*\) best re-evaluates
-it from scratch. Under our framework such conditioning is unnecessary:
-by Lemma~\ref{lem-gumbel}(ii) the distribution of the best utility does
-not depend on which good attained it, so the second response should
-depend on the set only through \(\overline{\mu}_{it}\). The same
-conditioning, generalized from a binary follow-up to an ordinal rating,
-is the two-step choice-ordered logit of Webb and Hess (2021), whose
-second stage is an ordered logit in \(\zeta V_{itj^*}\) with a free
-scale \(\zeta\). That specification is therefore the \(\delta = 1\) end
-of the conditioning test of Section~\ref{sec-spectests}, and our
-\(\lambda\) plays the role of their \(\zeta\) on the inclusive value
-rather than on the chosen good.
+it when assessing the follow up question. This likelihood should not be
+confused with the DR-2Max \emph{question format}, in which the follow-up
+names only the chosen good; the two are separable, and Diener et al.
+(2006) recommend the 2Max format for its clarity to respondents while
+estimating with the AnyMax likelihood, reporting that the 2Max coding
+biases the no-choice coefficient downward. Under our framework such
+conditioning is unnecessary: by Lemma~\ref{lem-gumbel}(ii) the
+distribution of the best utility does not depend on which good attained
+it, so the second response should depend on the set only through
+\(\overline{\mu}_{it}\). The same conditioning, generalized from a
+binary follow-up to an ordinal rating, is the two-step choice-ordered
+logit of Webb and Hess (2021), whose second stage is an ordered logit in
+\(\zeta V_{itj^*}\) with a free scale \(\zeta\). That specification is
+therefore the \(\delta = 1\) end of the conditioning test of
+Section~\ref{sec-spectests}, and our \(\lambda\) plays the role of their
+\(\zeta\) on the inclusive value rather than on the chosen good.
+
+\textbf{The meaning of a scale point.} From the researcher's perspective
+\(\E \left[ p_{it} \right] = S_{it} \big/ \left( S_{it} + 1 \right) = \Lambda \left( \overline{\mu}_{it} \right)\):
+integrating out unobservables, the probability of purchase is the
+logistic of the inclusive value. Conditioning on the report rescales it:
+a consumer who answers \(w\) has
+\begin{equation}\protect\phantomsection\label{eq-condexp}{
+\E \left[ p_{it} \mid y_{it} = w \right] = \frac{S_{it}}{S_{it}+1} \cdot \frac{\alpha_w^{\,S_{it}+1} - \alpha_{w-1}^{\,S_{it}+1}}{\alpha_w^{\,S_{it}} - \alpha_{w-1}^{\,S_{it}}},
+}\end{equation} the unconditional mean times a correction for the bin.
+Because \(S_{it}\) appears here as well as in the bin boundaries, the
+same scale point implies different purchase probabilities in tasks with
+different choice sets.
 
 \textbf{Reductions to the binary model.} An ordinal response can be
 reduced to a form the binary model accepts in two ways: (i)
@@ -891,19 +903,19 @@ the same for every inside good ever shown.
 
 The practical implication is a coding rule that differs from the one
 practitioners carry over from the single-stage model. The dual-response
-model must omit one level of every attribute as a base, because the
-outside good never appears as a design row here: its role is absorbed by
-the cut points. In the single-stage MNL with a no-choice alternative, by
-contrast, a full set of brand dummies is identified, because the
-no-choice row of zeros supplies the contrast that breaks the constancy
-(Haaijer et al. 2001). Include dummies for all \(L\) brands in our model
-and that contrast is gone: each alternative carries exactly one brand
-dummy, so the dummies sum to \(\iota\), ``being one of the \(L\)
-brands'' is a characteristic every good shares, and raising all \(L\)
-part-worths and all cut points by the same amount changes nothing
-observable. Attributes must therefore be coded against omitted reference
-levels (or effects-coded), and the design must contain no global
-constant.
+model must omit one level of every categorical attribute as a base,
+because the outside good never appears as a design row here: its role is
+absorbed by the cut points. In the single-stage MNL with a no-choice
+alternative, by contrast, a full set of brand dummies is identified,
+because the no-choice row of zeros supplies the contrast that breaks the
+constancy (Haaijer et al. 2001). Include dummies for all \(L\) brands in
+our model and that contrast is gone: each alternative carries exactly
+one brand dummy, so the dummies sum to \(\iota\), ``being one of the
+\(L\) brands'' is a characteristic every good shares, and raising all
+\(L\) part-worths and all cut points by the same amount changes nothing
+observable. Categorical attributes must therefore be coded against
+omitted reference levels (or effects-coded), and the design must contain
+no global constant.
 
 \textbf{What the remaining normalizations do.} The unit Gumbel scale
 fixes the scale of \(\bfbeta\), as in any logit. Beyond the location and
@@ -934,6 +946,16 @@ through how the ordinal distribution shifts as \(S_{it}\) varies. A
 design that holds task attractiveness fixed therefore supplies no
 further information about the link's shape, however many tasks it
 contains.
+
+The ordinal-response literature faces the same separation problem, of
+telling thresholds apart from the latent index they partition, and
+solves it with anchoring vignettes: fixed scenarios that every
+respondent rates, so that differences in the ratings can be attributed
+to thresholds rather than to the index (King et al. 2004; Greene and
+Hensher 2010b). The forced choice plays that role here without extra
+questions. It pins \(\bfbeta\), and with it every task's inclusive
+value, from data that involve no threshold at all, and the ordinal
+report is then read against a known index.
 
 \textbf{Population versus sample.} Under Proposition~\ref{prp-ident}
 every scale category has strictly positive probability in every task
@@ -969,6 +991,15 @@ under-reacts to the quality of the displayed set (consistent with
 inattention to the set or with scale-use compression), while
 \(\lambda > 1\) indicates over-reaction. Testing \(H_0\!: \lambda = 1\)
 by likelihood ratio or Wald therefore tests the joint utility account.
+The device itself is familiar: a relative scale parameter is routinely
+estimated when pooling data sources that may differ in error variance,
+and tested against unity before the sources are combined (Swait and
+Louviere 1993; Ben-Akiva and Morikawa 1990). What differs here is the
+null. In the pooling literature \(\lambda \ne 1\) is a nuisance to be
+absorbed, because the sources are distinct elicitations; here the two
+responses come from one task and, under the premise, one draw, so
+\(\lambda = 1\) is a prediction of the behavioral model rather than a
+convenience.
 
 \textbf{The conditioning test.} The framework implies the second
 response depends on the choice set only through \(\overline{\mu}_{it}\)
@@ -1018,7 +1049,14 @@ refinement of the scale partition: merging two adjacent categories pools
 their scores, and by Cauchy--Schwarz the pooled cell contributes no more
 than the two it replaces (Appendix A). The binary response (\(W=2\)) is
 therefore the least informative member of the family, and information
-rises toward the continuous-report limit as \(W \to \infty\).
+rises toward the continuous-report limit as \(W \to \infty\). Because
+every increment is the scalar \(\omega\) times the same rank-one matrix
+\(\overline{\x}_{it} \overline{\x}_{it}'\), two scales are ordered at a
+task in the Loewner sense by \(\omega\) alone: the finer scale is at
+least as informative about every linear combination of \(\bfbeta\) at
+once, and no scalar summary such as the determinant is needed to compare
+them. A determinant would in fact understate the difference, since it
+spreads a rank-one gain over all \(P\) dimensions.
 Section~\ref{sec-simstudy} quantifies the practical magnitudes: how much
 of the binary-to-continuous gap a five- or seven-point scale captures,
 and how the gains vary with task attractiveness.
@@ -1537,34 +1575,541 @@ repairs it.
 We illustrate the model with data from a commercial choice-based
 conjoint study conducted in partnership with a consumer insights
 consultancy, in which an ordinal purchase-likelihood question followed
-each choice task.
+each choice task. The study is reported blind: the card issuer, its
+retail partner, and the consultancy are not named, and attribute labels
+are generic.
 
 \subsection{Data}\label{sec-data}
+
+The study was fielded online in August 2023 for the issuer of a
+co-branded credit card facing a regulatory cap on late fees. The
+business question was which benefit reductions and fee changes would
+cost the fewest sign-ups among prospects. The prospect sample comprises
+510 adults who said they would consider applying for the card within
+twelve months, split by membership in the retail partner's loyalty
+programme: 386 members and 124 non-members. Each respondent completed
+twelve choice tasks, each presenting three card configurations with no
+``none'' alternative, and after each forced choice answered ``If the
+card you selected were available to you, how likely would you be to sign
+up for it?'' on a five-point scale from \emph{very unlikely} to
+\emph{very likely}. The study also surveyed current cardholders, but
+their follow-up asked how their card usage would change rather than how
+likely they would be to sign up; it is an ordinal response but not a
+probability report, so we do not use it.
+
+Table~\ref{tbl-emp-attributes} lists the nine attributes. Members saw
+the partner-purchase cash-back attribute fixed at a level outside the
+tested range, so it is a constant for them and is dropped, leaving 9
+part-worths against 11 for non-members. Because the two segments saw
+different attribute sets and may use the scale differently, we fit them
+separately throughout, which gives each its own cut points. The design
+is level-balanced and carries no alternative-specific constants, so the
+rank condition of Proposition~\ref{prp-ident} holds by construction; we
+verified it directly in both segments. The study has no designed
+holdout, so we withhold the last two of each respondent's twelve tasks;
+task order was randomised, so these are a random pair.
+
+\begin{longtable}[]{@{}ll@{}}
+
+\caption{\label{tbl-emp-attributes}Attributes and levels in the prospect
+study. Level 1 is the omitted reference level. Members saw the first
+attribute fixed and it is not estimated for them.}
+
+\tabularnewline
+
+\toprule\noalign{}
+Attribute & Levels \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+cash back, partner purchases & 1\% / 2\% / 3\% \\
+cash back, gas stations & 1\% / 2\% \\
+cash back, restaurants & 1\% / 2\% \\
+cash back, local transit & 1\% / 2\% \\
+purchase APR & lower / higher \\
+penalty APR & no / yes \\
+balance-transfer fee & 4\% / 6\% / 9\% \\
+foreign-transaction fee & none / 3\% \\
+metal card (\$10 fee) & no / yes \\
+
+\end{longtable}
+
+Every scale point is used in both segments: the shares of the five
+responses are 4\% / 7\% / 16\% / 47\% / 26\% for members and 5\% / 10\%
+/ 23\% / 44\% / 19\% for non-members. There is no drift across task
+position of the kind Hung, Kurz, et al. (2025) document for no-choice
+responses: the top-two-box share ranges from 72\% to 75\% across the
+twelve positions for members, with no trend.
+
+The consultancy analysed these data with the incumbent binary
+dual-response model: the five-point scale dichotomised at top-two-box
+and fit as a logit, the special case of Section~\ref{sec-nesting}. Its
+report gives the implied share of prospects ``likely to sign up'' for
+the current card. Our own hierarchical fit of that model reproduces it
+--- 78.5\% against the report's 78.5\% for members, 71.1\% (posterior sd
+2.0) against 73.7\% for non-members --- which fixes both the alignment
+of choices to the design and the reading that ``likely to sign up''
+means the top-two-box event.
 
 \subsection{Model Specifications and
 Estimation}\label{sec-empirical-spec}
 
-We estimate four specifications on the same data: our model
-(Section~\ref{sec-model}) in aggregate and hierarchical form; the binary
-dual-response benchmark applied to the dichotomized scale (top-2-box);
-and the constant-probability heuristic. Hierarchical specifications use
-the sampler of Section~\ref{sec-estimation}.
+We estimate our model at the three levels of
+Section~\ref{sec-estimation} --- aggregate maximum likelihood, the
+hierarchical model with common cut points, and the hierarchical model
+with respondent-specific cut points (Section~\ref{sec-hetcut}) ---
+together with the binary dual-response benchmark at the top-two-box and
+top-box cuts, a choice-only hierarchical logit, and the
+constant-probability heuristic. All hierarchical fits use the sampler of
+Appendix B with 30000 iterations, 12000 discarded and every 10th draw
+kept; acceptance rates are 0.23 on the individual blocks and 0.34 on the
+cut-point block for members, and a second seed moves every population
+mean by at most 0.27 posterior standard deviations.
 
-\textbf{Pre-specified test battery.} Before any model comparison, we
-commit to the three specification tests of Section~\ref{sec-spectests}
-on the aggregate fit: the unit-slope test (\(\lambda = 1\)), the
-conditioning test (\(\delta = 0\)), and the DR-2Max test
-(\(\delta = 1\)), whose operating characteristics
-Section~\ref{sec-sim-spectests} establishes, together with a test, by
-holdout likelihood and WAIC, of our model's complementary log-log link
-against the logit link of the resolved comparison. We also commit to
-re-running the pricing counterfactual of
-Section~\ref{sec-sim-counterfactual} on the empirical posteriors,
-replacing the synthetic market with the study's own category structure.
+\textbf{Pre-specified test battery.} Before any model comparison we
+committed to the three specification tests of
+Section~\ref{sec-spectests} on the aggregate fit --- the unit-slope test
+(\(\lambda = 1\)), the conditioning test (\(\delta = 0\)), and the
+DR-2Max test (\(\delta = 1\)) --- and to a test of our complementary
+log-log link against the logit link of the resolved comparison by
+holdout likelihood and WAIC. Two things changed in execution, both
+reported below. Aggregate standard errors are clustered by respondent,
+since the twelve tasks of one respondent share her tastes and the
+inverse-Hessian errors understate uncertainty on panel data. And because
+the aggregate unit-slope test turned out to be uninformative under the
+heterogeneity we found, we added \(\lambda\) and \(\delta\) as common
+parameters to the hierarchical sampler, in both the common-cut and the
+respondent-specific-cut model, and bootstrapped each test by simulating
+from the fitted model with \(\lambda = 1\) exactly. In place of the
+pricing counterfactual of Section~\ref{sec-sim-counterfactual}, which
+needs prices, we re-run the consultancy's own scenario analysis: nine
+card configurations from the current offer to a worst case, evaluated
+under every estimator.
 
 \subsection{Results}\label{sec-empirical-results}
 
+\textbf{Part-worths.} Table~\ref{tbl-emp-partworths} reports the
+part-worths and cut points at all three levels. Signs and ordering are
+what the category predicts in both segments: every cash-back coefficient
+is positive and increases with the rate, the higher purchase APR and
+every fee are negative, and cash back on local transit is the weakest
+attribute. The three levels agree in sign and ordering throughout, and
+the ratios between coefficients are stable, while the magnitudes grow
+from the aggregate fit to the hierarchical ones. That growth is the
+familiar attenuation of a pooled logit under unmodelled heterogeneity
+(Yatchew and Griliches 1985): a logit coefficient is identified only
+relative to the error scale, and when every respondent is assigned one
+\(\bfbeta\), each respondent's own taste deviation joins the error term,
+so every coefficient is scaled down by the same factor. The hierarchical
+fit estimates each \(\bfbeta_i\) against that respondent's own residual,
+and the respondent-specific cut points remove scale-use noise from the
+second response as well, so the magnitudes rise once more. Across the
+three levels only the ratios are comparable, and those are.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1600}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1400}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1400}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1400}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1400}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1400}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 12\tabcolsep) * \real{0.1400}}@{}}
+
+\caption{\label{tbl-emp-partworths}Part-worths and cut points at the
+three estimation levels, cloglog link. Aggregate: maximum-likelihood
+estimate and (respondent-clustered standard error). Hierarchical:
+posterior mean and (posterior standard deviation) of the population
+mean, with common cut points or respondent-specific cut points; for the
+latter the cut point shown is the population mean of the individual cut
+points, which the summary does not carry a standard deviation for. Level
+1 of each attribute is the omitted reference; members (M) did not see
+the partner-purchase cash-back attribute vary. NM: non-members.}
+
+\tabularnewline
+
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Parameter
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+M aggregate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+M common \(c\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+M indiv. \(c_i\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+NM aggregate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+NM common \(c\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+NM indiv. \(c_i\)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+partner cash back 2\% & --- & --- & --- & \(0.30\)~(0.08) &
+\(0.52\)~(0.15) & \(0.74\)~(0.17) \\
+partner cash back 3\% & --- & --- & --- & \(0.71\)~(0.11) &
+\(1.19\)~(0.17) & \(1.56\)~(0.23) \\
+gas cash back 2\% & \(0.45\)~(0.04) & \(0.69\)~(0.07) & \(0.79\)~(0.08)
+& \(0.40\)~(0.07) & \(0.68\)~(0.11) & \(0.87\)~(0.15) \\
+restaurant cash back 2\% & \(0.38\)~(0.04) & \(0.61\)~(0.06) &
+\(0.67\)~(0.07) & \(0.30\)~(0.07) & \(0.47\)~(0.11) & \(0.67\)~(0.13) \\
+transit cash back 2\% & \(0.07\)~(0.03) & \(0.14\)~(0.05) &
+\(0.13\)~(0.06) & \(0.02\)~(0.05) & \(0.02\)~(0.11) & \(0.04\)~(0.13) \\
+purchase APR higher & \(-0.49\)~(0.05) & \(-0.70\)~(0.07) &
+\(-0.94\)~(0.09) & \(-0.35\)~(0.06) & \(-0.57\)~(0.11) &
+\(-0.72\)~(0.12) \\
+penalty APR yes & \(-0.15\)~(0.04) & \(-0.16\)~(0.06) & \(-0.26\)~(0.06)
+& \(-0.21\)~(0.07) & \(-0.30\)~(0.12) & \(-0.39\)~(0.14) \\
+balance-transfer fee 6\% & \(-0.29\)~(0.04) & \(-0.27\)~(0.07) &
+\(-0.45\)~(0.07) & \(-0.13\)~(0.07) & \(-0.24\)~(0.13) &
+\(-0.29\)~(0.14) \\
+balance-transfer fee 9\% & \(-0.46\)~(0.05) & \(-0.61\)~(0.07) &
+\(-0.86\)~(0.08) & \(-0.42\)~(0.09) & \(-0.68\)~(0.13) &
+\(-0.79\)~(0.16) \\
+foreign-transaction fee 3\% & \(-0.19\)~(0.03) & \(-0.23\)~(0.06) &
+\(-0.37\)~(0.07) & \(-0.15\)~(0.07) & \(-0.20\)~(0.12) &
+\(-0.28\)~(0.14) \\
+metal card yes & \(-0.25\)~(0.04) & \(-0.32\)~(0.07) & \(-0.47\)~(0.07)
+& \(-0.30\)~(0.07) & \(-0.40\)~(0.13) & \(-0.57\)~(0.14) \\
+cut point \(c_1\) & \(-0.32\)~(0.09) & \(-1.49\)~(0.08) & \(-3.14\) &
+\(0.10\)~(0.19) & \(-0.60\)~(0.13) & \(-1.00\) \\
+cut point \(c_2\) & \(0.04\)~(0.08) & \(-0.58\)~(0.07) & \(-0.17\) &
+\(0.55\)~(0.18) & \(0.45\)~(0.12) & \(-0.07\) \\
+cut point \(c_3\) & \(0.56\)~(0.08) & \(0.57\)~(0.07) & \(0.14\) &
+\(1.25\)~(0.19) & \(1.78\)~(0.13) & \(0.10\) \\
+cut point \(c_4\) & \(2.04\)~(0.10) & \(3.21\)~(0.08) & \(1.42\) &
+\(2.80\)~(0.24) & \(4.44\)~(0.17) & \(1.46\) \\
+
+\end{longtable}
+
+\textbf{Cut points.} The cut points on the probability scale,
+\(\alpha_w = F(c_w)\), are the quantities of Section~\ref{sec-model}
+that no binary model delivers: the purchase probability at which each
+label begins. For members they are 0.01, 0.17, 0.57, 0.96 and for
+non-members 0.16, 0.53, 0.85, 0.99. The same words carry different
+probabilities in the two segments --- ``somewhat likely'' begins at a
+purchase probability of 0.57 for members and 0.85 for non-members ---
+which is the first of two ways the data say a scale point is not worth a
+fixed number. Figure~\ref{fig-emp-thresholds} shows the four thresholds
+with their intervals, from the aggregate and the common-cut hierarchical
+fits; the hierarchical fit spreads the thresholds apart, with the outer
+ones nearer 0 and 1, which is the attenuation of the previous paragraph
+seen from the cut points' side: a pooled fit that compresses the index
+also bunches the thresholds that partition it.
+
+\begin{figure}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{R/output/figs/empirical_thresholds.png}}
+
+}
+
+\caption{\label{fig-emp-thresholds}Cut points on the probability scale,
+\(\alpha_w = F(c_w)\): the purchase probability at which each label
+begins, with 95\% intervals (clustered, for the aggregate fit;
+posterior, for the hierarchical fit).}
+
+\end{figure}%
+
+\textbf{Model comparison.} At the aggregate level the logit link fits
+better: bridge-sampling log marginal likelihoods of -8984.5 (cloglog)
+against -8945.2 (logit) for members. At the hierarchical level, which is
+where any applied analysis would operate, the ordering reverses
+decisively (Table~\ref{tbl-emp-compare}): WAIC favours the cloglog link
+by 149 and 83, and the held-out log-likelihood by 137 and 139. Holdout
+hit rates for the forced choice are equal across links, as they must be.
+The larger gap in the table is between common and respondent-specific
+cut points, to which we return in Section~\ref{sec-empirical-hetcut}.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1304}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.5326}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.0652}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1739}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.0978}}@{}}
+
+\caption{\label{tbl-emp-compare}Model comparison on the prospect data:
+WAIC, log posterior-predictive density of the two held-out tasks per
+respondent, and the held-out forced-choice hit rate.}
+
+\tabularnewline
+
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Segment
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Model
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+WAIC
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Holdout log-lik
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Hit rate
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Members & ordinal, cloglog, common cut points & 13683 & -1419 & 0.547 \\
+Members & ordinal, logit, common cut points & 13832 & -1556 & 0.549 \\
+Members & ordinal, cloglog, respondent-specific cut points & 10878 &
+-1183 & 0.605 \\
+Members & binary top-two-box, logit (incumbent) & --- & --- & 0.570 \\
+Members & binary top-two-box, cloglog & --- & --- & 0.566 \\
+Non-members & ordinal, cloglog, common cut points & 4688 & -516 &
+0.577 \\
+Non-members & ordinal, logit, common cut points & 4770 & -655 & 0.593 \\
+Non-members & ordinal, cloglog, respondent-specific cut points & 3798 &
+-403 & 0.653 \\
+Non-members & binary top-two-box, logit (incumbent) & --- & --- &
+0.597 \\
+Non-members & binary top-two-box, cloglog & --- & --- & 0.593 \\
+
+\end{longtable}
+
+\textbf{Specification tests.} The conditioning test is unambiguous at
+every level (Table~\ref{tbl-emp-spec}). The estimated \(\delta\) sits
+near zero at every level: within a clustered standard error or two of
+zero in the aggregate fit, and with posterior intervals that cover zero
+in five of the six hierarchical cases, the exception being the
+common-cut-point fit for non-members (-0.24, interval {[}-0.41,
+-0.04{]}), which falls on the side away from DR-2Max and disappears once
+scale usage is individual. \(\delta = 1\) --- the DR-2Max reading in
+which she grades the product she picked --- is rejected with clustered
+Wald statistics of \(-19.0\) and \(-10.5\) and lies far outside every
+hierarchical interval. Respondents grade the set, not the product they
+picked, which is the conditioning the model assumes.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1224}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.3469}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1837}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0918}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.0816}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1735}}@{}}
+
+\caption{\label{tbl-emp-spec}Specification tests. Aggregate rows:
+estimate, respondent-clustered standard error and Wald statistic for the
+null shown. Hierarchical rows: posterior mean, standard deviation and
+95\% interval of the common parameter. The bootstrap rows give the mean
+estimate across three data sets simulated from the fitted model with
+lambda = 1 exactly.}
+
+\tabularnewline
+
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Segment
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Level
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Test
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+SE / sd
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+z / 95\% interval
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Members & aggregate & lambda = 1 & 0.23 & 0.063 & -12.4 \\
+Members & aggregate & delta = 0 & -0.07 & 0.056 & -1.2 \\
+Members & aggregate & delta = 1 & -0.07 & 0.056 & -19.0 \\
+Members & hierarchical, common cuts & lambda = 1 & 1.70 & 0.079 &
+{[}1.55, 1.85{]} \\
+Members & hierarchical, common cuts & delta = 0 & -0.05 & 0.044 &
+{[}-0.13, 0.03{]} \\
+Members & hierarchical, resp.-specific cuts & lambda = 1 & 0.36 & 0.047
+& {[}0.28, 0.46{]} \\
+Members & hierarchical, resp.-specific cuts & delta = 0 & 0.09 & 0.088 &
+{[}-0.07, 0.27{]} \\
+Members & bootstrap of aggregate & lambda = 1 (true) & 0.80 & & \\
+Members & bootstrap, common cuts & lambda = 1 (true) & 0.92 & & \\
+Members & bootstrap, resp.-specific cuts & lambda = 1 (true) & 0.82 &
+& \\
+Non-members & aggregate & lambda = 1 & 0.26 & 0.098 & -7.6 \\
+Non-members & aggregate & delta = 0 & 0.01 & 0.094 & 0.1 \\
+Non-members & aggregate & delta = 1 & 0.01 & 0.094 & -10.5 \\
+Non-members & hierarchical, common cuts & lambda = 1 & 1.12 & 0.120 &
+{[}0.90, 1.37{]} \\
+Non-members & hierarchical, common cuts & delta = 0 & -0.24 & 0.092 &
+{[}-0.41, -0.04{]} \\
+Non-members & hierarchical, resp.-specific cuts & lambda = 1 & 0.30 &
+0.041 & {[}0.22, 0.39{]} \\
+Non-members & hierarchical, resp.-specific cuts & delta = 0 & 0.10 &
+0.197 & {[}-0.29, 0.46{]} \\
+Non-members & bootstrap of aggregate & lambda = 1 (true) & 0.79 & & \\
+Non-members & bootstrap, common cuts & lambda = 1 (true) & 0.91 & & \\
+Non-members & bootstrap, resp.-specific cuts & lambda = 1 (true) & 0.73
+& & \\
+
+\end{longtable}
+
+The unit-slope test is where the empirical application earns its keep,
+because the answer depends on the estimation level in a way that is
+informative rather than contradictory. The aggregate estimate is
+\(\hat\lambda = 0.23\) for members and \(0.26\) for non-members, far
+below one. But a pooled \(\overline{\mu}_{it}\) is a noisy proxy for
+each respondent's own, and the bootstrap shows what that does:
+heterogeneity in tastes alone attenuates the aggregate estimate to 0.80
+when the truth is one, and heterogeneity in scale usage of the size
+estimated in Section~\ref{sec-empirical-hetcut} attenuates it further,
+to 0.40 (members) and 0.55 (non-members) --- most of the way to the
+real-data value. The aggregate test cannot be read at face value. In the
+hierarchical model with common cut points the estimate moves to the
+other side of one, \(1.70\) (members) and \(1.12\) (non-members), and
+its bootstrap returns 0.92 under a true value of one, so that value is
+not an artifact of shrinkage either. The two disagree because they are
+identified from different variation. With common cut points, the only
+way the model can fit between-respondent differences in the \emph{level}
+of the ordinal response --- one respondent who answers ``somewhat
+likely'' to every card, another who answers ``neither'' --- is to
+amplify the between-respondent spread of \(\overline{\mu}_i\), which is
+what a \(\lambda\) above one does. Once each respondent carries her own
+cut points, that level is absorbed and \(\lambda\) is identified from
+\emph{within}-respondent variation across tasks. There the estimate is
+\(0.36\) (members, interval {[}0.28, 0.46{]}) and \(0.30\)
+(non-members): when the displayed set improves, a respondent's stated
+likelihood moves about a third as far as her choices say it should. This
+is the scale-compression reading of \(\lambda < 1\) in
+Section~\ref{sec-spectests}, and it is the second way the data say that
+a scale point is not worth a fixed number. The estimator is not
+unbiased, and we say so: with four free thresholds per respondent
+informed by ten reports, its bootstrap returns 0.82 (members) and 0.73
+(non-members) when the truth is one, so the compression should be
+measured against those values rather than against one. The real-data
+estimates lie a further 0.45 and 0.43 below them, several posterior
+standard deviations, so the compression is real but smaller than the raw
+estimate suggests.
+
+\textbf{Dichotomising the scale.} Collapsing the five points to
+top-two-box and fitting the binary model costs precision and nothing
+else, as Section~\ref{sec-sim-benchmarks} predicts. The posterior
+standard deviations of the population part-worths are 22\% larger under
+the incumbent binary logit for members and 18\% for non-members, while
+holdout hit rates are within sampling error of the ordinal model's
+(Table~\ref{tbl-emp-compare}). The consultancy's report recovered the
+scale's thresholds by fitting a sequence of binary models, one per cut;
+one ordinal fit returns all four, with posterior standard deviations no
+larger than the separate fits', and answers the top-box margin ---
+25.9\% of members for the current card --- that a top-two-box model
+cannot address at all.
+
+\textbf{Fixed probabilities per label.} The constant-probability
+heuristic attaches 0.05/0.25/0.5/0.75/0.95 to the five labels.
+Equation~\ref{eq-condexp} says what each label is actually worth given
+the task it was given in, and Table~\ref{tbl-emp-worth} reports that
+quantity across the estimation tasks. The constants are wrong for every
+label, and ``somewhat likely'' is worth 0.80 to a member and 0.93 to a
+non-member. The managerial consequence appears in the scenario analysis:
+because the heuristic's incidence is a constant computed from observed
+label shares, it reports 70.1\% of members likely to sign up for the
+current card and exactly the same figure for the worst case, in which
+the consultancy's own model puts sign-up at 39.5\% and ours at 22.1\%.
+The ordinal model and the incumbent binary model agree closely across
+all nine scenarios at the top-two-box margin
+(Figure~\ref{fig-emp-scenarios}); the difference between them is what
+the ordinal model can additionally say.
+
+\begin{longtable}[]{@{}lrllll@{}}
+
+\caption{\label{tbl-emp-worth}The purchase probability behind each scale
+point, E{[}p \textbar{} y = w, task{]}, across the estimation tasks
+(hierarchical cloglog fit, posterior means), against the fixed constant
+the heuristic assigns.}
+
+\tabularnewline
+
+\toprule\noalign{}
+Segment & Label & Fixed constant & 10th pct & Median & 90th pct \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Members & 1 & 0.05 & 0.00 & 0.01 & 0.01 \\
+Members & 2 & 0.25 & 0.08 & 0.13 & 0.16 \\
+Members & 3 & 0.50 & 0.35 & 0.44 & 0.55 \\
+Members & 4 & 0.75 & 0.76 & 0.80 & 0.94 \\
+Members & 5 & 0.95 & 0.98 & 0.98 & 0.99 \\
+Non-members & 1 & 0.05 & 0.08 & 0.14 & 0.16 \\
+Non-members & 2 & 0.25 & 0.35 & 0.45 & 0.52 \\
+Non-members & 3 & 0.50 & 0.69 & 0.74 & 0.83 \\
+Non-members & 4 & 0.75 & 0.92 & 0.93 & 0.97 \\
+Non-members & 5 & 0.95 & 0.99 & 0.99 & 0.99 \\
+
+\end{longtable}
+
+\begin{figure}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{R/output/figs/empirical_scenarios.png}}
+
+}
+
+\caption{\label{fig-emp-scenarios}Share of prospects likely to sign up
+under the consultancy's nine card scenarios, by method. The report
+column is the consultancy's own simulator and anchors the current-offer
+scenario; the fixed-probability heuristic cannot respond to the
+scenario.}
+
+\end{figure}%
+
 \subsection{Scale-Usage Heterogeneity}\label{sec-empirical-hetcut}
+
+Scale-usage heterogeneity is large in these data. Letting each
+respondent carry her own cut points improves WAIC by 2805 (members) and
+889 (non-members) and the held-out log-likelihood by 236 and 113, and
+raises the held-out forced-choice hit rate from 0.547 to 0.605 and from
+0.577 to 0.653: once the ordinal responses are no longer forced through
+common thresholds, they stop distorting the individual tastes. The
+population standard deviation of the first threshold is 3.1 utility
+units for members and 3.3 for non-members, against population
+part-worths of order one, and scale usage correlates positively with
+taste intensity (correlations between the individual part-worths and the
+first threshold of 0.07 to 0.40 for members).
+
+Figure~\ref{fig-emp-cuts-i} shows how wide the spread is: for every
+boundary the middle half of respondents spans about three utility units,
+wider than the largest part-worth in either segment, and the common cut
+point falls within the middle 90\% of respondents' thresholds without
+being typical of them.
+
+\begin{figure}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{R/output/figs/empirical_cuts_i.png}}
+
+}
+
+\caption{\label{fig-emp-cuts-i}Respondent-specific cut points on the
+utility scale: the median, the middle 50\% and the middle 90\% of
+respondents' posterior means for each boundary, with the
+common-cut-point estimate for comparison.}
+
+\end{figure}%
+
+As Section~\ref{sec-hetcut} anticipates, the individual thresholds
+themselves are only partially identified from ten ordinal reports, and
+their posterior means sit at the extremes: for the median member,
+``somewhat likely'' covers purchase probabilities from 0.07 to 1.00.
+Most respondents use two of the five scale points, which is what the
+marginal response distribution looks like through the model. What the
+extension recovers is the population distribution of scale usage and its
+correlation with tastes, not each respondent's thresholds. For the
+managerial quantities it matters less than one might expect --- the
+respondent-specific-cut-point model's sign-up shares track the
+common-cut model's within a few points across the scenarios --- but for
+inference about the behavioural model it matters a great deal, since it
+is the level at which the unit-slope test becomes interpretable.
 
 \section{Discussion}\label{sec-discussion}
 
@@ -1585,11 +2130,12 @@ which good attains it, \emph{any} coherent report about the best
 option's standing against the outside good must depend on the task only
 through its inclusive value. The empirical success of the AnyMax/Unified
 form over DR-2Max, documented in both Diener et al. (2006) and Hung,
-Liu, et al. (2025), is what our framework predicts. Where our account
-differs from Brazell et al. (2006) is in what the second response
-\emph{is}. They treat it as a second choice from an augmented set; we
-treat it as a report about an unresolved comparison, and that reading is
-what licenses asking for it on an ordinal scale.
+Liu, et al. (2025), is what our framework predicts, and it is the form
+commercial software settled on (Sawtooth Software 2016). Where our
+account differs from Brazell et al. (2006) is in what the second
+response \emph{is}. They treat it as a second choice from an augmented
+set; we treat it as a report about an unresolved comparison, and that
+reading is what licenses asking for it on an ordinal scale.
 
 The choice of link encodes a behavioral assumption about when the
 consumer resolves the outside-good shock. For a binary follow-up both
@@ -2393,8 +2939,8 @@ AI-assisted technologies in the manuscript preparation process}
 
 During the preparation of this work the authors used Claude (Anthropic),
 accessed through Claude Code, iteratively in the drafting and editing of
-manuscript text and select coding tasks. After using this tool, the
-authors reviewed and edited the content as needed and take full
+manuscript text and select coding tasks. The authors carefully reviewed
+and edited any output provided by this tool, and take full
 responsibility for the content of the published article.
 
 \section*{References}\label{references}
@@ -2407,6 +2953,11 @@ Allenby, Greg M., Nino Hardt, and Peter E. Rossi. 2019. {``Economic
 Foundations of Conjoint Analysis.''} In \emph{Handbook of the Economics
 of Marketing}, edited by Jean-Pierre Dubé and Peter E. Rossi, vol. 1.
 North-Holland.
+
+\bibitem[\citeproctext]{ref-BenAkiva_1990}
+Ben-Akiva, Moshe, and Takayuki Morikawa. 1990. {``Estimation of
+Switching Models from Revealed Preferences and Stated Intentions.''}
+\emph{Transportation Research Part A} 24 (6): 485--95.
 
 \bibitem[\citeproctext]{ref-Brazell_2006}
 Brazell, Jeff D., Christopher G. Diener, Ekaterina Karniouchina, William
@@ -2512,6 +3063,13 @@ Probability: An Experiment in Survey Design.''} \emph{Journal of the
 American Statistical Association} 61 (315): 658--96.
 \url{https://doi.org/10.1080/01621459.1966.10480897}.
 
+\bibitem[\citeproctext]{ref-King_2004}
+King, Gary, Christopher J. L. Murray, Joshua A. Salomon, and Ajay
+Tandon. 2004. {``Enhancing the Validity and Cross-Cultural Comparability
+of Measurement in Survey Research.''} \emph{American Political Science
+Review} 98 (1): 191--207.
+\url{https://doi.org/10.1017/S000305540400108X}.
+
 \bibitem[\citeproctext]{ref-Manski_1990}
 Manski, Charles F. 1990. {``The Use of Intentions Data to Predict
 Behavior: A Best-Case Analysis.''} \emph{Journal of the American
@@ -2559,6 +3117,10 @@ Choice.''} \emph{Transportation Research Part A} 71: 141--52.
 Rossi, Peter E., Greg M. Allenby, and Robert McCulloch. 2005.
 \emph{Bayesian Statistics and Marketing}. John Wiley \& Sons.
 
+\bibitem[\citeproctext]{ref-Sawtooth_2016}
+Sawtooth Software. 2016. \emph{{CBC/HB} V5: Software for {Hierarchical
+Bayes} Estimation for {CBC} Data}. Sawtooth Software, Inc.
+
 \bibitem[\citeproctext]{ref-Sawtooth_2017}
 Sawtooth Software. 2017. \emph{The {CBC} System for Choice-Based
 Conjoint Analysis, Version 9}. Technical Paper. Sawtooth Software, Inc.
@@ -2569,6 +3131,12 @@ Discrete Choice Experiments to Improve Willingness-to-Pay Estimation
 That Result in {SDR} and {SADR}: Separated (Adaptive) Dual Response.''}
 \emph{Management Science} 63 (3): 829--42.
 \url{https://doi.org/10.1287/mnsc.2015.2367}.
+
+\bibitem[\citeproctext]{ref-Swait_1993}
+Swait, Joffre, and Jordan Louviere. 1993. {``The Role of the Scale
+Parameter in the Estimation and Comparison of Multinomial Logit
+Models.''} \emph{Journal of Marketing Research} 30 (3): 305--14.
+\url{https://doi.org/10.1177/002224379303000303}.
 
 \bibitem[\citeproctext]{ref-Train_2001}
 Train, Kenneth E. 2001. \emph{A Comparison of Hierarchical {Bayes} and
@@ -2602,6 +3170,11 @@ Adoption with Conjoint Analysis: External Validity of {BDM}-Based
 Incentive-Aligned and Dual-Response Choice Designs.''} \emph{Marketing
 Letters} 27 (1): 195--210.
 \url{https://doi.org/10.1007/s11002-014-9326-x}.
+
+\bibitem[\citeproctext]{ref-Yatchew_1985}
+Yatchew, Adonis, and Zvi Griliches. 1985. {``Specification Error in
+Probit Models.''} \emph{The Review of Economics and Statistics} 67 (1):
+134--39. \url{https://doi.org/10.2307/1928444}.
 
 \end{CSLReferences}
 
