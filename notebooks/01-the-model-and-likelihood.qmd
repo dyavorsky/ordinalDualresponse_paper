@@ -1,6 +1,6 @@
 ---
 title: "The Model and the Likelihood"
-subtitle: "The model, worked end to end on a single configuration"
+subtitle: "A Simple Example"
 author:
   - name: Dan Yavorsky
   - name: Geoffery Zheng
@@ -19,20 +19,17 @@ execute:
 
 ## What this notebook does
 
-This notebook is the walkthrough. It takes one parameter configuration of the model
-and follows it the whole way: draw a design, simulate the behavioral process,
-write out the joint likelihood, maximize it, and check what comes back.
+This notebook is a walkthrough. It simulates data from the aggregate model under one 
+simple specification for one parameter configuration, estimates the model using
+the simulated data, and compares the resulting estimates to the known parameter values.
 
 Everything is self-contained, and the code is deliberately the simplest that will
-work. Nothing is generalized yet. Notebook 02 takes the same machinery,
-generalizes it to both links, and runs it across configurations and repeated
-samples.
+work. Nothing is generalized yet. 
 
 The functions are copies of `R/lib/dgp.R` and `R/lib/likelihood.R`, 
 commented so the mechanics are visible and documented.
 
-This notebook writes no results files. Nothing in the article depends on it, so
-it can be edited freely.
+This notebook writes no results files. Nothing in the article depends on it.
 
 ## 1. The model in one screen
 
