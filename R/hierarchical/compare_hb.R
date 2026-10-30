@@ -27,8 +27,10 @@ holdout_ll <- function(fit, dat_holdout) {
     if (is.null(dim(Phi_r))) Phi_r <- matrix(Phi_r, N, 1)
     cutmat <- if (het_cut) phi_to_cutmat(Phi_r, P, W)
               else matrix(fit$draws$cut[r, ], N, W - 1, byrow = TRUE)
+    ext <- if (is.null(fit$settings$ext)) "none" else fit$settings$ext
     ll[r, ] <- resp_loglik_all(dat_holdout, Phi_r[, 1:P, drop = FALSE], cutmat,
-                               fit$settings$choice_only)
+                               fit$settings$choice_only, ext,
+                               if (ext == "none") NULL else fit$draws$theta[r])
   }
   list(total = sum(apply(ll, 2, logmeanexp)),
        by_resp = apply(ll, 2, logmeanexp))

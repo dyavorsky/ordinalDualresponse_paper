@@ -33,7 +33,12 @@ phi_to_cutmat <- function(Phi, P, W) {
 
 # N-vector of per-respondent joint log-likelihoods.
 #   Bmat: N x P coefficients; cutmat: N x (W-1) utility-scale cut points.
-resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE) {
+#   ext / theta: the paper's one-parameter specification enlargements, with a
+#   COMMON theta (see spec_tests.R for the aggregate versions):
+#     "lambda": second-stage predictor theta * mubar      (theory: theta = 1)
+#     "delta":  predictor mubar + theta * (V_{j*} - mubar) (theory: theta = 0)
+resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE,
+                            ext = "none", theta = NULL) {
   des <- dat$design
   n <- des$n_tasks
   J <- des$J
@@ -41,11 +46,16 @@ resp_loglik_all <- function(dat, Bmat, cutmat, choice_only = FALSE) {
   V <- matrix(rowSums(des$X * Bx), nrow = n, ncol = J, byrow = TRUE)
   m <- row_max(V)
   mubar <- m + log(rowSums(exp(V - m)))
-  ll <- V[cbind(seq_len(n), dat$jstar)] - mubar
+  Vstar <- V[cbind(seq_len(n), dat$jstar)]
+  ll <- Vstar - mubar
   if (!choice_only) {
+    pred <- switch(ext,
+                   lambda = theta * mubar,
+                   delta  = mubar + theta * (Vstar - mubar),
+                   mubar)
     cut_aug <- cbind(-Inf, cutmat, Inf)
-    lo <- cut_aug[cbind(dat$resp, dat$y)] - mubar
-    hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - mubar
+    lo <- cut_aug[cbind(dat$resp, dat$y)] - pred
+    hi <- cut_aug[cbind(dat$resp, dat$y + 1L)] - pred
     ll <- ll + log(pmax(ord_prob_z(lo, hi, dat$link), 1e-312))
   }
   as.numeric(rowsum(ll, dat$resp, reorder = TRUE))
@@ -90,8 +100,15 @@ fit_dual_hb <- function(dat,
                         mcmc = list(R = 30000, burn = 10000, thin = 10),
                         het_cut = FALSE, choice_only = FALSE,
                         priors = NULL, keep_phi = TRUE,
+                        ext = c("none", "lambda", "delta"),
                         seed = NULL, verbose = TRUE) {
   if (!is.null(seed)) set.seed(seed)
+  # Optional common extension parameter (the specification tests at the
+  # hierarchical level). Starts at, and is shrunk toward, the theory's value.
+  ext <- match.arg(ext)
+  if (choice_only) ext <- "none"
+  theta_null <- if (ext == "lambda") 1 else 0
+  theta <- theta_null
   des <- dat$design
   N <- dat$N
   P <- des$P
@@ -120,19 +137,23 @@ fit_dual_hb <- function(dat,
   # par_to_cut(zeta, P = 0, W) reads the common-cut block directly
   cur_cutmat <- if (het_cut) phi_to_cutmat(Phi, P, W)
                 else matrix(par_to_cut(zeta, 0, W), N, W - 1, byrow = TRUE)
-  cur_ll <- resp_loglik_all(dat, Phi[, 1:P, drop = FALSE], cur_cutmat, choice_only)
+  cur_ll <- resp_loglik_all(dat, Phi[, 1:P, drop = FALSE], cur_cutmat, choice_only,
+                            ext, theta)
 
   # --- MH bookkeeping
   s_phi <- rep(2.93 / sqrt(dim_phi), N)
   acc_phi <- rep(0, N)
   s_zeta <- 0.05
   acc_zeta <- 0
+  s_theta <- 0.05
+  acc_theta <- 0
   window <- 100
 
   # --- storage
   keep_betabar <- matrix(NA_real_, nkeep, dim_phi)
   keep_Sigma <- array(NA_real_, c(nkeep, dim_phi, dim_phi))
   keep_cut <- if (!het_cut && !choice_only) matrix(NA_real_, nkeep, W - 1) else NULL
+  keep_theta <- if (ext != "none") numeric(nkeep) else NULL
   keep_ll <- numeric(nkeep)
   keep_ll_resp <- matrix(NA_real_, nkeep, N)
   keep_Phi <- if (keep_phi) array(NA_real_, c(nkeep, N, dim_phi)) else NULL
@@ -146,7 +167,8 @@ fit_dual_hb <- function(dat,
     Z <- matrix(rnorm(N * dim_phi), N, dim_phi) %*% U
     Prop <- Phi + Z * s_phi
     prop_cutmat <- if (het_cut) phi_to_cutmat(Prop, P, W) else cur_cutmat
-    prop_ll <- resp_loglik_all(dat, Prop[, 1:P, drop = FALSE], prop_cutmat, choice_only)
+    prop_ll <- resp_loglik_all(dat, Prop[, 1:P, drop = FALSE], prop_cutmat, choice_only,
+                               ext, theta)
     Sinv <- chol2inv(chol(Sigma))
     dcur <- sweep(Phi, 2, phibar)
     dprop <- sweep(Prop, 2, phibar)
@@ -163,7 +185,8 @@ fit_dual_hb <- function(dat,
     if (!het_cut && !choice_only) {
       zeta_prop <- zeta + rnorm(W - 1, sd = s_zeta)
       cut_prop <- matrix(par_to_cut(zeta_prop, 0, W), N, W - 1, byrow = TRUE)
-      ll_prop <- resp_loglik_all(dat, Phi[, 1:P, drop = FALSE], cut_prop, choice_only)
+      ll_prop <- resp_loglik_all(dat, Phi[, 1:P, drop = FALSE], cut_prop, choice_only,
+                                 ext, theta)
       lp <- (sum(ll_prop) - 0.5 * priors$zeta_prec * sum(zeta_prop^2)) -
             (sum(cur_ll) - 0.5 * priors$zeta_prec * sum(zeta^2))
       if (log(runif(1)) < lp) {
@@ -171,6 +194,20 @@ fit_dual_hb <- function(dat,
         cur_cutmat <- cut_prop
         cur_ll <- ll_prop
         acc_zeta <- acc_zeta + 1
+      }
+    }
+
+    # (2b) common extension parameter by RW-MH, prior N(theta_null, 1/zeta_prec)
+    if (ext != "none") {
+      theta_prop <- theta + rnorm(1, sd = s_theta)
+      ll_prop <- resp_loglik_all(dat, Phi[, 1:P, drop = FALSE], cur_cutmat, choice_only,
+                                 ext, theta_prop)
+      lp <- (sum(ll_prop) - 0.5 * priors$zeta_prec * (theta_prop - theta_null)^2) -
+            (sum(cur_ll) - 0.5 * priors$zeta_prec * (theta - theta_null)^2)
+      if (log(runif(1)) < lp) {
+        theta <- theta_prop
+        cur_ll <- ll_prop
+        acc_theta <- acc_theta + 1
       }
     }
 
@@ -189,8 +226,13 @@ fit_dual_hb <- function(dat,
         s_zeta <- min(max(s_zeta * exp(1.5 * (rate_z - 0.30)), 1e-3), 2)
         acc_zeta <- 0
       }
+      if (ext != "none") {
+        rate_t <- acc_theta / window
+        s_theta <- min(max(s_theta * exp(1.5 * (rate_t - 0.30)), 1e-3), 2)
+        acc_theta <- 0
+      }
     }
-    if (it == burn) { acc_phi <- rep(0, N); acc_zeta <- 0 }
+    if (it == burn) { acc_phi <- rep(0, N); acc_zeta <- 0; acc_theta <- 0 }
 
     # store
     if (it > burn && (it - burn) %% thin == 0) {
@@ -198,6 +240,7 @@ fit_dual_hb <- function(dat,
       keep_betabar[ki, ] <- phibar
       keep_Sigma[ki, , ] <- Sigma
       if (!is.null(keep_cut)) keep_cut[ki, ] <- par_to_cut(zeta, 0, W)
+      if (!is.null(keep_theta)) keep_theta[ki] <- theta
       keep_ll[ki] <- sum(cur_ll)
       keep_ll_resp[ki, ] <- cur_ll
       if (keep_phi) keep_Phi[ki, , ] <- Phi
@@ -212,11 +255,13 @@ fit_dual_hb <- function(dat,
   post_iters <- R_iter - burn
   structure(list(
     draws = list(phibar = keep_betabar, Sigma = keep_Sigma, cut = keep_cut,
-                 Phi = keep_Phi),
+                 Phi = keep_Phi, theta = keep_theta),
     ll = keep_ll, ll_resp = keep_ll_resp,
     accept = list(phi = mean(acc_phi / post_iters),
-                  zeta = if (het_cut || choice_only) NA else acc_zeta / post_iters),
+                  zeta = if (het_cut || choice_only) NA else acc_zeta / post_iters,
+                  theta = if (ext == "none") NA else acc_theta / post_iters),
     settings = list(mcmc = mcmc, het_cut = het_cut, choice_only = choice_only,
+                    ext = ext, theta_null = theta_null,
                     P = P, W = W, N = N, link = dat$link, priors = priors),
     runtime_min = as.numeric(difftime(Sys.time(), t0, units = "mins"))
   ), class = "dr_hb_fit")
