@@ -52,7 +52,15 @@ for (seg in c("member", "nonmember")) {
     y_freq = tabulate(full$y, 5L), y_share = tabulate(full$y, 5L) / length(full$y),
     mean_y_by_task = tapply(full$y, tt, mean),
     t2b_by_task = tapply(full$y >= 4L, tt, mean),
-    jstar_share = tabulate(full$jstar, 3L) / length(full$jstar))
+    jstar_share = tabulate(full$jstar, 3L) / length(full$jstar),
+    # respondent-level scale use, as counts over respondents (no ids): how many
+    # distinct points each person used, each person's modal answer, how often
+    # the modal answer was given, and the spread of per-person top-two-box shares
+    points_used = tabulate(tapply(full$y, full$resp, function(v) length(unique(v))), 5L),
+    modal_cat = tabulate(tapply(full$y, full$resp, function(v) which.max(tabulate(v, 5L))), 5L),
+    modal_share_q = quantile(tapply(full$y, full$resp, function(v) max(tabulate(v, 5L)) / length(v)),
+                             c(.1, .25, .5, .75, .9)),
+    t2b_resp_q = quantile(tapply(full$y >= 4L, full$resp, mean), c(.1, .25, .5, .75, .9)))
 
   # ---- B. aggregate ML ----------------------------------------------------------
   a <- agg_all[[seg]]
