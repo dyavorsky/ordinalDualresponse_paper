@@ -113,9 +113,15 @@ for (seg in c("member", "nonmember")) {
     corr <- cov2cor(Sig)
     Phi_pm <- apply(het$draws$Phi, c(2, 3), mean)
     cuts_i <- phi_to_cutmat(Phi_pm, P, W)
+    # The population mean of the cut block is stored in the phi
+    # parameterisation (c_1, log successive differences); map every draw back
+    # to utility-scale cut points before summarising, or columns 2..W-1 are
+    # log-differences, not cut points.
+    cutpop_draws <- phi_to_cutmat(het$draws$phibar, P, W)
     R$hetcut <- list(
       phibar = pm(het$draws$phibar)[1:P], phibar_sd = psd(het$draws$phibar)[1:P],
-      cut_pop = pm(het$draws$phibar)[(P + 1):(P + W - 1)],
+      cut_pop = pm(cutpop_draws), cut_pop_sd = psd(cutpop_draws),
+      alpha_pop = pm(Fclog(cutpop_draws)),
       sd_c1_across_resp = sqrt(Sig[P + 1, P + 1]),
       sd_logdiff_across_resp = sqrt(diag(Sig)[(P + 2):(P + W - 1)]),
       corr_beta_c1 = setNames(corr[1:P, P + 1], cn),
@@ -132,11 +138,16 @@ for (seg in c("member", "nonmember")) {
   k2l  <- load_fit("k2_logit", seg);  k3l  <- load_fit("k3_logit", seg)
   if (!is.null(ord) && !is.null(t2bl)) {
     sd_ratio <- function(f) psd(f$draws$phibar) / psd(ord$draws$phibar)
+    # the same ratio for the respondent-level part-worths: posterior sd of
+    # each beta_ip over draws, averaged over respondents and attributes
+    ind_sd <- function(f) mean(apply(f$draws$Phi, c(2, 3), sd))
+    sd_ratio_ind <- function(f) ind_sd(f) / ind_sd(ord)
     bins <- list(t2b_logit = t2bl, t2b_cloglog = t2bc, top_logit = topl, top_cloglog = topc)
     bins <- bins[!vapply(bins, is.null, logical(1))]
     R$dichot <- list(
       sd_ratio = sapply(bins, sd_ratio),
       sd_ratio_mean = sapply(bins, function(f) mean(sd_ratio(f))),
+      sd_ratio_ind_mean = sapply(bins, sd_ratio_ind),
       hit = c(ordinal = R$hb$hit, sapply(bins, hit_rate, dat_holdout = hold)),
       phibar = sapply(bins, function(f) pm(f$draws$phibar)))
     # the report's stepwise thresholds: four separate binary logits vs one
@@ -188,6 +199,19 @@ for (seg in c("member", "nonmember")) {
       heur_juster = 100 * inc["juster"], heur_t2b = 100 * inc["t2b"],
       row.names = NULL)
     if (!is.null(het)) sc$hetcut_t2b <- hb_su(het, 4)
+    # "Consultant-style" fixed probabilities: the label distribution for each
+    # card from the four binary logit fits (cuts at 2..5), differenced, then
+    # the Juster weights. Cumulative shares from separate fits can cross; the
+    # count of negative differences is recorded and they are clipped at zero
+    # (and the distribution renormalised) before weighting.
+    steps <- list(k2l, k3l, t2bl, topl)
+    if (all(!vapply(steps, is.null, logical(1)))) {
+      cum <- sapply(steps, function(f) signup_hb(f, Xs, 2)$mean)   # nscen x 4: Pr(y >= 2), ..., Pr(y >= 5)
+      lab <- cbind(1 - cum[, 1], cum[, 1] - cum[, 2], cum[, 2] - cum[, 3], cum[, 3] - cum[, 4], cum[, 4])
+      sc$consultant_crossings <- rowSums(lab < 0)
+      lab <- pmax(lab, 0); lab <- lab / rowSums(lab)
+      sc$consultant_juster <- 100 * as.vector(lab %*% wts_juster)
+    }
     R$scenarios <- list(table = sc, levels = tab[, c("scenario", paste0("att", 1:9))])
   }
 
@@ -236,6 +260,25 @@ for (seg in c("member", "nonmember")) {
     }
     R$attenuation$lambda_hetcut_real <- if (!is.null(exlh)) mean(exlh$draws$theta) else NA
   }
+
+  # Calibrated lambda: the estimator's expectation as a line in the true value
+  # (from the calib stage), inverted at the real-data posterior. The interval
+  # carries the posterior spread of the real-data estimate through the inverse
+  # map and adds the calibration residual, so it reflects both the estimator's
+  # noise and the uncertainty of the line.
+  calibrate <- function(file, fit) {
+    if (!file.exists(file) || is.null(fit)) return(NULL)
+    cb <- readRDS(file); ln <- lm(lambda_hb ~ lambda_true, data = cb)
+    a <- unname(coef(ln)[1]); b <- unname(coef(ln)[2]); rs <- summary(ln)$sigma
+    th <- fit$draws$theta; cal <- (th - a) / b
+    tot_sd <- sqrt(var(cal) + (rs / b)^2)
+    list(grid = cb, intercept = a, slope = b, resid_sd = rs,
+         lambda_hat = mean(th), lambda_hat_ci = unname(quantile(th, c(.025, .975))),
+         lambda_cal = mean(cal), lambda_cal_sd = tot_sd,
+         lambda_cal_ci = mean(cal) + c(-1.96, 1.96) * tot_sd)
+  }
+  R$calib <- calibrate(file.path(FD, sprintf("calib_lambda_hetcut_%s.rds", seg)), exlh)
+  R$calib_common <- calibrate(file.path(FD, sprintf("calib_lambda_%s.rds", seg)), exl)
 
   results[[seg]] <- R
 }

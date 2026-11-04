@@ -17,8 +17,12 @@ draw_betas <- function(N, beta_bar, Sigma, seed) {
 #   link:  "cloglog" (probability report), "logit" (graded comparison)
 #   model2: "inclusive" (the paper's second stage) or "2max" (DR-2Max-style:
 #           second-stage latent is V_{j*} + fresh logistic noise)
-#   lambda: slope on the inclusive value in the second-stage latent (logit-link
-#           semantics; lambda = 1 is the theory's value)
+#   lambda: slope on the inclusive value in the second-stage latent (lambda = 1
+#           is the theory's value). With lambda_latent = "logistic" (the
+#           default, the spec-test studies) the latent is logistic at
+#           lambda * mubar; with "gumbel" it is Gumbel at lambda * mubar, which
+#           is exactly the cloglog lambda-extension the sampler fits, so a
+#           cloglog fit can be calibrated against its own process
 #   shock:  "gumbel" or "normal" (variance-matched, for misspecification runs)
 #   nest:   NULL, or list(groups = <length-J nest ids>, lambda = <one per
 #           nest>) to draw correlated nested-logit (GEV) first-stage
@@ -31,10 +35,11 @@ draw_betas <- function(N, beta_bar, Sigma, seed) {
 simulate_dual_hb <- function(design, Bmat, cut, link = c("cloglog", "logit"), seed,
                              model2 = c("inclusive", "2max"), lambda = 1,
                              shock = c("gumbel", "normal"), drift = NULL,
-                             nest = NULL) {
+                             nest = NULL, lambda_latent = c("logistic", "gumbel")) {
   link <- match.arg(link)
   model2 <- match.arg(model2)
   shock <- match.arg(shock)
+  lambda_latent <- match.arg(lambda_latent)
   set.seed(seed)
   n <- design$n_tasks
   J <- design$J
@@ -60,6 +65,8 @@ simulate_dual_hb <- function(design, Bmat, cut, link = c("cloglog", "logit"), se
 
   latent <- if (model2 == "2max") {
     V[cbind(seq_len(n), jstar)] + rlogis(n)
+  } else if (lambda != 1 && lambda_latent == "gumbel") {
+    lambda * mubar + rgumbel(n)               # the cloglog lambda extension itself
   } else if (lambda != 1) {
     rlogis(n, location = lambda * mubar)      # statistical alternative for the slope test
   } else if (link == "cloglog") {

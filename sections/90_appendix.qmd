@@ -2,7 +2,7 @@
 
 ### A.1 Proof of @lem-gumbel {.unnumbered}
 
-The result is classical [@Mcfadden_1981]. We give the derivation because part (ii) carries @eq-joint, and because Appendix D extends this calculation to generalized extreme value errors.
+The result is classical: both parts follow from the joint law of the maximizer and the maximum in the GEV theorem of @Mcfadden_1981, and @dePalma_2007 state the independence in part (ii) explicitly, for the whole GEV family. We give the derivation because part (ii) carries @eq-joint, and because Appendix D extends this calculation to generalized extreme value errors.
 
 Let $u_j = V_j + \eta_j$ with $\eta_j \iid \text{Gumbel}(0,1)$ for $j \in \mathcal{J}^+$, so $u_j$ has CDF $F_j(t) = \exp\left( -e^{-(t - V_j)} \right)$ and density $f_j(t) = e^{-(t-V_j)} \exp\left( -e^{-(t-V_j)} \right)$. For any $j$ and any $u$,
 $$
@@ -112,7 +112,7 @@ Because the bias is similar for models of similar dimension, Newton–Raftery *r
 
 ## Appendix D: Correlated Alternatives {#sec-appendix-gev .unnumbered}
 
-@lem-gumbel is stated for independent Gumbel errors, and the whole of @sec-model rests on it. Both of its properties hold for the entire generalized extreme value (GEV) family of @Mcfadden_1981, so that correlation among the inside goods costs the framework nothing beyond a redefinition of the inclusive value.
+@lem-gumbel is stated for independent Gumbel errors, and the whole of @sec-model rests on it. Both of its properties hold for the entire generalized extreme value (GEV) family of @Mcfadden_1981, and the independence in part (ii) is the invariance result of @dePalma_2007, so that correlation among the inside goods costs the framework nothing beyond a redefinition of the inclusive value.
 
 Let the inside-good components have the GEV joint distribution
 $$

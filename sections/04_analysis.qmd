@@ -46,7 +46,7 @@ We estimate our model at the three levels of @sec-estimation --- aggregate maxim
 ```{r}
 #| label: tbl-emp-partworths
 #| echo: false
-#| tbl-cap: "Part-worths and cut points at the three estimation levels, cloglog link. Aggregate: maximum-likelihood estimate and (respondent-clustered standard error). Hierarchical: posterior mean and (posterior standard deviation) of the population mean, with common cut points or respondent-specific cut points; for the latter the cut point shown is the population mean of the individual cut points, which the summary does not carry a standard deviation for. Level 1 of each attribute is the omitted reference; members (M) did not see the partner-purchase cash-back attribute vary. NM: non-members."
+#| tbl-cap: "Part-worths and cut points at the three estimation levels, cloglog link. Aggregate: maximum-likelihood estimate and (respondent-clustered standard error). Hierarchical: posterior mean and (posterior standard deviation) of the population mean, with common cut points or respondent-specific cut points; for the latter the cut point shown is the population mean of the individual cut points, $c_w$ at the population mean of the cut-point block, with its posterior standard deviation. Level 1 of each attribute is the omitted reference; members (M) did not see the partner-purchase cash-back attribute vary. NM: non-members."
 #| tbl-colwidths: [16, 14, 14, 14, 14, 14, 14]
 short <- c(partner_cb = "partner cash back", gas_cb = "gas cash back", rest_cb = "restaurant cash back",
            transit_cb = "transit cash back", apr = "purchase APR", penalty = "penalty APR",
@@ -61,7 +61,7 @@ cols <- function(R, cn) { i <- match(cn, R$colnames)
     cell(R$hb$phibar$mean[i], R$hb$phibar$sd[i]),
     cell(R$hetcut$phibar[i], R$hetcut$phibar_sd[i])) }
 cuts <- function(R, w) c(cell(R$agg$cut[w], R$agg$se_cut_cl[w]), cell(R$hb$cut[w], R$hb$cut_sd[w]),
-                         paste0("$", f2(R$hetcut$cut_pop[w]), "$"))
+                         cell(R$hetcut$cut_pop[w], R$hetcut$cut_pop_sd[w]))
 body <- rbind(
   t(sapply(names(lab), function(cn) c(cols(M, cn), cols(NM, cn)))),
   t(sapply(1:4, function(w) c(cuts(M, w), cuts(NM, w)))))

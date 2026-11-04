@@ -15,6 +15,11 @@
 #   boot        parametric bootstrap of both lambda tests under lambda = 1,
 #               simulating from the fitted common-cut model
 #   boot_hetcut the same, simulating from and refitting the het-cut model
+#   calib       calibration of the hierarchical lambda estimator: data simulated
+#               from the fitted het-cut model at lambda in {0.25, 0.5, 0.75, 1}
+#               (Gumbel latent, i.e. the extension the sampler fits), refit with
+#               lambda free; analyze_cobrand.R inverts the resulting line
+#   calib_common the same for the common-cut model
 #   all         everything above, in order
 #
 # Fits are written to `empirical application/derived/fits/` (gitignored).
@@ -142,6 +147,33 @@ stage_boot <- function(het = FALSE, reps = 3L) {
   }
 }
 
+stage_calib <- function(het = TRUE, reps = 3L, grid = c(0.25, 0.5, 0.75, 1)) {
+  for (seg in SEGS) {
+    nm <- if (het) "calib_lambda_hetcut" else "calib_lambda"
+    f <- fit_path(nm, seg)
+    if (file.exists(f)) { cat(sprintf("%-10s %-20s cached\n", seg, nm)); next }
+    est <- load_seg(seg)$est
+    base <- readRDS(fit_path(if (het) "hetcut_cloglog" else "ord_cloglog", seg))
+    P <- base$settings$P; W <- base$settings$W
+    phibar <- colMeans(base$draws$phibar); Sig <- apply(base$draws$Sigma, c(2, 3), mean)
+    out <- expand.grid(rep = seq_len(reps), lambda_true = grid)
+    out$lambda_hb <- NA; out$lambda_hb_sd <- NA
+    for (r in seq_len(nrow(out))) {
+      s <- out$rep[r]; lam <- out$lambda_true[r]; g <- match(lam, grid)
+      Phi_s <- draw_betas(est$N, phibar, Sig, seed = 4000 + 10 * g + s)
+      B <- Phi_s[, 1:P, drop = FALSE]
+      cutv <- if (het) phi_to_cutmat(Phi_s, P, W) else colMeans(base$draws$cut)
+      sim <- simulate_dual_hb(est$design, B, cutv, link = "cloglog", seed = 5000 + 10 * g + s,
+                              lambda = lam, lambda_latent = "gumbel")
+      fh <- hb(sim, 6000 + 10 * g + s, ext = "lambda", het_cut = het)
+      out$lambda_hb[r] <- mean(fh$draws$theta); out$lambda_hb_sd[r] <- sd(fh$draws$theta)
+      cat(sprintf("%-10s %-20s true %.2f rep %d: hierarchical %.3f (sd %.3f)\n",
+                  seg, nm, lam, s, out$lambda_hb[r], out$lambda_hb_sd[r]))
+    }
+    saveRDS(out, f)
+  }
+}
+
 args <- commandArgs(trailingOnly = TRUE)
 stage <- if (length(args)) args[1] else "all"
 switch(stage,
@@ -153,7 +185,10 @@ switch(stage,
   exthet      = stage_ext(TRUE),
   boot        = stage_boot(FALSE),
   boot_hetcut = stage_boot(TRUE),
+  calib       = stage_calib(TRUE),
+  calib_common = stage_calib(FALSE),
   all = { stage_ingest(); stage_aggregate(); stage_agglmd(); stage_battery()
-          stage_ext(FALSE); stage_ext(TRUE); stage_boot(FALSE); stage_boot(TRUE) },
+          stage_ext(FALSE); stage_ext(TRUE); stage_boot(FALSE); stage_boot(TRUE)
+          stage_calib(TRUE); stage_calib(FALSE) },
   stop("unknown stage: ", stage))
 cat("done:", stage, "\n")
