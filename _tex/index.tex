@@ -180,9 +180,9 @@
 \theoremstyle{plain}
 \newtheorem{lemma}{Lemma}[section]
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{conjecture}{Assumption}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -226,7 +226,7 @@ outside good}},
 \makeatother
 \subtitle{Ordinal Dual Response in Choice-Based Conjoint Analysis}
 \author{Dan Yavorsky \and Geoffery Zheng}
-\date{2026-10-30}
+\date{2026-11-04}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -445,10 +445,10 @@ arrived, so her evaluation of it is uncertain.\footnote{This can be
   motivated by a framework in which \(u_{it0} = 0\) and
   \(u_{itj} = {\x_{tj}}'\bfbeta_i + \eta_{itj} - \eta_{it0}\) for
   \(j \in \mathcal{J}^{+}\), where \(\eta_{it0}\) captures the
-  consumer's uncertainty about her future tastes or circumstances at the
-  moment of purchase. Because utilities are ordinal and \(\eta_{it0}\)
-  is a common shock, it plays no role in the comparison among inside
-  goods.} \footnote{While the parametrization
+  consumer's uncertainty about her circumstances at the moment of
+  purchase. Because utilities are ordinal and \(\eta_{it0}\) is a common
+  shock, it plays no role in the comparison among inside goods.}
+\footnote{While the parametrization
   \(\eta_{it0} \sim \text{Gumbel}\left(0,1\right)\) preserves symmetry
   among the \(J+1\) goods and is thus a natural choice, the framework
   easily accommodates alternative distributions for \(\eta_{it0}\). For
@@ -540,8 +540,9 @@ Assumption~\ref{cnj-outside} determines what the consumer consults when
 answering ``how likely are you to purchase the option you selected?'':
 she has not resolved \(\eta_{it0}\), so what she has to report is a
 probability. The assumption delivers a likelihood of
-\emph{cumulative-link} form, depending on the choice set only through
-the inclusive value \(\overline{\mu}_{it}\), and it determines the link.
+\emph{cumulative-link} form (Agresti 2002; Christensen 2020), depending
+on the choice set only through the inclusive value
+\(\overline{\mu}_{it}\), and it determines the link.
 
 She knows \(u^*_{it}\) (she just identified \(j^*_{it}\)) but does not
 know \(\eta_{it0}\), so from her perspective the probability that she
@@ -621,15 +622,27 @@ they sit alongside \(\overline{\mu}_{it}\) and cast
 Equation~\ref{eq-ordprob} as a cumulative link in the inclusive value,
 \begin{equation}\protect\phantomsection\label{eq-cumlink}{
 \Pr \left( y_{it} \le w \right) = F \left( c_w - \overline{\mu}_{it} \right).
-}\end{equation} In our model, \(F\) is the complementary log-log link,
-inherited from the Gumbel kernel. We state the model in
-\(\boldsymbol{\alpha}\), which is what an application reports, and work
-in \(\mathbf{c}\) wherever the argument concerns the location of
-\(\overline{\mu}_{it}\). The two scales handle a common shift in
-utilities differently. Adding a constant \(k\) to every utility adds
-\(k\) to \(\overline{\mu}_{it}\) and multiplies \(S_{it}\) by \(e^{k}\).
-The right-hand side of Equation~\ref{eq-cumlink} depends on the
-parameters only through \(c_w - \overline{\mu}_{it}\), so it is
+}\end{equation} In our model, \(F\) is the complementary log-log
+link,\footnote{In the terminology of cumulative link models (Agresti
+  2002; Christensen 2020), a link is named for the cumulative
+  probability \(\Pr\left( y_{it} \le w \right)\), and
+  \(F(z) = \exp\left( -e^{-z} \right)\), the Gumbel distribution
+  function, is then the inverse of the \emph{log-log} link. It is the
+  complementary log-log link for the exceedance
+  \(\Pr\left( y_{it} > w \right)\), equivalently for the scale read in
+  reverse order; the two descriptions are the same model with the signs
+  of the coefficients and cut points flipped. We keep the latter name
+  because purchase is the natural success: at \(W = 2\) the follow-up is
+  a complementary log-log regression for buying. In the R package
+  ordinal, with the scale in its natural order, the corresponding option
+  is \texttt{link\ =\ "loglog"}.} inherited from the Gumbel kernel. We
+state the model in \(\boldsymbol{\alpha}\), which is what an application
+reports, and work in \(\mathbf{c}\) wherever the argument concerns the
+location of \(\overline{\mu}_{it}\). The two scales handle a common
+shift in utilities differently. Adding a constant \(k\) to every utility
+adds \(k\) to \(\overline{\mu}_{it}\) and multiplies \(S_{it}\) by
+\(e^{k}\). The right-hand side of Equation~\ref{eq-cumlink} depends on
+the parameters only through \(c_w - \overline{\mu}_{it}\), so it is
 unchanged if \(k\) is also added to every \(c_w\). The right-hand side
 of Equation~\ref{eq-ordprob} is unchanged only if every \(\alpha_w\) is
 raised to the power \(e^{-k}\).
@@ -808,6 +821,46 @@ constant-probability weighting fixes the value of a scale point, which
 by Equation~\ref{eq-condexp} varies with the task through \(S_{it}\)
 (i.e., constant-probability weighting is inappropriate since no single
 value assigned to a scale point is right for every task).
+
+\textbf{Relation to the economic foundations of conjoint analysis.}
+Allenby et al. (2019) derive the conjoint logit from a direct utility
+function over unit-demand inside goods and a numeraire outside good,
+maximized against a budget. Choosing good \(j\) yields
+\(\psi_j + \psi_z \left( E - p_j \right) + \varepsilon_j\) and choosing
+nothing yields \(\psi_z E + \varepsilon_z\); the term \(\psi_z E\) is
+common to every option and cancels, so the budget drops out and what
+remains is \(\psi_j - \psi_z p_j + \varepsilon_j\) measured against
+\(\varepsilon_z\). That is Equation~\ref{eq-utility}, with price (where
+the design carries one) as a column of \(\x_{tj}\), \(V_{it0} = 0\), and
+\(\eta_{it0}\) in the role of \(\varepsilon_z\). Integrating out
+\(\eta_{it0}\) returns their choice probability with the outside good,
+\(S_{it} \big/ \left( S_{it} + 1 \right)\), as the previous paragraph
+shows, so the market shares, no-purchase shares, and welfare measures
+built on that logit are available here unchanged. Our one departure is
+the timing of \(\varepsilon_z\). In their setup every error is known to
+the consumer when she answers; under Assumption~\ref{cnj-outside} she
+has not yet observed the outside good's, which is in keeping with their
+reading of the outside good as including ``the option to delay a
+purchase,'' and with the view of a stated intention as a forecast made
+under the information available at the time of the survey (Manski 1990).
+The departure does not touch the budget. Under linear utility an
+uncertain budget cancels exactly as a certain one does, so the
+uncertainty has to sit on the outside good's own shock; the budget
+re-enters only through the price screen that Hung, Liu, et al. (2025)
+apply to the second response, which we take up in
+Section~\ref{sec-discussion}. The same chapter warns against rating
+scales, on the grounds that they are ordinal, carry no likelihood, and
+ask about an ``importance'' that has no meaning outside a demand
+context, and against combining conjoint data with rankings. The second
+response survives each count. We treat the scale as ordinal: the cut
+points are estimated, and any monotone relabelling of the scale points
+leaves Equation~\ref{eq-joint} unchanged. Its likelihood is generated by
+the same utility draw as the forced choice, with no new error term. And
+what it asks about is a demand quantity, the probability of choosing
+\(j^*_{it}\) over the outside good, which is the question the no-choice
+option asks in another form. The interval scale on which the cut points
+sit is fixed by the forced choice, and the ordinal report is located on
+it; the report could not supply that scale on its own.
 
 \subsection{Identification}\label{sec-identification}
 
@@ -1637,10 +1690,16 @@ metal card (\$10 fee) & no / yes \\
 
 Every scale point is used in both segments: the shares of the five
 responses are 4\% / 7\% / 16\% / 47\% / 26\% for members and 5\% / 10\%
-/ 23\% / 44\% / 19\% for non-members. There is no drift across task
-position of the kind Hung, Kurz, et al. (2025) document for no-choice
-responses: the top-two-box share ranges from 72\% to 75\% across the
-twelve positions for members, with no trend.
+/ 23\% / 44\% / 19\% for non-members. The marginal shares understate how
+concentrated the reports are within a person. Across their twelve tasks,
+31\% of members gave the same answer every time and 68\% used no more
+than two of the five points (19\% and 49\% of non-members); the median
+member's top-two-box share is 0.92. Most of the variation in the ordinal
+response is therefore between people, which is the fact
+Section~\ref{sec-empirical-hetcut} returns to. There is no drift across
+task position of the kind Hung, Kurz, et al. (2025) document for
+no-choice responses: the top-two-box share ranges from 72\% to 75\%
+across the twelve positions for members, with no trend.
 
 The consultancy analysed these data with the incumbent binary
 dual-response model: the five-point scale dichotomised at top-two-box
@@ -1722,9 +1781,10 @@ estimate and (respondent-clustered standard error). Hierarchical:
 posterior mean and (posterior standard deviation) of the population
 mean, with common cut points or respondent-specific cut points; for the
 latter the cut point shown is the population mean of the individual cut
-points, which the summary does not carry a standard deviation for. Level
-1 of each attribute is the omitted reference; members (M) did not see
-the partner-purchase cash-back attribute vary. NM: non-members.}
+points, \(c_w\) at the population mean of the cut-point block, with its
+posterior standard deviation. Level 1 of each attribute is the omitted
+reference; members (M) did not see the partner-purchase cash-back
+attribute vary. NM: non-members.}
 
 \tabularnewline
 
@@ -1774,14 +1834,16 @@ foreign-transaction fee 3\% & \(-0.19\)~(0.03) & \(-0.23\)~(0.06) &
 \(-0.28\)~(0.14) \\
 metal card yes & \(-0.25\)~(0.04) & \(-0.32\)~(0.07) & \(-0.47\)~(0.07)
 & \(-0.30\)~(0.07) & \(-0.40\)~(0.13) & \(-0.57\)~(0.14) \\
-cut point \(c_1\) & \(-0.32\)~(0.09) & \(-1.49\)~(0.08) & \(-3.14\) &
-\(0.10\)~(0.19) & \(-0.60\)~(0.13) & \(-1.00\) \\
-cut point \(c_2\) & \(0.04\)~(0.08) & \(-0.58\)~(0.07) & \(-0.17\) &
-\(0.55\)~(0.18) & \(0.45\)~(0.12) & \(-0.07\) \\
-cut point \(c_3\) & \(0.56\)~(0.08) & \(0.57\)~(0.07) & \(0.14\) &
-\(1.25\)~(0.19) & \(1.78\)~(0.13) & \(0.10\) \\
-cut point \(c_4\) & \(2.04\)~(0.10) & \(3.21\)~(0.08) & \(1.42\) &
-\(2.80\)~(0.24) & \(4.44\)~(0.17) & \(1.46\) \\
+cut point \(c_1\) & \(-0.32\)~(0.09) & \(-1.49\)~(0.08) &
+\(-3.14\)~(0.41) & \(0.10\)~(0.19) & \(-0.60\)~(0.13) &
+\(-1.00\)~(0.42) \\
+cut point \(c_2\) & \(0.04\)~(0.08) & \(-0.58\)~(0.07) &
+\(-2.26\)~(0.30) & \(0.55\)~(0.18) & \(0.45\)~(0.12) &
+\(-0.05\)~(0.39) \\
+cut point \(c_3\) & \(0.56\)~(0.08) & \(0.57\)~(0.07) & \(-1.11\)~(0.24)
+& \(1.25\)~(0.19) & \(1.78\)~(0.13) & \(1.07\)~(0.40) \\
+cut point \(c_4\) & \(2.04\)~(0.10) & \(3.21\)~(0.08) & \(3.05\)~(0.37)
+& \(2.80\)~(0.24) & \(4.44\)~(0.17) & \(5.44\)~(0.74) \\
 
 \end{longtable}
 
@@ -2101,11 +2163,14 @@ As Section~\ref{sec-hetcut} anticipates, the individual thresholds
 themselves are only partially identified from ten ordinal reports, and
 their posterior means sit at the extremes: for the median member,
 ``somewhat likely'' covers purchase probabilities from 0.07 to 1.00.
-Most respondents use two of the five scale points, which is what the
-marginal response distribution looks like through the model. What the
-extension recovers is the population distribution of scale usage and its
-correlation with tastes, not each respondent's thresholds. For the
-managerial quantities it matters less than one might expect --- the
+Most respondents use two of the five scale points, which is what the raw
+data already showed in Section~\ref{sec-data}: the model reads a person
+who answers ``somewhat likely'' in every task as one whose thresholds
+make that label cover nearly the whole probability range, not as one who
+is indifferent among twelve different cards. What the extension recovers
+is the population distribution of scale usage and its correlation with
+tastes, not each respondent's thresholds. For the managerial quantities
+it matters less than one might expect --- the
 respondent-specific-cut-point model's sign-up shares track the
 common-cut model's within a few points across the scenarios --- but for
 inference about the behavioural model it matters a great deal, since it
@@ -2206,7 +2271,7 @@ class) are compatible with the framework.
 
 \subsection{Limitations}\label{limitations}
 
-Five limitations qualify the results. First, the results depend on the
+Six limitations qualify the results. First, the results depend on the
 Gumbel error assumption: the factorization of the joint likelihood and
 the inclusive-value form of the second response both rest on
 max-stability. Appendix D shows how far the assumption can be relaxed.
@@ -2245,7 +2310,16 @@ likelihood presumes the two questions are asked together, as in the
 standard dual-response task. Designs that separate them, such as the
 separated dual response of Schlereth and Skiera (2017), break the
 coupling between the two responses and would require modeling the stages
-as separate draws. Appendix C documents a separate methodological
+as separate draws. Sixth, the study of Section~\ref{sec-analysis} was
+designed to predict sign-up shares rather than to test the behavioural
+model: every screen shows three similar cards, so the inclusive value
+varies little across a respondent's tasks and the link and the
+unit-slope test are only weakly identified, and the binary comparison
+collapses the ordinal answers rather than fielding a yes/no question, so
+a format effect on stated intent itself is not tested; a study designed
+for the model would engineer tasks that differ in attractiveness, ask
+for a probability directly on a few tasks, and match respondents to
+realized applications. Appendix C documents a separate methodological
 caution: harmonic-mean estimates of the marginal likelihood are
 optimistic, so we anchor model comparisons in holdout likelihood and
 WAIC alongside the conventional estimator.
@@ -2297,9 +2371,12 @@ budget constraints, and on the design of the scale itself.
 Lemma~\ref{lem-gumbel}}{A.1 Proof of Lemma~}}\label{a.1-proof-of-lem-gumbel}
 \addcontentsline{toc}{subsection}{A.1 Proof of Lemma~\ref{lem-gumbel}}
 
-The result is classical (McFadden 1981). We give the derivation because
-part (ii) carries Equation~\ref{eq-joint}, and because Appendix D
-extends this calculation to generalized extreme value errors.
+The result is classical: both parts follow from the joint law of the
+maximizer and the maximum in the GEV theorem of McFadden (1981), and
+Palma and Kilani (2007) state the independence in part (ii) explicitly,
+for the whole GEV family. We give the derivation because part (ii)
+carries Equation~\ref{eq-joint}, and because Appendix D extends this
+calculation to generalized extreme value errors.
 
 Let \(u_j = V_j + \eta_j\) with \(\eta_j \iid \text{Gumbel}(0,1)\) for
 \(j \in \mathcal{J}^+\), so \(u_j\) has CDF
@@ -2598,8 +2675,10 @@ holdout comparisons as primary whenever the two disagree.
 Lemma~\ref{lem-gumbel} is stated for independent Gumbel errors, and the
 whole of Section~\ref{sec-model} rests on it. Both of its properties
 hold for the entire generalized extreme value (GEV) family of McFadden
-(1981), so that correlation among the inside goods costs the framework
-nothing beyond a redefinition of the inclusive value.
+(1981), and the independence in part (ii) is the invariance result of
+Palma and Kilani (2007), so that correlation among the inside goods
+costs the framework nothing beyond a redefinition of the inclusive
+value.
 
 Let the inside-good components have the GEV joint distribution
 \begin{equation}\protect\phantomsection\label{eq-gevcdf}{
@@ -2948,6 +3027,9 @@ responsibility for the content of the published article.
 
 \protect\phantomsection\label{refs}
 \begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-Agresti_2002}
+Agresti, Alan. 2002. \emph{Categorical Data Analysis}. 2nd ed. Wiley.
+
 \bibitem[\citeproctext]{ref-Allenby_2019}
 Allenby, Greg M., Nino Hardt, and Peter E. Rossi. 2019. {``Economic
 Foundations of Conjoint Analysis.''} In \emph{Handbook of the Economics
@@ -2977,6 +3059,11 @@ Campbell, Danny, and Seda Erdem. 2019. {``Including Opt-Out Options in
 Discrete Choice Experiments: Issues to Consider.''} \emph{The Patient -
 Patient-Centered Outcomes Research} 12 (1): 1--14.
 \url{https://doi.org/10.1007/s40271-018-0324-6}.
+
+\bibitem[\citeproctext]{ref-Christensen_2020}
+Christensen, Rune Haubo Bojesen. 2020. \emph{Cumulative Link Models for
+Ordinal Regression with the {R} Package Ordinal}. Vignette for the R
+package ordinal. \url{https://cran.r-project.org/package=ordinal}.
 
 \bibitem[\citeproctext]{ref-Daly_2012}
 Daly, Andrew, Stephane Hess, Bhanu Patruni, Dimitris Potoglou, and
@@ -3088,8 +3175,10 @@ Association} 97 (459): 674--82.
 \url{https://doi.org/10.1198/016214502388618410}.
 
 \bibitem[\citeproctext]{ref-Mcfadden_1981}
-McFadden, Daniel L. 1981. \emph{Econometric Models of Probabilistic
-Choice}. The MIT Press.
+McFadden, Daniel L. 1981. {``Econometric Models of Probabilistic
+Choice.''} In \emph{Structural Analysis of Discrete Data with
+Econometric Applications}, edited by Charles F. Manski and Daniel
+McFadden. The MIT Press.
 
 \bibitem[\citeproctext]{ref-Meng_1996}
 Meng, Xiao-Li, and Wing Hung Wong. 1996. {``Simulating Ratios of
@@ -3107,6 +3196,10 @@ Newton, Michael A., and Adrian E. Raftery. 1994. {``Approximate
 \emph{Journal of the Royal Statistical Society: Series B
 (Methodological)} 56 (1): 3--48.
 \url{https://doi.org/10.1111/j.2517-6161.1994.tb01956.x}.
+
+\bibitem[\citeproctext]{ref-dePalma_2007}
+Palma, André de, and Karim Kilani. 2007. {``Invariance of Conditional
+Maximum Utility.''} \emph{Journal of Economic Theory} 132 (1): 137--46.
 
 \bibitem[\citeproctext]{ref-Rose_2015}
 Rose, John M., Matthew J. Beck, and David A. Hensher. 2015. {``The Joint
