@@ -8,8 +8,8 @@ number-sections: true
 affiliations:
   - id: nyu
     name: New York University, Shanghai 
-  - id: gbk
-    name: GBK Collective
+  - id: sdsu
+    name: San Diego State University
     
 author:
   - name: Dan Yavorsky
@@ -17,7 +17,7 @@ author:
     corresponding: true
     email: dyavorsky@gmail.com
     affiliations: 
-      - ref: gbk
+      - ref: sdsu
   - name: Geoffery Zheng
     orcid: 0000-0003-4229-8231
     corresponding: false

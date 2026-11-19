@@ -1,7 +1,7 @@
 ---
 title: "Outside Good Uncertainty"
 subtitle: "Ordinal Dual Response in Choice-Based Conjoint Analysis"
-author: "Dan Yavorsky (GBK Collective) and Geoffery Zheng (NYU Shanghai)"
+author: "Dan Yavorsky (San Diego State University) and Geoffery Zheng (NYU Shanghai)"
 format:
   pdf:
     documentclass: article
@@ -21,7 +21,7 @@ format:
           \posttitle{\par\end{center}\vskip 0.3em}
 ---
 
-\vspace{-2emµ}
+\vspace{-2em}
 
 *Proposal for the Sawtooth Research Conference 2027 — methodological track, 30-minute presentation.*
 
